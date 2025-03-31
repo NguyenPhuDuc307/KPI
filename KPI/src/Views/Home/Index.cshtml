@@ -22,12 +22,13 @@
                     <h5 class="card-title"><i class="bi bi-speedometer2 me-2" style="color: var(--deha-blue);"></i>Bảng
                         điều khiển nhanh</h5>
                     <div class="row mt-4">
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="card h-100 border-0 shadow-sm">
                                 <div class="card-body text-center">
                                     <div class="bg-light p-3 rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
                                         style="width: 70px; height: 70px;">
-                                        <i class="bi bi-bar-chart-line fs-1" style="color: var(--deha-blue);"></i>
+                                        <img src="~/img/chart-icon.png" alt="KPI Icon"
+                                            style="width: 40px; height: 40px;">
                                     </div>
                                     <h3 class="display-6 fw-bold">16</h3>
                                     <p class="text-muted">KPIs hiện có</p>
@@ -36,12 +37,13 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="card h-100 border-0 shadow-sm">
                                 <div class="card-body text-center">
                                     <div class="bg-light p-3 rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
                                         style="width: 70px; height: 70px;">
-                                        <i class="bi bi-check2-all fs-1" style="color: var(--deha-green);"></i>
+                                        <img src="~/img/check-icon.png" alt="CSF Icon"
+                                            style="width: 40px; height: 40px;">
                                     </div>
                                     <h3 class="display-6 fw-bold">8</h3>
                                     <p class="text-muted">CSFs đang theo dõi</p>
@@ -50,31 +52,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4 mb-3">
                             <div class="card h-100 border-0 shadow-sm">
                                 <div class="card-body text-center">
                                     <div class="bg-light p-3 rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
                                         style="width: 70px; height: 70px;">
-                                        <i class="bi bi-exclamation-triangle fs-1" style="color: #fd7e14;"></i>
+                                        <img src="~/img/warning-icon.png" alt="Alert Icon"
+                                            style="width: 40px; height: 40px;">
                                     </div>
                                     <h3 class="display-6 fw-bold">3</h3>
                                     <p class="text-muted">KPIs cần chú ý</p>
                                     <a asp-controller="KPI" asp-action="Alerts"
                                         class="btn btn-sm btn-outline-warning">Xem chi tiết</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-body text-center">
-                                    <div class="bg-light p-3 rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
-                                        style="width: 70px; height: 70px;">
-                                        <i class="bi bi-building fs-1" style="color: var(--deha-blue-dark);"></i>
-                                    </div>
-                                    <h3 class="display-6 fw-bold">5</h3>
-                                    <p class="text-muted">Phòng ban tham gia</p>
-                                    <a asp-controller="Department" asp-action="Index"
-                                        class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
                                 </div>
                             </div>
                         </div>
