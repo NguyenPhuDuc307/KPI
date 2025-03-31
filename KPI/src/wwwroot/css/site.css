@@ -10,6 +10,7 @@
   --deha-gray: #E0E7EF;
   --deha-gray-dark: #798796;
   --deha-text: #333333;
+  --deha-text-dark: #222222;
   
   /* Font variables */
   --heading-font: 'Montserrat', sans-serif;
@@ -231,17 +232,35 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, .display-1, .display-2, .d
 /* Badge styling */
 .badge {
   font-family: var(--heading-font);
-  font-weight: 500;
+  font-weight: 600;
   padding: 0.4rem 0.7rem;
   border-radius: 20px;
 }
 
 .badge.bg-primary {
-  background-color: var(--deha-blue) !important;
+  background-color: var(--deha-blue-dark) !important;
 }
 
 .badge.bg-success {
-  background-color: var(--deha-green) !important;
+  background-color: #2e8540 !important;
+}
+
+.badge.bg-secondary {
+  background-color: #555 !important;
+}
+
+.badge.bg-info {
+  background-color: #0277bd !important;
+  color: white !important;
+}
+
+.badge.bg-warning {
+  background-color: #e65100 !important;
+  color: white !important;
+}
+
+.badge.bg-danger {
+  background-color: #c62828 !important;
 }
 
 /* Dashboard components */
@@ -276,6 +295,8 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, .display-1, .display-2, .d
 .form-control {
   font-family: var(--body-font);
   border-radius: 6px;
+  color: var(--deha-text-dark);
+  border-color: #bbb;
 }
 
 .form-control:focus {
@@ -532,4 +553,77 @@ input[type="range"]:focus::-ms-fill-upper {
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
   background-color: var(--deha-gray-light) !important;
   border-color: var(--deha-gray) !important;
+}
+
+/* Bổ sung để cải thiện tương phản */
+.table {
+  color: var(--deha-text-dark);
+  border-color: #ddd;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.table-hover > tbody > tr:hover {
+  background-color: rgba(0, 70, 140, 0.05);
+}
+
+.table thead th {
+  background-color: #f2f5f8;
+  color: var(--deha-text-dark);
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+}
+
+.btn-sm {
+  font-weight: 500;
+}
+
+.btn-info {
+  background-color: #0277bd;
+  border-color: #0277bd;
+}
+
+.btn-info:hover, .btn-info:focus {
+  background-color: #01579b;
+  border-color: #01579b;
+}
+
+/* Cải thiện tương phản cho các phần tử khác */
+.card-header.bg-primary {
+  background-color: var(--deha-blue-dark) !important;
+}
+
+.text-muted {
+  color: #555 !important;
+}
+
+/* Cải thiện độ tương phản cho biểu mẫu */
+label {
+  color: var(--deha-text-dark);
+  font-weight: 500;
+}
+
+.form-control, .form-select {
+  color: var(--deha-text-dark);
+  border-color: #bbb;
+}
+
+/* DataTables */
+.dataTables_wrapper .dataTables_length, 
+.dataTables_wrapper .dataTables_filter, 
+.dataTables_wrapper .dataTables_info, 
+.dataTables_wrapper .dataTables_processing, 
+.dataTables_wrapper .dataTables_paginate {
+  color: var(--deha-text-dark);
+}
+
+.page-link {
+  color: var(--deha-blue-dark);
+}
+
+.page-item.active .page-link {
+  background-color: var(--deha-blue-dark);
+  border-color: var(--deha-blue-dark);
 }

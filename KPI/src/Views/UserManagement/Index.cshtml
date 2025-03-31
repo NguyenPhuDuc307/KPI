@@ -14,22 +14,22 @@
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-striped table-hover" id="usersTable">
-                <thead class="table-light">
+                <thead class="table-dark">
                     <tr>
-                        <th>Họ tên</th>
-                        <th>Email</th>
-                        <th>Chức danh</th>
-                        <th>Phòng ban</th>
-                        <th>Vai trò</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
+                        <th class="fw-bold">Họ tên</th>
+                        <th class="fw-bold">Email</th>
+                        <th class="fw-bold">Chức danh</th>
+                        <th class="fw-bold">Phòng ban</th>
+                        <th class="fw-bold">Vai trò</th>
+                        <th class="fw-bold">Trạng thái</th>
+                        <th class="fw-bold">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
                         <tr>
-                            <td>@item.FullName</td>
+                            <td class="fw-medium">@item.FullName</td>
                             <td>@item.Email</td>
                             <td>@item.JobTitle</td>
                             <td>@item.DepartmentName</td>
@@ -41,7 +41,7 @@
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Tạm khóa</span>
+                                    <span class="badge bg-dark"><i class="bi bi-x-circle me-1"></i>Tạm khóa</span>
                                 }
                             </td>
                             <td>

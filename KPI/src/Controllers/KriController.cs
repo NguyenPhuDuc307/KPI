@@ -259,6 +259,20 @@ namespace KPISolution.Controllers
         }
 
         /// <summary>
+        /// Alternative route for KRI details to support legacy URLs
+        /// </summary>
+        /// <param name="id">The ID of the KRI to display</param>
+        /// <returns>View with KRI details</returns>
+        [HttpGet]
+        [Route("/KeyResultIndicator/Details/{id}")]
+        public async Task<IActionResult> KeyResultIndicatorDetails(Guid? id)
+        {
+            // Forward to the regular Details action
+            _logger.LogInformation("Redirecting KeyResultIndicator/Details to Kri/Details for id: {0}", id);
+            return await Details(id);
+        }
+
+        /// <summary>
         /// Displays the form for creating a new KRI
         /// </summary>
         /// <returns>Create KRI view</returns>
@@ -744,6 +758,27 @@ namespace KPISolution.Controllers
             }
         }
 
+        /// <summary>
+        /// Generic route for handling all legacy KeyResultIndicator URLs
+        /// </summary>
+        /// <param name="id">The ID of the KRI</param>
+        /// <returns>Appropriate action result based on the original URL</returns>
+        [Route("/KeyResultIndicator/{action=Index}/{id?}")]
+        public async Task<IActionResult> KriRedirect(string? action, Guid? id)
+        {
+            var actionName = action ?? "Index";
+            _logger.LogInformation("Redirecting from KeyResultIndicator to Kri with action:{0}, id:{1}", actionName, id);
+
+            // Forward to the corresponding action in this controller
+            return actionName.ToLower() switch
+            {
+                "details" => await Details(id),
+                "edit" => await Edit(id),
+                "delete" => await Delete(id),
+                "index" or _ => RedirectToAction("Index", "Kri")
+            };
+        }
+
         // Helper methods
 
         /// <summary>
@@ -837,34 +872,6 @@ namespace KPISolution.Controllers
                 "impactlevel" => isDescending ? query.OrderByDescending(k => k.ImpactLevel) : query.OrderBy(k => k.ImpactLevel),
                 _ => query.OrderBy(k => k.Name) // Default sort
             };
-        }
-
-        private SelectList GetImpactLevelSelectList()
-        {
-            var items = Enum.GetValues(typeof(ImpactLevel))
-                .Cast<ImpactLevel>()
-                .Select(e => new SelectListItem
-                {
-                    Value = e.ToString(),
-                    Text = e.ToString().SplitCamelCase()
-                })
-                .ToList();
-
-            return new SelectList(items, "Value", "Text");
-        }
-
-        private SelectList GetBusinessAreaSelectList()
-        {
-            var items = Enum.GetValues(typeof(BusinessArea))
-                .Cast<BusinessArea>()
-                .Select(e => new SelectListItem
-                {
-                    Value = e.ToString(),
-                    Text = e.ToString().SplitCamelCase()
-                })
-                .ToList();
-
-            return new SelectList(items, "Value", "Text");
         }
     }
 }

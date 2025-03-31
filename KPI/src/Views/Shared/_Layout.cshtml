@@ -149,22 +149,13 @@
         </nav>
     </header>
 
-    @if (ViewData["UsePageTemplate"] != null && (bool)ViewData["UsePageTemplate"] == true)
-    {
-        <partial name="_Alert" />
-        <partial name="_Breadcrumb" />
-        <partial name="_PageTemplate" />
-    }
-    else
-    {
-        <div class="container-fluid py-3">
-            <main role="main" class="pb-3">
-                <partial name="_Alert" />
-                <partial name="_Breadcrumb" />
-                @RenderBody()
-            </main>
-        </div>
-    }
+    <div class="container-fluid py-3">
+        <main role="main" class="pb-3">
+            <partial name="_Alert" />
+            <partial name="_Breadcrumb" />
+            @RenderBody()
+        </main>
+    </div>
 
     <footer class="border-top footer text-white">
         <div class="container">

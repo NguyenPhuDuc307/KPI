@@ -14,6 +14,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Events;
+using Microsoft.AspNetCore.Routing;
+using KPISolution.Infrastructure.Routing;
 
 // Make this file's entry point async
 await Main();
@@ -168,6 +170,15 @@ async Task Main()
         builder.Services.AddRazorPages();
     }
 
+    // Add case-insensitive routing configuration
+    builder.Services.Configure<RouteOptions>(options =>
+    {
+        options.LowercaseUrls = false;
+        options.LowercaseQueryStrings = false;
+        options.AppendTrailingSlash = false;
+        options.ConstraintMap.Add("ignore-case", typeof(IgnoreCaseParameterTransformer));
+    });
+
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
@@ -190,6 +201,25 @@ async Task Main()
     {
         try
         {
+            // Special handling for KeyResultIndicator URLs
+            if (context.Request.Path.Value != null &&
+                context.Request.Path.Value.StartsWith("/KeyResultIndicator", StringComparison.OrdinalIgnoreCase))
+            {
+                Log.Information("Intercepted request to {Path}", context.Request.Path);
+
+                // Extract ID from the URL if it's a Details request
+                if (context.Request.Path.Value.Contains("/Details/"))
+                {
+                    var parts = context.Request.Path.Value.Split('/');
+                    if (parts.Length >= 4)
+                    {
+                        var id = parts[3]; // Get the GUID
+                        context.Request.Path = $"/Kri/Details/{id}";
+                        Log.Information("Rewriting path to {NewPath}", context.Request.Path);
+                    }
+                }
+            }
+
             await next();
 
             // Handle 404 errors for non-existent endpoints if no response has been sent yet
@@ -224,6 +254,24 @@ async Task Main()
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
+
+    // Add custom route for CSF with case-insensitive routing
+    app.MapControllerRoute(
+        name: "csf",
+        pattern: "Csf/{action=Index}/{id?}",
+        defaults: new { controller = "Csf" });
+
+    // Add custom route for KRI with case-insensitive routing
+    app.MapControllerRoute(
+        name: "kri",
+        pattern: "KeyResultIndicator/{action=Index}/{id?}",
+        defaults: new { controller = "Kri" });
+
+    // Add custom route for KPI with case-insensitive routing
+    app.MapControllerRoute(
+        name: "kpi",
+        pattern: "Kpi/{action=Index}/{id?}",
+        defaults: new { controller = "Kpi" });
 
     // Add custom route for Measurement
     app.MapControllerRoute(

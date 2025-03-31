@@ -159,7 +159,23 @@
                                                 <span class="badge bg-@statusClass">@kpi.Status.ToString()</span>
                                             </td>
                                             <td>
-                                                <a href="@Url.Action("Details", kpi.KpiType.ToString(), new { id = kpi.KpiId })"
+                                                @{
+                                                    // Xác định controller name dựa trên loại KPI
+                                                    string controllerName = kpi.KpiType.ToString();
+                                                    if (controllerName == "KeyResultIndicator")
+                                                    {
+                                                        controllerName = "Kri";
+                                                    }
+                                                    else if (controllerName == "PerformanceIndicator")
+                                                    {
+                                                        controllerName = "Pi";
+                                                    }
+                                                    else if (controllerName == "ResultIndicator")
+                                                    {
+                                                        controllerName = "Ri";
+                                                    }
+                                                }
+                                                <a href="@Url.Action("Details", controllerName, new { id = kpi.KpiId })"
                                                     class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-eye"></i> Xem
                                                 </a>
@@ -336,7 +352,21 @@
                         <div class="list-group">
                             @foreach (var kpi in Model.LinkedKpis)
                             {
-                                <a href="@Url.Action("Details", "KPI", new { id = kpi.KpiId })"
+                                string sidebarControllerName = kpi.KpiType.ToString();
+                                if (sidebarControllerName == "KeyResultIndicator")
+                                {
+                                    sidebarControllerName = "Kri";
+                                }
+                                else if (sidebarControllerName == "PerformanceIndicator")
+                                {
+                                    sidebarControllerName = "Pi";
+                                }
+                                else if (sidebarControllerName == "ResultIndicator")
+                                {
+                                    sidebarControllerName = "Ri";
+                                }
+
+                                <a href="@Url.Action("Details", sidebarControllerName, new { id = kpi.KpiId })"
                                     class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h5 class="mb-1">@kpi.Code</h5>
