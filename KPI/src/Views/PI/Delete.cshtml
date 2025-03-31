@@ -1,0 +1,72 @@
+@model KPISolution.Models.ViewModels.KPI.KpiViewModel
+
+@{
+    ViewData["Title"] = "Xác nhận xóa PI";
+}
+
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa</h5>
+                </div>
+                <div class="card-body p-4">
+                    <h3 class="mb-3">Bạn có chắc chắn muốn xóa chỉ số hiệu suất này?</h3>
+
+                    <div class="alert alert-warning">
+                        <p class="mb-0">
+                            <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. Việc xóa chỉ số này sẽ xóa tất
+                            cả dữ liệu liên quan.
+                        </p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Mã PI</label>
+                                <p class="form-control-plaintext">@Model.Name</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tên chỉ số</label>
+                                <p class="form-control-plaintext">@Model.Name</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Phòng ban</label>
+                                <p class="form-control-plaintext">@Model.DepartmentName</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Loại hoạt động</label>
+                                <p class="form-control-plaintext">@Model.Type</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Mô tả</label>
+                                <p class="form-control-plaintext">@Model.Description</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i>Xác nhận xóa
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

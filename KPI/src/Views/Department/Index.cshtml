@@ -1,0 +1,150 @@
+@model IEnumerable<KPISolution.Models.ViewModels.Department.DepartmentViewModel>
+
+@{
+    ViewData["Title"] = "Danh sách phòng ban";
+    ViewData["Icon"] = "bi-building";
+    ViewData["Subtitle"] = "Quản lý phòng ban trong hệ thống";
+    ViewData["ShowFilterPanel"] = true;
+    ViewData["UsePageTemplate"] = true;
+
+    if (User.IsInRole("Administrator"))
+    {
+        ViewData["PrimaryButton"] = ("Thêm phòng ban mới", "Department", "Create", "", "bi-plus-circle");
+    }
+}
+
+@section FilterContent {
+    <form asp-action="Index" method="get" id="filterForm">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <input name="searchTerm" class="form-control" placeholder="Tìm kiếm...">
+                    <label>Tìm kiếm theo tên hoặc mô tả</label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-floating">
+                    <select name="isActive" class="form-select">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="true">Hoạt động</option>
+                        <option value="false">Không hoạt động</option>
+                    </select>
+                    <label>Trạng thái</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-search me-1"></i>Tìm kiếm
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Xóa bộ lọc
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+}
+
+<!-- Department Management Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link active" asp-action="Index">Danh sách</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-action="Hierarchy">Cấu trúc phòng ban</a>
+    </li>
+</ul>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-transparent">
+        <h5 class="mb-0">Danh sách phòng ban</h5>
+    </div>
+    <div class="card-body p-0">
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="departmentsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên phòng ban</th>
+                            <th>Trưởng phòng</th>
+                            <th>Số nhân viên</th>
+                            <th>Trạng thái</th>
+                            <th width="150">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var department in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@department.Id" class="fw-medium">
+                                        @department.Name
+                                    </a>
+                                </td>
+                                <td>
+                                    @(department.ManagerName ?? "Chưa có trưởng phòng")
+                                </td>
+                                <td>
+                                    @department.EmployeeCount nhân viên
+                                </td>
+                                <td>
+                                    @if (department.Status == "Active")
+                                    {
+                                        <span class="badge bg-success">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Không hoạt động</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@department.Id"
+                                            class="btn btn-sm btn-info text-white" title="Chi tiết">
+                                            <i class="bi bi-info-circle"></i>
+                                        </a>
+                                        @if (User.IsInRole("Administrator"))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@department.Id" class="btn btn-sm btn-primary"
+                                                title="Chỉnh sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@department.Id" class="btn btn-sm btn-danger"
+                                                title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-building text-muted" style="font-size: 3rem;"></i>
+                <h5 class="mt-3">Không tìm thấy phòng ban nào</h5>
+                <p class="text-muted">Hãy thêm phòng ban mới để bắt đầu.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#departmentsTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json'
+                },
+                order: [[0, 'asc']],
+                pageLength: 25
+            });
+        });
+    </script>
+}

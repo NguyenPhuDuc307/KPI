@@ -1,0 +1,207 @@
+@model KPISolution.Models.ViewModels.BusinessObjective.BusinessObjectiveEditViewModel
+
+@{
+    ViewData["Title"] = "Tạo mục tiêu mới";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4 mb-0"><i class="bi bi-bullseye me-2"></i>Tạo mục tiêu mới</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="BusinessObjective" asp-action="Index">Mục tiêu kinh doanh</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Tạo mới</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <i class="bi bi-plus-circle me-1"></i> Thông tin mục tiêu
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label required"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label required"></label>
+                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="BusinessPerspective" class="form-label required"></label>
+                                    <select asp-for="BusinessPerspective" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.BusinessPerspective>()" class="form-select">
+                                    </select>
+                                    <span asp-validation-for="BusinessPerspective" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Priority" class="form-label required"></label>
+                                    <select asp-for="Priority" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.PriorityLevel>()" class="form-select">
+                                    </select>
+                                    <span asp-validation-for="Priority" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Status" class="form-label required"></label>
+                                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.ObjectiveStatus>()" class="form-select">
+                                    </select>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ProgressPercentage" class="form-label"></label>
+                                    <div class="input-group">
+                                        <input asp-for="ProgressPercentage" class="form-control" type="number" min="0" max="100" />
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <span asp-validation-for="ProgressPercentage" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="DepartmentId" class="form-label"></label>
+                                    <select asp-for="DepartmentId" asp-items="Model.Departments" class="form-select">
+                                        <option value="">-- Chọn phòng ban --</option>
+                                    </select>
+                                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Timeframe" class="form-label required"></label>
+                                    <select asp-for="Timeframe" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.TimeframeType>()" class="form-select">
+                                    </select>
+                                    <span asp-validation-for="Timeframe" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="StartDate" class="form-label required"></label>
+                                    <input asp-for="StartDate" class="form-control" type="date" />
+                                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="TargetDate" class="form-label required"></label>
+                                    <input asp-for="TargetDate" class="form-control" type="date" />
+                                    <span asp-validation-for="TargetDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Budget" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">VNĐ</span>
+                                <input asp-for="Budget" class="form-control" type="number" min="0" step="1000000" />
+                            </div>
+                            <span asp-validation-for="Budget" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="ParentObjectiveId" class="form-label"></label>
+                            <select asp-for="ParentObjectiveId" asp-items="Model.ParentObjectives" class="form-select">
+                                <option value="">-- Không có mục tiêu cha --</option>
+                            </select>
+                            <span asp-validation-for="ParentObjectiveId" class="text-danger"></span>
+                            <small class="text-muted">Nếu mục tiêu này là mục tiêu con của một mục tiêu khác</small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="FiscalYear" class="form-label"></label>
+                            <input asp-for="FiscalYear" class="form-control" placeholder="Ví dụ: 2023-2024" />
+                            <span asp-validation-for="FiscalYear" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Notes" class="form-label"></label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-top pt-3">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i> Tạo mục tiêu
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Hủy bỏ
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    
+        <script>
+            $(document).ready(function() {
+                // Initialize select2
+                $('.form-select').select2({
+                    theme: 'bootstrap-5'
+                });
+        
+                // Ensure progress and status are in sync
+                $('#ProgressPercentage, #Status').on('change', function() {
+                    var progress = parseInt($('#ProgressPercentage').val());
+                    var statusSelect = $('#Status');
+            
+                    if (progress === 0) {
+                        statusSelect.val('0'); // NotStarted
+                    } else if (progress === 100) {
+                        statusSelect.val('3'); // Completed
+                    } else if (progress > 0 && progress < 100) {
+                        statusSelect.val('1'); // InProgress
+                    }
+            
+                    statusSelect.trigger('change');
+                });
+        
+                // Date validation
+                $('#StartDate, #TargetDate').on('change', function() {
+                    var startDate = new Date($('#StartDate').val());
+                    var targetDate = new Date($('#TargetDate').val());
+            
+                    if (targetDate < startDate) {
+                        alert('Ngày hoàn thành dự kiến phải sau ngày bắt đầu!');
+                        $('#TargetDate').val($('#StartDate').val());
+                    }
+                });
+            });
+        </script>
+}

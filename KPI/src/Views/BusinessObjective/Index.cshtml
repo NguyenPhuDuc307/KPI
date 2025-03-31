@@ -1,0 +1,176 @@
+@model KPISolution.Models.ViewModels.BusinessObjective.BusinessObjectiveListViewModel
+
+@{
+    ViewData["Title"] = "Mục tiêu kinh doanh";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4 mb-0"><i class="bi bi-bullseye me-2"></i>Mục tiêu kinh doanh</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Mục tiêu kinh doanh</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a asp-action="Create" class="btn btn-success">
+                <i class="bi bi-plus-circle me-1"></i> Thêm mục tiêu mới
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-filter me-1"></i> Bộ lọc</h5>
+                <button type="button" class="btn btn-sm btn-link" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+        <div class="collapse show" id="filterCollapse">
+            <div class="card-body">
+                <form method="get" asp-action="Index">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label asp-for="SearchTerm" class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input asp-for="SearchTerm" class="form-control" placeholder="Nhập từ khóa...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="FilterPerspective" class="form-label">Phối cảnh</label>
+                            <select asp-for="FilterPerspective" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.BusinessPerspective>()" class="form-select">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="FilterStatus" class="form-label">Trạng thái</label>
+                            <select asp-for="FilterStatus" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.ObjectiveStatus>()" class="form-select">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="FilterPriority" class="form-label">Ưu tiên</label>
+                            <select asp-for="FilterPriority" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.PriorityLevel>()" class="form-select">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="FilterTimeframe" class="form-label">Thời hạn</label>
+                            <select asp-for="FilterTimeframe" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.TimeframeType>()" class="form-select">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-funnel me-1"></i> Lọc
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <i class="bi bi-table me-1"></i>
+            Danh sách mục tiêu
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên mục tiêu</th>
+                            <th>Phối cảnh</th>
+                            <th>Phòng ban</th>
+                            <th>Trạng thái</th>
+                            <th>Tiến độ</th>
+                            <th>Ưu tiên</th>
+                            <th>Thời hạn</th>
+                            <th>Ngày hoàn thành</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Objectives != null && Model.Objectives.Any())
+                        {
+                                    foreach (var item in Model.Objectives)
+                                    {
+                                                <tr>
+                                                    <td>
+                                                        <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none text-dark fw-medium">
+                                                            @item.Name
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        <span class="@item.BusinessPerspectiveClass">
+                                                            <i class="bi bi-diagram-3 me-1"></i>
+                                                            @Html.DisplayFor(modelItem => item.BusinessPerspective)
+                                                        </span>
+                                                    </td>
+                                                    <td>@(string.IsNullOrEmpty(item.Department) ? "-" : item.Department)</td>
+                                                    <td><span class="@item.StatusBadgeClass">@Html.DisplayFor(modelItem => item.Status)</span></td>
+                                                    <td>
+                                                        <div class="progress" style="height: 10px;">
+                                                            <div class="progress-bar @(item.ProgressPercentage == 100 ? "bg-success" : item.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")" 
+                                                                role="progressbar" style="width: @(item.ProgressPercentage)%;" 
+                                                                aria-valuenow="@item.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                                                            </div>
+                                                        </div>
+                                                        <small class="text-muted">@item.ProgressPercentage%</small>
+                                                    </td>
+                                                    <td><span class="@item.PriorityBadgeClass">@Html.DisplayFor(modelItem => item.Priority)</span></td>
+                                                    <td><span class="@item.TimeframeBadgeClass">@Html.DisplayFor(modelItem => item.TimeframeType)</span></td>
+                                                    <td>@item.TargetDate.ToString("dd/MM/yyyy")</td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </a>
+                                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
+                                                                <i class="bi bi-eye"></i>
+                                                            </a>
+                                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">
+                                                                <i class="bi bi-trash"></i>
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                    }
+                        }
+                        else
+                        {
+                                    <tr>
+                                        <td colspan="9" class="text-center py-4">
+                                            <div class="text-muted mb-2">
+                                                <i class="bi bi-search" style="font-size: 2rem;"></i>
+                                            </div>
+                                            <h5>Không tìm thấy mục tiêu kinh doanh nào</h5>
+                                            <p class="mb-0">Hãy tạo mục tiêu kinh doanh mới hoặc thay đổi bộ lọc tìm kiếm</p>
+                                        </td>
+                                    </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+            <script>
+                $(document).ready(function() {
+                    // Initialize select2
+                    $('.form-select').select2({
+                        theme: 'bootstrap-5'
+                    });
+                });
+            </script>
+}

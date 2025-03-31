@@ -1,0 +1,261 @@
+@model KPISolution.Models.ViewModels.KPI.EditKpiViewModel
+@using KPISolution.Models.Enums
+@{
+    ViewData["Title"] = $"Chỉnh sửa PI: {Model.Code}";
+}
+
+<div class="container-fluid px-4 pt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-action="Index">PI</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Code</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Chỉnh sửa</li>
+                </ol>
+            </nav>
+            <h1 class="h2 mb-0">Chỉnh sửa PI: @Model.Name</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="KpiType" value="PerformanceIndicator" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Thông tin cơ bản</h5>
+                            <span class="badge bg-primary">Chỉ số hiệu suất (PI)</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="DepartmentId" asp-items="Model.Departments" class="form-select">
+                                        <option value="">-- Chọn phòng ban --</option>
+                                    </select>
+                                    <label asp-for="DepartmentId">Phòng ban</label>
+                                    <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Code" class="form-control" placeholder="Mã PI">
+                                    <label asp-for="Code">Mã PI</label>
+                                    <span asp-validation-for="Code" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Name" class="form-control" placeholder="Tên PI">
+                                    <label asp-for="Name">Tên PI</label>
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="Category" class="form-select">
+                                        <option value="">-- Chọn danh mục --</option>
+                                        @foreach (KpiCategory category in Enum.GetValues(typeof(KpiCategory)))
+                                        {
+                                            <option value="@category">@(category == KpiCategory.Financial ? "Tài chính" :
+                                                                     category == KpiCategory.Customer ? "Khách hàng" :
+                                                                     category == KpiCategory.Operational ? "Quy trình nội bộ" :
+                                                                     category == KpiCategory.LearningAndGrowth ? "Học tập và phát triển" :
+                                                                     category == KpiCategory.Environmental ? "Môi trường" :
+                                                                     category == KpiCategory.Social ? "Xã hội" :
+                                                                     category == KpiCategory.Governance ? "Quản trị" :
+                                                                     category.ToString())</option>
+                                        }
+                                    </select>
+                                    <label asp-for="Category">Danh mục</label>
+                                    <span asp-validation-for="Category" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="ActivityType" asp-items="Model.ActivityTypes" class="form-select">
+                                        <option value="">-- Chọn loại hoạt động --</option>
+                                    </select>
+                                    <label asp-for="ActivityType">Loại hoạt động</label>
+                                    <span asp-validation-for="ActivityType" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="PerformanceLevel" class="form-select">
+                                        <option value="1">1 - Rất thấp</option>
+                                        <option value="2">2 - Thấp</option>
+                                        <option value="3">3 - Trung bình</option>
+                                        <option value="4">4 - Cao</option>
+                                        <option value="5">5 - Rất cao</option>
+                                    </select>
+                                    <label asp-for="PerformanceLevel">Mức hiệu suất</label>
+                                    <span asp-validation-for="PerformanceLevel" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Owner" class="form-control" placeholder="Người chịu trách nhiệm">
+                                    <label asp-for="Owner">Người chịu trách nhiệm</label>
+                                    <span asp-validation-for="Owner" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="Status" class="form-select">
+                                        <option value="@KpiStatus.Draft">Chưa bắt đầu</option>
+                                        <option value="@KpiStatus.OnTarget">Đang theo kế hoạch</option>
+                                        <option value="@KpiStatus.AtRisk">Có rủi ro</option>
+                                        <option value="@KpiStatus.BelowTarget">Không theo kế hoạch</option>
+                                        <option value="@KpiStatus.Active">Hoạt động</option>
+                                    </select>
+                                    <label asp-for="Status">Trạng thái</label>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <textarea asp-for="Description" class="form-control" placeholder="Mô tả"
+                                        style="height: 100px"></textarea>
+                                    <label asp-for="Description">Mô tả</label>
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">Thông tin đo lường</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="TargetValue" class="form-control" placeholder="Giá trị mục tiêu">
+                                    <label asp-for="TargetValue">Giá trị mục tiêu</label>
+                                    <span asp-validation-for="TargetValue" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="MeasurementUnit" class="form-control" placeholder="Đơn vị đo">
+                                    <label asp-for="MeasurementUnit">Đơn vị đo</label>
+                                    <span asp-validation-for="MeasurementUnit" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <select asp-for="MeasurementFrequency" class="form-select">
+                                        @foreach (MeasurementFrequency frequency in Enum.GetValues(typeof(MeasurementFrequency)))
+                                        {
+                                            <option value="@frequency">@(frequency == MeasurementFrequency.Daily ? "Hàng ngày" :
+                                                                        frequency == MeasurementFrequency.Weekly ? "Hàng tuần" :
+                                                                        frequency == MeasurementFrequency.Biweekly ? "Hai tuần một lần" :
+                                                                        frequency == MeasurementFrequency.Monthly ? "Hàng tháng" :
+                                                                        frequency == MeasurementFrequency.Quarterly ? "Hàng quý" :
+                                                                        frequency == MeasurementFrequency.Semiannually ? "Nửa năm" :
+                                                                        frequency == MeasurementFrequency.Annually ? "Hàng năm" : "Tùy chỉnh")</option>
+                                        }
+                                    </select>
+                                    <label asp-for="MeasurementFrequency">Tần suất đo</label>
+                                    <span asp-validation-for="MeasurementFrequency" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <select asp-for="MeasurementDirection" class="form-select">
+                                        @foreach (MeasurementDirection direction in Enum.GetValues(typeof(MeasurementDirection)))
+                                        {
+                                            <option value="@direction">@(direction == MeasurementDirection.HigherIsBetter ? "Cao hơn là tốt hơn" : 
+                                                                        direction == MeasurementDirection.LowerIsBetter ? "Thấp hơn là tốt hơn" : 
+                                                                        direction == MeasurementDirection.TargetIsBest ? "Đạt đúng mục tiêu" : 
+                                                                        "Nằm trong phạm vi")</option>
+                                        }
+                                    </select>
+                                    <label asp-for="MeasurementDirection">Chiều hướng</label>
+                                    <span asp-validation-for="MeasurementDirection" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input asp-for="EffectiveDate" class="form-control" type="date"
+                                        value="@Model.EffectiveDate.ToString("yyyy-MM-dd")">
+                                    <label asp-for="EffectiveDate">Ngày hiệu lực</label>
+                                    <span asp-validation-for="EffectiveDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <textarea asp-for="ActionPlan" class="form-control"
+                                        placeholder="Kế hoạch hành động" style="height: 100px"></textarea>
+                                    <label asp-for="ActionPlan">Kế hoạch hành động</label>
+                                    <span asp-validation-for="ActionPlan" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <textarea asp-for="DataSource" class="form-control" placeholder="Nguồn dữ liệu"
+                                        style="height: 100px"></textarea>
+                                    <label asp-for="DataSource">Nguồn dữ liệu</label>
+                                    <span asp-validation-for="DataSource" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">Yếu tố thành công (CSF) liên quan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <select asp-for="SelectedCsfIds" asp-items="Model.CriticalSuccessFactors" class="form-select" multiple>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Quay lại
+                    </a>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i>Lưu thay đổi
+                        </button>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger ms-2">
+                            <i class="bi bi-trash me-1"></i>Xóa PI
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize select2 for dropdowns
+            $('.form-select').select2({
+                theme: 'bootstrap-5'
+            });
+
+            // Initialize multi-select for CSFs
+            $('#SelectedCsfIds').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Chọn các yếu tố thành công liên quan',
+                allowClear: true
+            });
+        });
+    </script>
+}

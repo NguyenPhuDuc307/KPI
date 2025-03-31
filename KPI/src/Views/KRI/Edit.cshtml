@@ -1,0 +1,232 @@
+@model KPISolution.Models.ViewModels.KPI.EditKpiViewModel
+@using KPISolution.Models.Enums
+@using KPISolution.Extensions
+@{
+    ViewData["Title"] = "Edit Key Result Indicator";
+}
+
+<div class="container-fluid">
+    <div class="page-header mt-3 mb-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a asp-controller="Kri" asp-action="Index">KRIs</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                    </ol>
+                </nav>
+                <h2>Edit @Model.Code</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-12">
+            <form asp-controller="Kri" asp-action="Edit" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="KpiType" value="KeyResultIndicator" />
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Basic Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="Department" asp-items="Model.Departments" class="form-select">
+                                        <option value="">-- Select Department --</option>
+                                    </select>
+                                    <label asp-for="Department">Department</label>
+                                    <span asp-validation-for="Department" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="BusinessArea" asp-items="Model.BusinessAreas" class="form-select">
+                                        <option value="">-- Select Business Area --</option>
+                                    </select>
+                                    <label asp-for="BusinessArea">Business Area</label>
+                                    <span asp-validation-for="BusinessArea" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Code" class="form-control" placeholder="KRI Code">
+                                    <label asp-for="Code">KRI Code</label>
+                                    <span asp-validation-for="Code" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Name" class="form-control" placeholder="KRI Name">
+                                    <label asp-for="Name">KRI Name</label>
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="StrategicObjective" class="form-control" placeholder="Strategic Objective">
+                                    <label asp-for="StrategicObjective">Strategic Objective</label>
+                                    <span asp-validation-for="StrategicObjective" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="Status" class="form-select">
+                                        @foreach (KpiStatus status in Enum.GetValues(typeof(KpiStatus)))
+                                        {
+                                                    <option value="@status">@status.ToString().SplitCamelCase()</option>
+                                        }
+                                    </select>
+                                    <label asp-for="Status">Status</label>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Owner" class="form-control" placeholder="Owner">
+                                    <label asp-for="Owner">Owner</label>
+                                    <span asp-validation-for="Owner" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="ExecutiveOwner" class="form-control" placeholder="Executive Owner">
+                                    <label asp-for="ExecutiveOwner">Executive Owner</label>
+                                    <span asp-validation-for="ExecutiveOwner" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="ImpactLevel" asp-items="Model.ImpactLevels" class="form-select">
+                                        <option value="">-- Select Impact Level --</option>
+                                    </select>
+                                    <label asp-for="ImpactLevel">Impact Level</label>
+                                    <span asp-validation-for="ImpactLevel" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="ConfidenceLevel" class="form-control" placeholder="Confidence Level (%)">
+                                    <label asp-for="ConfidenceLevel">Confidence Level (%)</label>
+                                    <span asp-validation-for="ConfidenceLevel" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <textarea asp-for="Description" class="form-control" placeholder="Description" style="height: 100px"></textarea>
+                                    <label asp-for="Description">Description</label>
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Measurement Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="TargetValue" class="form-control" placeholder="Target Value">
+                                    <label asp-for="TargetValue">Target Value</label>
+                                    <span asp-validation-for="TargetValue" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="MeasurementUnit" class="form-control" placeholder="Unit">
+                                    <label asp-for="MeasurementUnit">Unit</label>
+                                    <span asp-validation-for="MeasurementUnit" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <select asp-for="MeasurementFrequency" class="form-select">
+                                        @foreach (MeasurementFrequency frequency in Enum.GetValues(typeof(MeasurementFrequency)))
+                                        {
+                                                    <option value="@frequency">@frequency.ToString().SplitCamelCase()</option>
+                                        }
+                                    </select>
+                                    <label asp-for="MeasurementFrequency">Measurement Frequency</label>
+                                    <span asp-validation-for="MeasurementFrequency" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <select asp-for="MeasurementDirection" class="form-select">
+                                        @foreach (MeasurementDirection direction in Enum.GetValues(typeof(MeasurementDirection)))
+                                        {
+                                                    <option value="@direction">@direction.ToString().SplitCamelCase()</option>
+                                        }
+                                    </select>
+                                    <label asp-for="MeasurementDirection">Measurement Direction</label>
+                                    <span asp-validation-for="MeasurementDirection" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input asp-for="EffectiveDate" class="form-control" type="date">
+                                    <label asp-for="EffectiveDate">Effective Date</label>
+                                    <span asp-validation-for="EffectiveDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <textarea asp-for="CalculationMethod" class="form-control" placeholder="Calculation Method" style="height: 100px"></textarea>
+                                    <label asp-for="CalculationMethod">Calculation Method</label>
+                                    <span asp-validation-for="CalculationMethod" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <textarea asp-for="DataSource" class="form-control" placeholder="Data Source" style="height: 100px"></textarea>
+                                    <label asp-for="DataSource">Data Source</label>
+                                    <span asp-validation-for="DataSource" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Linked Critical Success Factors</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <select asp-for="SelectedCsfIds" asp-items="Model.CriticalSuccessFactors" class="form-select" multiple size="6">
+                            </select>
+                            <small class="form-text text-muted">Hold Ctrl (CMD on Mac) to select multiple CSFs.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a asp-controller="Kri" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+            <partial name="_ValidationScriptsPartial" />
+            <script>
+                $(document).ready(function () {
+                    // Initialize any select2 or other plugins if needed
+                });
+            </script>
+}

@@ -1,0 +1,94 @@
+@model KPISolution.Models.ViewModels.KPI.KpiDetailsViewModel
+@using KPISolution.Models.Enums
+@{
+    ViewData["Title"] = Model.Code;
+}
+
+<div class="container-fluid px-4 pt-4 pb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-controller="Ri" asp-action="Index">RI</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@Model.Code</li>
+                </ol>
+            </nav>
+            <h1 class="h2 mb-0">@Model.Name</h1>
+        </div>
+        @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+        {
+            <div>
+                <div class="btn-group">
+                    <a asp-controller="Ri" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i>Chỉnh sửa
+                    </a>
+                    <a asp-controller="Ri" asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>Xóa
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <p>Basic information and measurement details would go here</p>
+        </div>
+
+        <div class="col-lg-6">
+            <!-- Linked CSFs -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">CSF liên kết</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.LinkedCsfs != null && Model.LinkedCsfs.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var csf in Model.LinkedCsfs)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">@csf.Code - @csf.Name</h6>
+                                        <small>
+                                            @switch (csf.Status)
+                                            {
+                                                case CSFStatus.InProgress:
+                                                    <span class="badge bg-success">Đúng tiến độ</span>
+                                                    break;
+                                                case CSFStatus.AtRisk:
+                                                    <span class="badge bg-warning text-dark">Có rủi ro</span>
+                                                    break;
+                                                case CSFStatus.Delayed:
+                                                    <span class="badge bg-danger">Chậm tiến độ</span>
+                                                    break;
+                                                case CSFStatus.Completed:
+                                                    <span class="badge bg-info">Hoàn thành</span>
+                                                    break;
+                                                case CSFStatus.NotStarted:
+                                                    <span class="badge bg-secondary">Chưa bắt đầu</span>
+                                                    break;
+                                                case CSFStatus.Cancelled:
+                                                    <span class="badge bg-dark">Đã hủy</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-secondary">@csf.Status</span>
+                                                    break;
+                                            }
+                                        </small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <p class="mt-2 mb-0 text-muted">Không có CSF nào được liên kết với RI này</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

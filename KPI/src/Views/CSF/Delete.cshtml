@@ -1,0 +1,95 @@
+@model KPISolution.Models.ViewModels.CSF.CsfDetailsViewModel
+
+@{
+    ViewData["Title"] = "Xóa CSF";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Xác nhận xóa CSF</h1>
+        <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a asp-action="Index">Danh sách CSF</a></li>
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Chi tiết</a></li>
+            <li class="breadcrumb-item active">Xóa</li>
+        </ol>
+    </div>
+
+    <div class="card shadow mb-4 border-left-danger">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-danger">Cảnh báo</h6>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger mb-4">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Bạn sắp xóa CSF này. Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn tất cả dữ liệu liên quan.
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="mb-3">Thông tin CSF</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 30%">Mã CSF</th>
+                            <td>@Model.Code</td>
+                        </tr>
+                        <tr>
+                            <th>Tên CSF</th>
+                            <td>@Model.Name</td>
+                        </tr>
+                        <tr>
+                            <th>Phòng ban</th>
+                            <td>@Model.DepartmentName</td>
+                        </tr>
+                        <tr>
+                            <th>Danh mục</th>
+                            <td>@Model.CategoryDisplay</td>
+                        </tr>
+                        <tr>
+                            <th>Người phụ trách</th>
+                            <td>@Model.Owner</td>
+                        </tr>
+                        <tr>
+                            <th>Trạng thái</th>
+                            <td>
+                                <span class="badge @Model.StatusCssClass">@Model.StatusDisplay</span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5 class="mb-3">Dữ liệu sẽ bị mất</h5>
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Cập nhật tiến độ
+                            <span class="badge bg-primary rounded-pill">@(Model.ProgressUpdates?.Count ?? 0)</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            KPIs liên quan
+                            <span class="badge bg-primary rounded-pill">@(Model.LinkedKpis?.Count ?? 0)</span>
+                        </li>
+                    </ul>
+                    
+                    @if (Model.LinkedKpis != null && Model.LinkedKpis.Any())
+                    {
+                            <div class="alert alert-warning">
+                                <strong>Lưu ý:</strong> Các KPI liên kết sẽ không bị xóa, nhưng sẽ mất liên kết với CSF này.
+                            </div>
+                    }
+                </div>
+            </div>
+            
+            <hr />
+            
+            <form asp-action="DeleteConfirmed" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div class="text-right">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash mr-1"></i> Xác nhận xóa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 

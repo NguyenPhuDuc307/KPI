@@ -1,0 +1,76 @@
+@model KPISolution.Controllers.UserViewModel
+
+@{
+    ViewData["Title"] = "Xóa người dùng";
+}
+
+<div class="card shadow">
+    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận xóa người dùng</h4>
+        <a asp-action="Index" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h5 class="alert-heading mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Cảnh báo!</h5>
+            <p>Bạn có chắc chắn muốn xóa người dùng này không? Hành động này không thể hoàn tác.</p>
+            <p>Tất cả dữ liệu liên quan đến người dùng này có thể bị ảnh hưởng.</p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-person me-2"></i>Thông tin người dùng</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Họ và tên:</dt>
+                            <dd class="col-sm-8">@Model.FullName</dd>
+
+                            <dt class="col-sm-4">Email:</dt>
+                            <dd class="col-sm-8">@Model.Email</dd>
+
+                            <dt class="col-sm-4">Chức danh:</dt>
+                            <dd class="col-sm-8">@Model.JobTitle</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">Phòng ban:</dt>
+                            <dd class="col-sm-8">@Model.DepartmentName</dd>
+
+                            <dt class="col-sm-4">Vai trò:</dt>
+                            <dd class="col-sm-8">@Model.Roles</dd>
+
+                            <dt class="col-sm-4">Trạng thái:</dt>
+                            <dd class="col-sm-8">
+                                @if (Model.IsActive)
+                                {
+                                        <span class="badge bg-success">Hoạt động</span>
+                                }
+                                else
+                                {
+                                        <span class="badge bg-secondary">Tạm khóa</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="text-center">
+                <a asp-action="Index" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-x-circle me-1"></i>Hủy bỏ
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>Xác nhận xóa
+                </button>
+            </div>
+        </form>
+    </div>
+</div> 

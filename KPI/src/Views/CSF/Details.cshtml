@@ -1,0 +1,421 @@
+@model KPISolution.Models.ViewModels.CSF.CsfDetailsViewModel
+
+@{
+    ViewData["Title"] = $"Chi tiết CSF: {Model.Code}";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h1 class="mb-1">@Model.Name</h1>
+            <p class="text-muted">@Model.Code</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                    <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+                </a>
+                <a asp-action="UpdateProgress" asp-route-id="@Model.Id" class="btn btn-success">
+                    <i class="bi bi-graph-up me-1"></i> Cập nhật tiến độ
+                </a>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left column - Basic information -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="mb-0">Thông tin chi tiết</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Mã</dt>
+                                <dd class="col-sm-8">@Model.Code</dd>
+
+                                <dt class="col-sm-4">Danh mục</dt>
+                                <dd class="col-sm-8">@Model.CategoryDisplay</dd>
+
+                                <dt class="col-sm-4">Trạng thái</dt>
+                                <dd class="col-sm-8"><span
+                                        class="badge @Model.StatusCssClass">@Model.StatusDisplay</span></dd>
+
+                                <dt class="col-sm-4">Độ ưu tiên</dt>
+                                <dd class="col-sm-8">@Model.PriorityDisplay</dd>
+
+                                <dt class="col-sm-4">Mức độ rủi ro</dt>
+                                <dd class="col-sm-8"><span
+                                        class="badge @Model.RiskLevelCssClass">@Model.RiskLevelDisplay</span></dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Phòng ban</dt>
+                                <dd class="col-sm-8">@Model.DepartmentName</dd>
+
+                                <dt class="col-sm-4">Người phụ trách</dt>
+                                <dd class="col-sm-8">@Model.Owner</dd>
+
+                                <dt class="col-sm-4">Ngày bắt đầu</dt>
+                                <dd class="col-sm-8">@Model.StartDate.ToString("dd/MM/yyyy")</dd>
+
+                                <dt class="col-sm-4">Ngày hoàn thành</dt>
+                                <dd class="col-sm-8">
+                                    @Model.TargetDate.ToString("dd/MM/yyyy")
+                                    @if (Model.DaysRemaining > 0)
+                                    {
+                                        <span
+                                            class="ms-2 @(Model.DaysRemaining < 7 ? "text-danger" : (Model.DaysRemaining < 14 ? "text-warning" : "text-muted"))">(còn
+                                            @Model.DaysRemaining ngày)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="ms-2 text-danger">(quá hạn @Math.Abs(Model.DaysRemaining) ngày)</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-4">Mục tiêu</dt>
+                                <dd class="col-sm-8">@(Model.BusinessObjectiveName ?? "Không có")</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h5>Mô tả</h5>
+                            <p>@Model.Description</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <div class="row">
+                            <div class="col-12">
+                                <h5>Ghi chú</h5>
+                                <p>@Model.Notes</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- KPIs liên quan -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">KPIs liên quan</h5>
+                    <span class="badge bg-primary">@Model.LinkedKpis.Count()</span>
+                </div>
+                <div class="card-body">
+                    @if (Model.LinkedKpis != null && Model.LinkedKpis.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Mã</th>
+                                        <th>Tên</th>
+                                        <th>Loại</th>
+                                        <th>Mức ảnh hưởng</th>
+                                        <th>Trạng thái</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var kpi in Model.LinkedKpis)
+                                    {
+                                        <tr>
+                                            <td>@kpi.Code</td>
+                                            <td>@kpi.Name</td>
+                                            <td>@kpi.KpiType.ToString()</td>
+                                            <td>
+                                                @{
+                                                    var impactClass = kpi.ImpactLevel switch
+                                                    {
+                                                        ImpactLevel.High => "danger",
+                                                        ImpactLevel.Medium => "warning",
+                                                        ImpactLevel.Low => "info",
+                                                        _ => "secondary"
+                                                    };
+                                                }
+                                                <span class="badge bg-@impactClass">@kpi.ImpactLevel.ToString()</span>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var statusClass = kpi.Status switch
+                                                    {
+                                                        KpiStatus.Active => "success",
+                                                        KpiStatus.OnTarget => "success",
+                                                        KpiStatus.AtRisk => "warning",
+                                                        KpiStatus.BelowTarget => "danger",
+                                                        _ => "secondary"
+                                                    };
+                                                }
+                                                <span class="badge bg-@statusClass">@kpi.Status.ToString()</span>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("Details", kpi.KpiType.ToString(), new { id = kpi.KpiId })"
+                                                    class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i> Xem
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Chưa có KPI nào được liên kết với CSF này.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Lịch sử cập nhật -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Lịch sử cập nhật</h5>
+                    <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addUpdateModal">
+                        <i class="bi bi-plus-lg"></i> Cập nhật mới
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (Model.UpdateHistory != null && Model.UpdateHistory.Any())
+                    {
+                        <ul class="timeline">
+                            @foreach (var update in Model.UpdateHistory.OrderByDescending(u => u.UpdatedAt))
+                            {
+                                <li class="timeline-item mb-4">
+                                    <div class="timeline-marker bg-primary"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">@update.UpdatedBy <small
+                                                class="text-muted">@update.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</small></h6>
+                                        <p class="mb-0">@update.Notes</p>
+                                        @if (update.ProgressChange.HasValue)
+                                        {
+                                            var progressChangeClass = update.ProgressChange.Value > 0 ? "text-success" :
+                                            "text-danger";
+                                            <p class="mb-0 @progressChangeClass">
+                                                <i
+                                                    class="bi @(update.ProgressChange.Value > 0 ? "bi-arrow-up" : "bi-arrow-down")"></i>
+                                                Tiến độ @(update.ProgressChange.Value > 0 ? "tăng" : "giảm")
+                                                @Math.Abs(update.ProgressChange.Value)%
+                                            </p>
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Chưa có cập nhật tiến độ nào cho CSF này.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Modal cập nhật tiến độ -->
+            <div class="modal fade" id="addUpdateModal" tabindex="-1" aria-labelledby="updateModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="updateModalLabel">Cập nhật tiến độ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form asp-action="AddUpdate" asp-controller="CSF" method="post">
+                            <div class="modal-body">
+                                <input type="hidden" name="CsfId" value="@Model.Id" />
+
+                                <div class="mb-3">
+                                    <label class="form-label">Tiến độ hiện tại</label>
+                                    <input type="range" class="form-range" min="0" max="100" step="5"
+                                        value="@Model.ProgressPercentage" id="progressRange" name="ProgressPercentage">
+                                    <div class="text-center" id="progressValue">@Model.ProgressPercentage%</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Ghi chú cập nhật</label>
+                                    <textarea class="form-control" name="Notes" rows="3" required></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu cập nhật</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Button để cập nhật tiến độ nhanh -->
+            <div class="d-flex justify-content-end mb-3">
+                <button type="button" class="btn btn-primary" id="quickUpdateBtn">
+                    <i class="bi bi-lightning-fill me-1"></i> Cập nhật tiến độ nhanh
+                </button>
+            </div>
+        </div>
+
+        <!-- Right column - Progress and KPIs -->
+        <div class="col-md-4">
+            <!-- Progress widget -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="mb-0">Tiến độ hiện tại</h2>
+                </div>
+                <div class="card-body">
+                    <div class="progress-container mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Tiến độ</span>
+                            <span class="fw-bold">@Model.ProgressPercentage%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar @Model.ProgressCssClass" role="progressbar"
+                                style="width: @Model.ProgressPercentage%" aria-valuenow="@Model.ProgressPercentage"
+                                aria-valuemin="0" aria-valuemax="100">
+                                @Model.ProgressPercentage%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="progress-container mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Thời gian đã qua</span>
+                            <span class="fw-bold">@Model.TimeElapsedPercentage%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar bg-info" role="progressbar"
+                                style="width: @Model.TimeElapsedPercentage%"
+                                aria-valuenow="@Model.TimeElapsedPercentage" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert @(Model.IsOnTrack ? "alert-success" : "alert-warning")">
+                        @if (Model.IsOnTrack)
+                        {
+                            <i class="bi bi-check-circle me-2"></i>
+                            <span>CSF đang tiến triển đúng tiến độ.</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <span>CSF đang chậm tiến độ so với kế hoạch.</span>
+                        }
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <a asp-action="UpdateProgress" asp-route-id="@Model.Id" class="btn btn-primary">
+                            <i class="bi bi-arrow-up-circle me-1"></i> Cập nhật tiến độ
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linked KPIs -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">KPIs liên quan</h2>
+                    <span class="badge bg-primary rounded-pill">@(Model.LinkedKpis?.Count ?? 0)</span>
+                </div>
+                <div class="card-body">
+                    @if (Model.LinkedKpis?.Any() == true)
+                    {
+                        <div class="list-group">
+                            @foreach (var kpi in Model.LinkedKpis)
+                            {
+                                <a href="@Url.Action("Details", "KPI", new { id = kpi.KpiId })"
+                                    class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">@kpi.Code</h5>
+                                        <span class="badge @GetStatusCssClass("Unknown")">Status</span>
+                                    </div>
+                                    <p class="mb-1">@kpi.Name</p>
+                                    <small class="text-muted">
+                                        @kpi.RelationshipStrengthDisplay -
+                                        @if (kpi.Weight > 0)
+                                        {
+                                            <span>Trọng số: @kpi.Weight%</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Không có trọng số</span>
+                                        }
+                                    </small>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            Chưa có KPI nào được liên kết với CSF này.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
+
+        $(document).ready(function () {
+            // Khởi tạo nút cập nhật tiến độ nhanh
+            $('#quickUpdateBtn').click(function () {
+                // Lấy thông tin CSF hiện tại
+                const csfId = '@Model.Id';
+                const currentProgress = @Model.ProgressPercentage;
+
+                // Thiết lập modal
+                setupQuickProgressModal(csfId, currentProgress);
+
+                // Hiển thị modal
+                const modal = new bootstrap.Modal(document.getElementById('quickProgressUpdateModal'));
+                modal.show();
+            });
+        });
+    </script>
+}
+
+@functions {
+    public string GetStatusCssClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "on track" or "đang tiến triển" => "bg-success",
+            "at risk" or "có rủi ro" => "bg-warning",
+            "delayed" or "chậm tiến độ" => "bg-danger",
+            "completed" or "hoàn thành" => "bg-info",
+            "not started" or "chưa bắt đầu" => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    public string GetProgressCssClass(int percentage)
+    {
+        return percentage switch
+        {
+            >= 75 => "bg-success",
+            >= 50 => "bg-info",
+            >= 25 => "bg-warning",
+            _ => "bg-danger"
+        };
+    }
+}

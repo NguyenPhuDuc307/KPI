@@ -1,0 +1,79 @@
+@model KPISolution.Models.ViewModels.CSF.CsfProgressUpdateViewModel
+
+<div class="modal fade" id="progressUpdateModal" tabindex="-1" aria-labelledby="progressUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="progressUpdateModalLabel">Cập nhật tiến độ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="progressUpdateForm" asp-action="UpdateProgress" asp-controller="CSF" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="modal-csf-id" name="CSFId" value="" />
+                    <input type="hidden" id="modal-csf-code" name="Code" value="" />
+                    <input type="hidden" id="modal-csf-name" name="Name" value="" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tiến độ hiện tại</label>
+                        <input type="range" class="form-range" id="modal-progress-range" name="ProgressPercentage" min="0" max="100" step="5" value="0">
+                        <div class="text-center fs-4 fw-bold" id="modal-progress-value">0%</div>
+                        <div class="progress mt-2" style="height: 20px;">
+                            <div class="progress-bar" id="modal-progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú cập nhật</label>
+                        <textarea class="form-control" id="modal-notes" name="Achievements" rows="3" placeholder="Mô tả những gì đã hoàn thành được từ lần cập nhật trước" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Lắng nghe sự kiện khi slider thay đổi giá trị
+        document.getElementById('modal-progress-range').addEventListener('input', function() {
+            let value = this.value;
+            
+            // Cập nhật giá trị hiển thị
+            document.getElementById('modal-progress-value').textContent = value + '%';
+            
+            // Cập nhật thanh tiến trình
+            let progressBar = document.getElementById('modal-progress-bar');
+            progressBar.style.width = value + '%';
+            progressBar.setAttribute('aria-valuenow', value);
+            progressBar.textContent = value + '%';
+            
+            // Thay đổi màu sắc dựa trên tiến độ
+            if (value < 25) {
+                progressBar.className = 'progress-bar bg-danger';
+            } else if (value < 50) {
+                progressBar.className = 'progress-bar bg-warning';
+            } else if (value < 75) {
+                progressBar.className = 'progress-bar bg-info';
+            } else {
+                progressBar.className = 'progress-bar bg-success';
+            }
+        });
+    });
+    
+    // Hàm thiết lập giá trị ban đầu cho modal
+    function setupProgressModal(csfId, csfCode, csfName, currentProgress) {
+        document.getElementById('modal-csf-id').value = csfId;
+        document.getElementById('modal-csf-code').value = csfCode;
+        document.getElementById('modal-csf-name').value = csfName;
+        
+        let rangeInput = document.getElementById('modal-progress-range');
+        rangeInput.value = currentProgress;
+        
+        // Kích hoạt sự kiện input để cập nhật giao diện
+        rangeInput.dispatchEvent(new Event('input'));
+    }
+</script> 

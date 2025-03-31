@@ -1,0 +1,265 @@
+@model KPISolution.Models.ViewModels.Dashboard.CustomDashboardViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa bảng điều khiển";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8 offset-md-2">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Chỉnh sửa bảng điều khiển</h1>
+                <a asp-action="Custom" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Quay lại
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Tiêu đề bảng điều khiển</label>
+                            <input asp-for="Title" class="form-control" required />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsDefault" class="form-check-input" />
+                                <label asp-for="IsDefault" class="form-check-label">Đặt làm bảng điều khiển mặc
+                                    định</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsPublic" class="form-check-input" />
+                                <label asp-for="IsPublic" class="form-check-label">Công khai với mọi người</label>
+                                <div class="form-text">Bảng điều khiển công khai có thể xem bởi tất cả người dùng trong
+                                    tổ chức.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Chia sẻ bảng điều khiển</label>
+                            <div class="card border">
+                                <div class="card-body p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="shareLink" readonly
+                                                    value="@Url.Action("ViewShared", "Dashboard", new { id = Model.Id }, Context.Request.Scheme)" />
+                                                <button class="btn btn-outline-secondary" type="button"
+                                                    onclick="copyShareLink()">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">Sử dụng liên kết này để chia sẻ bảng điều khiển
+                                                với người khác</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Quyền truy cập cụ thể</label>
+                            <div class="card border">
+                                <div class="card-body p-3">
+                                    <div class="form-floating mb-3">
+                                        <select class="form-select" id="userSelect">
+                                            <option value="">-- Chọn người dùng để chia sẻ --</option>
+                                            @foreach (var user in Model.AvailableUsers)
+                                            {
+                                                <option value="@user">@user</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm" id="accessTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Người dùng</th>
+                                                    <th>Quyền</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @if (Model.SharedUsers != null && Model.SharedUsers.Any())
+                                                {
+                                                    @foreach (var user in Model.SharedUsers)
+                                                    {
+                                                        <tr>
+                                                            <td>@user</td>
+                                                            <td>
+                                                                <select class="form-select form-select-sm"
+                                                                    name="UserPermissions[@user]">
+                                                                    <option value="View">Xem</option>
+                                                                    <option value="Edit">Chỉnh sửa</option>
+                                                                </select>
+                                                            </td>
+                                                            <td class="text-end">
+                                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                    onclick="removeUser(this)">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <tr id="noUsersRow">
+                                                        <td colspan="3" class="text-center py-3 text-muted">
+                                                            Chưa có người dùng nào được chia sẻ
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="addUserBtn">
+                                        <i class="bi bi-plus-circle me-1"></i>Thêm người dùng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mt-4 mb-3">Quản lý bảng điều khiển</h5>
+                        <div class="d-flex justify-content-between mb-3">
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteModal">
+                                <i class="bi bi-trash me-1"></i>Xóa bảng điều khiển
+                            </button>
+
+                            <div>
+                                <a asp-action="Custom" asp-route-id="@Model.Id"
+                                    class="btn btn-outline-secondary me-2">Hủy</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i>Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa bảng điều khiển <strong>"@Model.Title"</strong>?</p>
+                <p class="text-danger">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-danger">Xóa bảng điều khiển</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Add user to share list
+            document.getElementById('addUserBtn').addEventListener('click', function () {
+                const userSelect = document.getElementById('userSelect');
+                const selectedUser = userSelect.value;
+                const selectedUserText = userSelect.options[userSelect.selectedIndex].text;
+
+                if (selectedUser) {
+                    // Remove "no users" row if it exists
+                    const noUsersRow = document.getElementById('noUsersRow');
+                    if (noUsersRow) {
+                        noUsersRow.remove();
+                    }
+
+                    // Add new row
+                    const table = document.getElementById('accessTable').getElementsByTagName('tbody')[0];
+                    const newRow = table.insertRow();
+
+                    // Insert cells
+                    const cell1 = newRow.insertCell(0);
+                    const cell2 = newRow.insertCell(1);
+                    const cell3 = newRow.insertCell(2);
+
+                    // Add content to cells
+                    cell1.innerHTML = selectedUserText;
+                    cell2.innerHTML = `
+                                    <select class="form-select form-select-sm" name="UserPermissions[${selectedUser}]">
+                                        <option value="View">Xem</option>
+                                        <option value="Edit">Chỉnh sửa</option>
+                                    </select>
+                                `;
+                    cell3.className = 'text-end';
+                    cell3.innerHTML = `
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeUser(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                `;
+
+                    // Reset select
+                    userSelect.value = '';
+                }
+            });
+        });
+
+        // Remove user from share list
+        function removeUser(button) {
+            const row = button.closest('tr');
+            row.remove();
+
+            // Check if table is empty
+            const tbody = document.querySelector('#accessTable tbody');
+            if (tbody.children.length === 0) {
+                const newRow = tbody.insertRow();
+                newRow.id = 'noUsersRow';
+                const cell = newRow.insertCell(0);
+                cell.colSpan = 3;
+                cell.className = 'text-center py-3 text-muted';
+                cell.innerText = 'Chưa có người dùng nào được chia sẻ';
+            }
+        }
+
+        // Copy share link to clipboard
+        function copyShareLink() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            document.execCommand('copy');
+
+            // Show copy feedback
+            const button = shareLink.nextElementSibling;
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-check"></i>';
+            button.classList.add('btn-success');
+            button.classList.remove('btn-outline-secondary');
+
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-secondary');
+            }, 2000);
+        }
+    </script>
+}

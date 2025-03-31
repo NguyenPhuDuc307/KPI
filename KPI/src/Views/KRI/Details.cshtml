@@ -1,0 +1,360 @@
+@model KPISolution.Models.ViewModels.KPI.KpiDetailsViewModel
+@using KPISolution.Models.Enums
+@using KPISolution.Extensions
+@{
+    ViewData["Title"] = $"KRI: {Model.Code}";
+    
+    // Prepare chart data
+    var chartLabels = new List<string>();
+    var chartValues = new List<decimal>();
+    var chartTargetValue = "null";
+    
+    if (Model.HistoricalValues != null && Model.HistoricalValues.Any())
+    {
+        foreach (var item in Model.HistoricalValues.OrderByDescending(h => h.MeasurementDate))
+        {
+            chartLabels.Add($"'{item.MeasurementDate.ToString("MM/yyyy")}'");
+            chartValues.Add(item.ActualValue);
+        }
+    }
+    
+    if (Model.TargetValue.HasValue)
+    {
+        chartTargetValue = Model.TargetValue.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+    
+    var chartLabelsJson = string.Join(",", chartLabels);
+    var chartValuesJson = string.Join(",", chartValues);
+}
+
+<div class="container-fluid">
+    <div class="page-header mt-3 mb-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a asp-controller="Kri" asp-action="Index">KRIs</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">@Model.Code</li>
+                    </ol>
+                </nav>
+                <h2>@Model.Name</h2>
+                <p class="text-muted">@Model.Description</p>
+            </div>
+            
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a asp-controller="Kri" asp-action="AddMeasurement" asp-route-id="@Model.Id" class="btn btn-outline-success">
+                        <i class="bi bi-plus-circle"></i> Add Measurement
+                    </a>
+                    <a asp-controller="Kri" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <a asp-controller="Kri" asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- KRI Information Card -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">KRI Information</h5>
+                    <span class="badge bg-primary">Key Result Indicator</span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th width="150">Code:</th>
+                                        <td><span class="badge bg-secondary">@Model.Code</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Department:</th>
+                                        <td>@Model.Department</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Strategic Objective:</th>
+                                        <td>@Model.StrategicObjective</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Executive Owner:</th>
+                                        <td>@Model.ExecutiveOwner</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Unit:</th>
+                                        <td>@Model.MeasurementUnit</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th width="150">Measurement Frequency:</th>
+                                        <td>@Model.MeasurementFrequency</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Target Value:</th>
+                                        <td>@Model.TargetValue @Model.MeasurementUnit</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Measurement Direction:</th>
+                                        <td>
+                                            @if (Model.Direction == MeasurementDirection.HigherIsBetter)
+                                            {
+                                                <span class="text-success"><i class="bi bi-arrow-up"></i> Higher is better</span>
+                                            }
+                                            else if (Model.Direction == MeasurementDirection.LowerIsBetter)
+                                            {
+                                                <span class="text-danger"><i class="bi bi-arrow-down"></i> Lower is better</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@Model.DirectionString</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status:</th>
+                                        <td>
+                                            @{
+                                                var statusClass = Model.Status switch
+                                                {
+                                                    KpiStatus.Active => "bg-success",
+                                                    KpiStatus.Draft => "bg-secondary",
+                                                    KpiStatus.UnderReview => "bg-info text-dark",
+                                                    KpiStatus.Deprecated => "bg-warning text-dark",
+                                                    KpiStatus.Archived => "bg-dark",
+                                                    _ => "bg-secondary"
+                                                };
+                                            }
+                                            <span class="badge @statusClass">@Model.Status.ToString().SplitCamelCase()</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Effective Date:</th>
+                                        <td>@Model.EffectiveDate.ToString("MM/dd/yyyy")</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Calculation Method:</h6>
+                        <p class="mb-0">@(string.IsNullOrEmpty(Model.CalculationMethod) ? "No calculation method specified" : Model.CalculationMethod)</p>
+                    </div>
+                    
+                    <div>
+                        <h6 class="fw-bold">Data Source:</h6>
+                        <p class="mb-0">@(string.IsNullOrEmpty(Model.DataSource) ? "No data source specified" : Model.DataSource)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Historical Data Chart -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Historical Performance</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.HistoricalValues != null && Model.HistoricalValues.Any())
+                    {
+                        <div style="height: 300px;">
+                            <canvas id="historyChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center p-5">
+                            <i class="bi bi-graph-up fs-1 text-muted"></i>
+                            <p class="mt-3">No historical data available</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <!-- Current Status & Related Items -->
+        <div class="col-lg-4">
+            <!-- Current Status Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Current Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="display-3 fw-bold">
+                            @(Model.CurrentValue.HasValue ? Model.CurrentValue.Value.ToString("0.##") : "N/A")
+                            @if (!string.IsNullOrEmpty(Model.MeasurementUnit))
+                            {
+                                        <span class="fs-6 text-muted">@Model.MeasurementUnit</span>
+                            }
+                        </div>
+                        
+                        @if (Model.CurrentValue.HasValue && Model.TargetValue.HasValue)
+                        {
+                                    var progressPercentage = Math.Min(100, Math.Max(0, (Model.CurrentValue.Value / Model.TargetValue.Value) * 100));
+                                    var progressColorClass = progressPercentage switch
+                                    {
+                                                >= 90 => "bg-success",
+                                                >= 70 => "bg-info",
+                                                >= 40 => "bg-warning",
+                                                _ => "bg-danger"
+                                    };
+                            
+                                    <div class="mt-3 mb-2">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar @progressColorClass" role="progressbar" style="width: @progressPercentage%"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <small class="text-muted">0</small>
+                                            <small class="text-muted">@Model.TargetValue @Model.MeasurementUnit</small>
+                                        </div>
+                                    </div>
+                            
+                                    <div class="my-3">
+                                        @if (Model.Direction == MeasurementDirection.HigherIsBetter && Model.CurrentValue >= Model.TargetValue)
+                                        {
+                                                    <div class="alert alert-success">
+                                                        <i class="bi bi-check-circle me-2"></i> Target reached
+                                                    </div>
+                                        }
+                                        else if (Model.Direction == MeasurementDirection.LowerIsBetter && Model.CurrentValue <= Model.TargetValue)
+                                        {
+                                                    <div class="alert alert-success">
+                                                        <i class="bi bi-check-circle me-2"></i> Target reached
+                                                    </div>
+                                        }
+                                        else
+                                        {
+                                                    <div class="alert alert-warning">
+                                                        <i class="bi bi-exclamation-triangle me-2"></i> Target not yet reached
+                                                    </div>
+                                        }
+                                    </div>
+                        }
+                        else
+                        {
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i> No current value available
+                                    </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Linked CSFs Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Linked Critical Success Factors</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.LinkedCsfs != null && Model.LinkedCsfs.Any())
+                    {
+                                <div class="list-group">
+                                    @foreach (var csf in Model.LinkedCsfs)
+                                    {
+                                                <a href="#" class="list-group-item list-group-item-action">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1">@csf.Code - @csf.Name</h6>
+                                                        <small>
+                                                            @{
+                                                                        var csfStatusClass = csf.Status switch
+                                                                        {
+                                                                                    CSFStatus.InProgress => "bg-success",
+                                                                                    CSFStatus.AtRisk => "bg-warning text-dark",
+                                                                                    CSFStatus.Delayed => "bg-danger",
+                                                                                    CSFStatus.Completed => "bg-info",
+                                                                                    CSFStatus.NotStarted => "bg-secondary",
+                                                                                    CSFStatus.Cancelled => "bg-dark",
+                                                                                    _ => "bg-secondary"
+                                                                        };
+                                                            }
+                                                            <span class="badge @csfStatusClass">@csf.Status.ToString().SplitCamelCase()</span>
+                                                        </small>
+                                                    </div>
+                                                    <div class="progress mt-2" style="height: 5px;">
+                                                        <div class="progress-bar" role="progressbar" style="width: @csf.ProgressPercentage%" aria-valuenow="@csf.ProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                </a>
+                                    }
+                                </div>
+                    }
+                    else
+                    {
+                                <div class="text-center py-5">
+                                    <i class="bi bi-link-45deg fs-1 text-muted"></i>
+                                    <p class="mt-3">No CSFs linked to this KRI</p>
+                                </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.HistoricalValues != null && Model.HistoricalValues.Any())
+    {
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                initHistoryChart();
+                            });
+            
+                            function initHistoryChart() {
+                                const ctx = document.getElementById('historyChart').getContext('2d');
+                
+                                const chartData = {
+                                    labels: [@Html.Raw(chartLabelsJson)],
+                                    datasets: [
+                                        {
+                                            label: 'Actual Value',
+                                            data: [@chartValuesJson],
+                                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                            borderColor: 'rgba(54, 162, 235, 1)',
+                                            borderWidth: 2,
+                                            tension: 0.2
+                                        },
+                                        @if (Model.TargetValue.HasValue)
+                                        {
+                                                    <text>
+                                                    {
+                                                        label: 'Target',
+                                                        data: Array(@chartLabels.Count).fill(@chartTargetValue),
+                                                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                                        borderColor: 'rgba(255, 99, 132, 1)',
+                                                        borderWidth: 2,
+                                                        borderDash: [5, 5],
+                                                        pointRadius: 0
+                                                    }
+                                                    </text>
+                                        }
+                                    ]
+                                };
+                
+                                new Chart(ctx, {
+                                    type: 'line',
+                                    data: chartData,
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        </script>
+    }
+}

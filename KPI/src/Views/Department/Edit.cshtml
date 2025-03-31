@@ -1,0 +1,144 @@
+@model KPISolution.Models.ViewModels.Department.DepartmentViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa phòng ban";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4 mb-0"><i class="bi bi-building me-2"></i>Chỉnh sửa phòng ban</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Department" asp-action="Index">Quản lý phòng ban</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Chỉnh sửa</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <i class="bi bi-pencil me-1"></i> Thông tin phòng ban
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label required"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Code" class="form-label required"></label>
+                            <input asp-for="Code" class="form-control" />
+                            <span asp-validation-for="Code" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="ParentDepartmentId" class="form-label"></label>
+                            <select asp-for="ParentDepartmentId" asp-items="ViewBag.ParentDepartments" class="form-select">
+                                <option value="">-- Không có phòng ban cha --</option>
+                            </select>
+                            <span asp-validation-for="ParentDepartmentId" class="text-danger"></span>
+                            <small class="text-muted">Chọn phòng ban cha nếu đây là phòng ban con</small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="ManagerId" class="form-label"></label>
+                            <select asp-for="ManagerId" asp-items="ViewBag.Users" class="form-select">
+                                <option value="">-- Chọn quản lý --</option>
+                            </select>
+                            <span asp-validation-for="ManagerId" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <div class="form-check">
+                                <input type="radio" id="statusActive" name="Status" value="Active" 
+                                       @(Model.Status == "Active" ? "checked" : "") class="form-check-input" />
+                                <label for="statusActive" class="form-check-label">Hoạt động</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="statusInactive" name="Status" value="Inactive" 
+                                       @(Model.Status == "Inactive" ? "checked" : "") class="form-check-input" />
+                                <label for="statusInactive" class="form-check-label">Không hoạt động</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="Email" class="form-label">Email phòng ban</label>
+                            <input id="Email" name="Email" class="form-control" type="email" value="@ViewBag.Email" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="PhoneNumber" class="form-label">Số điện thoại</label>
+                            <input id="PhoneNumber" name="PhoneNumber" class="form-control" type="tel" value="@ViewBag.PhoneNumber" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="Location" class="form-label">Địa điểm</label>
+                            <input id="Location" name="Location" class="form-control" value="@ViewBag.Location" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                <div>
+                                    <strong>Thông tin cập nhật:</strong> Phòng ban này có @Model.EmployeeCount nhân viên và @Model.KpiCount KPI.<br />
+                                    Được tạo vào: @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")<br />
+                                    Cập nhật lần cuối: @(Model.LastUpdated.HasValue ? Model.LastUpdated.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa cập nhật")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-top pt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Lưu thay đổi
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Hủy bỏ
+                    </a>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
+                        <i class="bi bi-eye me-1"></i> Xem chi tiết
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    
+        <script>
+            $(document).ready(function() {
+                // Initialize select2
+                $('.form-select').select2({
+                    theme: 'bootstrap-5'
+                });
+            });
+        </script>
+}

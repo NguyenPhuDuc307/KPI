@@ -1,0 +1,136 @@
+@model KPISolution.Models.ViewModels.Department.DepartmentViewModel
+
+@{
+    ViewData["Title"] = "Tạo phòng ban mới";
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4 mb-0"><i class="bi bi-building me-2"></i>Tạo phòng ban mới</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Department" asp-action="Index">Quản lý phòng ban</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Tạo mới</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <i class="bi bi-plus-circle me-1"></i> Thông tin phòng ban
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label required"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Code" class="form-label required"></label>
+                            <input asp-for="Code" class="form-control" />
+                            <span asp-validation-for="Code" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="ParentDepartmentId" class="form-label"></label>
+                            <select asp-for="ParentDepartmentId" asp-items="ViewBag.ParentDepartments" class="form-select">
+                                <option value="">-- Không có phòng ban cha --</option>
+                            </select>
+                            <span asp-validation-for="ParentDepartmentId" class="text-danger"></span>
+                            <small class="text-muted">Chọn phòng ban cha nếu đây là phòng ban con</small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="ManagerId" class="form-label"></label>
+                            <select asp-for="ManagerId" asp-items="ViewBag.Users" class="form-select">
+                                <option value="">-- Chọn quản lý --</option>
+                            </select>
+                            <span asp-validation-for="ManagerId" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <div class="form-check">
+                                <input type="radio" id="statusActive" name="Status" value="Active" checked class="form-check-input" />
+                                <label for="statusActive" class="form-check-label">Hoạt động</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" id="statusInactive" name="Status" value="Inactive" class="form-check-input" />
+                                <label for="statusInactive" class="form-check-label">Không hoạt động</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="Email" class="form-label">Email phòng ban</label>
+                            <input id="Email" name="Email" class="form-control" type="email" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="PhoneNumber" class="form-label">Số điện thoại</label>
+                            <input id="PhoneNumber" name="PhoneNumber" class="form-control" type="tel" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="Location" class="form-label">Địa điểm</label>
+                            <input id="Location" name="Location" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-top pt-3">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i> Tạo phòng ban
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Hủy bỏ
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    
+        <script>
+            $(document).ready(function() {
+                // Initialize select2
+                $('.form-select').select2({
+                    theme: 'bootstrap-5'
+                });
+            
+                // Auto generate code from name
+                $('#Name').on('change', function() {
+                    if ($('#Code').val() === '') {
+                        var deptName = $(this).val();
+                        var deptCode = deptName
+                            .replace(/[^a-zA-Z0-9]/g, '') // Remove special characters
+                            .toUpperCase()                // Convert to uppercase
+                            .substring(0, 8);             // Take first 8 characters
+                    
+                        $('#Code').val(deptCode);
+                    }
+                });
+            });
+        </script>
+}

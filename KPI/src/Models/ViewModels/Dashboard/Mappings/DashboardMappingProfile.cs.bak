@@ -1,0 +1,73 @@
+using AutoMapper;
+using KPISolution.Models.Entities.CSF;
+using KPISolution.Models.Entities.KPI;
+using KPISolution.Models.ViewModels.Dashboard;
+using System;
+using System.Collections.Generic;
+
+namespace KPISolution.Models.ViewModels.Dashboard.Mappings
+{
+    /// <summary>
+    /// AutoMapper profile for mapping entities to dashboard view models
+    /// </summary>
+    public class DashboardMappingProfile : Profile
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DashboardMappingProfile"/> class.
+        /// </summary>
+        public DashboardMappingProfile()
+        {
+            // CriticalSuccessFactor -> CsfSummaryViewModel
+            CreateMap<CriticalSuccessFactor, CsfSummaryViewModel>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.Code, opt => opt.MapFrom(src => src.Code))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
+                .ForMember(dest => dest.StatusDisplay, opt => opt.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))
+                .ForMember(dest => dest.PriorityDisplay, opt => opt.MapFrom(src => src.Priority.ToString()))
+                .ForMember(dest => dest.ProgressPercentage, opt => opt.MapFrom(src => src.ProgressPercentage))
+                .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : null))
+                .ForMember(dest => dest.RiskLevel, opt => opt.MapFrom(src => src.RiskLevel))
+                .ForMember(dest => dest.RiskLevelDisplay, opt => opt.MapFrom(src => src.RiskLevel.ToString()))
+                .ForMember(dest => dest.TargetDate, opt => opt.MapFrom(src => src.TargetDate))
+                .ForMember(dest => dest.DaysRemaining, opt => opt.Ignore()) // Calculate this separately
+                .ForMember(dest => dest.IsOnTrack, opt => opt.Ignore()) // Calculate this separately
+                .ForMember(dest => dest.StatusCssClass, opt => opt.Ignore()) // Set this separately
+                .ForMember(dest => dest.RiskCssClass, opt => opt.Ignore()) // Set this separately
+                .ForMember(dest => dest.ProgressCssClass, opt => opt.Ignore()); // Set this separately
+
+            // KPI Base -> KpiSummaryViewModel
+            CreateMap<KpiBase, KpiSummaryViewModel>()
+                .ForMember(dest => dest.CurrentValue, opt => opt.Ignore()) // Set this from KPI values
+                .ForMember(dest => dest.PercentageOfTarget, opt => opt.Ignore()) // Calculate this separately
+                .ForMember(dest => dest.Status, opt => opt.Ignore()) // Set this separately
+                .ForMember(dest => dest.StatusDisplay, opt => opt.Ignore()) // Set this separately
+                .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : null))
+                .ForMember(dest => dest.Trend, opt => opt.Ignore()) // Calculate this separately
+                .ForMember(dest => dest.LastUpdated, opt => opt.Ignore()) // Set this from KPI values history
+                .ForMember(dest => dest.Type, opt => opt.Ignore()) // Set this based on derived type
+                .ForMember(dest => dest.TypeDisplay, opt => opt.Ignore()) // Set this based on derived type
+                .ForMember(dest => dest.StatusCssClass, opt => opt.Ignore()) // Set this separately
+                .ForMember(dest => dest.TrendCssClass, opt => opt.Ignore()); // Set this separately
+
+            // KRI -> KpiSummaryViewModel
+            CreateMap<KRI, KpiSummaryViewModel>()
+                .IncludeBase<KpiBase, KpiSummaryViewModel>()
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => Enums.KpiType.KRI))
+                .ForMember(dest => dest.TypeDisplay, opt => opt.MapFrom(src => "KRI"));
+
+            // RI -> KpiSummaryViewModel
+            CreateMap<RI, KpiSummaryViewModel>()
+                .IncludeBase<KpiBase, KpiSummaryViewModel>()
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => Enums.KpiType.RI))
+                .ForMember(dest => dest.TypeDisplay, opt => opt.MapFrom(src => "RI"));
+
+            // PI -> KpiSummaryViewModel
+            CreateMap<PI, KpiSummaryViewModel>()
+                .IncludeBase<KpiBase, KpiSummaryViewModel>()
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => Enums.KpiType.PI))
+                .ForMember(dest => dest.TypeDisplay, opt => opt.MapFrom(src => "PI"));
+        }
+    }
+}
