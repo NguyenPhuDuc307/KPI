@@ -22,6 +22,12 @@ namespace KPISolution.Models.ViewModels.KPI
         public KpiType? KpiType { get; set; }
 
         /// <summary>
+        /// Whether the indicator is a key indicator (for filtering KPIs vs PIs, or KRIs vs RIs)
+        /// </summary>
+        [Display(Name = "Is Key Indicator")]
+        public bool? IsKey { get; set; }
+
+        /// <summary>
         /// Category of KPI
         /// </summary>
         [Display(Name = "Category")]

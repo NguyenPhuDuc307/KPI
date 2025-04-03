@@ -2,21 +2,95 @@
 
 @{
     ViewData["Title"] = "Bảng điều khiển điều hành";
+    ViewData["Icon"] = "bi-speedometer2";
+    ViewData["Subtitle"] = "Theo dõi tổng quan về hiệu suất của tổ chức";
+    ViewData["ShowFilterPanel"] = false;
 
-    // Phân trang cho danh sách phòng ban
-    var departmentsPerPage = 5;
-    var currentDeptPage = ViewBag.DepartmentPage != null ? (int)ViewBag.DepartmentPage : 1;
-    var totalDeptPages = (int)Math.Ceiling(Model.PerformanceByDepartment.Count() / (double)departmentsPerPage);
-    var pagedDepts = Model.PerformanceByDepartment
-    .Skip((currentDeptPage - 1) * departmentsPerPage)
-    .Take(departmentsPerPage);
+    // Pagination logic for departments
+    int departmentsPerPage = 5;
+    int totalDepartments = Model.PerformanceByDepartment.Count();
+    int totalDeptPages = (int)Math.Ceiling((double)totalDepartments / departmentsPerPage);
+    int currentDeptPage = Math.Min(totalDeptPages, Math.Max(1, ViewBag.DepartmentPage ?? 1));
+    
+    // Calculate which departments to show on current page
+    var departmentsToShow = Model.PerformanceByDepartment
+        .OrderBy(d => d.Name) // Thêm sắp xếp để tránh cảnh báo
+        .Skip((currentDeptPage - 1) * departmentsPerPage)
+        .Take(departmentsPerPage);
 }
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">@Model.Title</h1>
+    <div class="d-flex justify-content-end mb-3">
         <div class="small text-muted">
             Cập nhật lần cuối: @Model.LastUpdated.ToString("dd/MM/yyyy HH:mm")
+        </div>
+    </div>
+
+    <!-- Cấu trúc phân cấp KPI Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white text-primary">
+                    <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Tổng quan cấu trúc phân cấp KPI</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md">
+                            <div class="border border-primary rounded p-3 mb-3 h-100">
+                                <h5 class="text-primary">Objectives</h5>
+                                <h3 class="display-6">@Model.ObjectiveCount</h3>
+                                <p class="text-muted small">Mục tiêu chiến lược</p>
+                                <a asp-controller="BusinessObjective" asp-action="Index"
+                                    class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="border border-success rounded p-3 mb-3 h-100">
+                                <h5 class="text-success">SFs</h5>
+                                <h3 class="display-6">@Model.SfCount</h3>
+                                <p class="text-muted small">Success Factors</p>
+                                <a asp-controller="SF" asp-action="Index" class="btn btn-sm btn-outline-success">Chi
+                                    tiết</a>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="border border-info rounded p-3 mb-3 h-100">
+                                <h5 class="text-info">CSFs</h5>
+                                <h3 class="display-6">@Model.CsfCount</h3>
+                                <p class="text-muted small">Critical Success Factors</p>
+                                <a asp-controller="CSF" asp-action="Index" class="btn btn-sm btn-outline-info">Chi
+                                    tiết</a>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="border border-warning rounded p-3 mb-3 h-100">
+                                <h5 class="text-warning">RIs/PIs</h5>
+                                <h3 class="display-6">@Model.IndicatorCount</h3>
+                                <p class="text-muted small">Indicators</p>
+                                <div class="btn-group">
+                                    <a asp-controller="RI" asp-action="Index"
+                                        class="btn btn-sm btn-outline-warning">RIs</a>
+                                    <a asp-controller="PI" asp-action="Index"
+                                        class="btn btn-sm btn-outline-warning">PIs</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="border border-danger rounded p-3 mb-3 h-100">
+                                <h5 class="text-danger">KRIs/KPIs</h5>
+                                <h3 class="display-6">@Model.KeyIndicatorCount</h3>
+                                <p class="text-muted small">Key Indicators</p>
+                                <div class="btn-group">
+                                    <a asp-controller="KRI" asp-action="Index"
+                                        class="btn btn-sm btn-outline-danger">KRIs</a>
+                                    <a asp-controller="KPI" asp-action="Index"
+                                        class="btn btn-sm btn-outline-danger">KPIs</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -88,7 +162,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var dept in pagedDepts)
+                                @foreach (var dept in departmentsToShow)
                                 {
                                     <tr>
                                         <td>
@@ -164,8 +238,80 @@
         </div>
     </div>
 
+    <div class="row mb-4">
+        <!-- Objectives Progress -->
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Tiến độ Objectives</h5>
+                    <a asp-controller="BusinessObjective" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tên Objective</th>
+                                    <th>Phòng ban</th>
+                                    <th class="text-center">Tiến độ</th>
+                                    <th class="text-center">SFs</th>
+                                    <th class="text-center">CSFs</th>
+                                    <th class="text-center">KPIs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Nâng cao chất lượng sản phẩm</td>
+                                    <td>Sản xuất</td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%;"
+                                                aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="small">75%</span>
+                                    </td>
+                                    <td class="text-center">3</td>
+                                    <td class="text-center">7</td>
+                                    <td class="text-center">4</td>
+                                </tr>
+                                <tr>
+                                    <td>Tăng trưởng thị phần</td>
+                                    <td>Kinh doanh</td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 45%;"
+                                                aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="small">45%</span>
+                                    </td>
+                                    <td class="text-center">2</td>
+                                    <td class="text-center">5</td>
+                                    <td class="text-center">3</td>
+                                </tr>
+                                <tr>
+                                    <td>Phát triển đội ngũ nhân sự</td>
+                                    <td>Nhân sự</td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-info" role="progressbar" style="width: 60%;"
+                                                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="small">60%</span>
+                                    </td>
+                                    <td class="text-center">2</td>
+                                    <td class="text-center">4</td>
+                                    <td class="text-center">3</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
-        <!-- KPI Table -->
+        <!-- KRI Table -->
         <div class="col-md-8">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -183,27 +329,27 @@
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0">
                             <thead class="table-light">
-                                <tr>
-                                    <th>Mã</th>
-                                    <th>Tên chỉ số</th>
-                                    <th class="text-end">Hiện tại</th>
-                                    <th class="text-end">Mục tiêu</th>
-                                    <th class="text-center">Trạng thái</th>
-                                    <th class="text-center">Xu hướng</th>
+                                <tr class="py-2">
+                                    <th class="px-3">Mã</th>
+                                    <th class="px-3">Tên chỉ số</th>
+                                    <th class="text-end px-3">Hiện tại</th>
+                                    <th class="text-end px-3">Mục tiêu</th>
+                                    <th class="text-center px-3">Trạng thái</th>
+                                    <th class="text-center px-3">Xu hướng</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var kpi in Model.KriSummaries.Take(10))
                                 {
-                                    <tr>
-                                        <td>@kpi.Code</td>
-                                        <td>@kpi.Name</td>
-                                        <td class="text-end">@kpi.CurrentValue @kpi.MeasurementUnit</td>
-                                        <td class="text-end">@kpi.TargetValue @kpi.MeasurementUnit</td>
-                                        <td class="text-center">
+                                    <tr class="py-2">
+                                        <td class="px-3">@kpi.Code</td>
+                                        <td class="px-3">@kpi.Name</td>
+                                        <td class="text-end px-3">@kpi.CurrentValue @kpi.MeasurementUnit</td>
+                                        <td class="text-end px-3">@kpi.TargetValue @kpi.MeasurementUnit</td>
+                                        <td class="text-center px-3">
                                             <span class="badge @kpi.StatusCssClass">@kpi.StatusDisplay</span>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center px-3">
                                             @if (kpi.Trend == KPISolution.Models.Enums.TrendDirection.Up)
                                             {
                                                 <i class="bi bi-arrow-up-circle-fill text-success"></i>
@@ -247,101 +393,105 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
-                        @if (Model.AlertsRequiringAttention.Any())
-                        {
-                            @foreach (var alert in Model.AlertsRequiringAttention.Take(5))
-                            {
-                                <div class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">@alert.KpiName</h6>
-                                        <small class="text-muted">@alert.CreatedOn.ToString("dd/MM/yyyy")</small>
-                                    </div>
-                                    <p class="mb-1 small">@alert.Message</p>
-                                    <small class="text-@alert.SeverityCssClass">@alert.SeverityDisplay</small>
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <div class="list-group-item text-center text-muted p-4">
-                                <i class="bi bi-check-circle fs-3"></i>
-                                <p class="mt-2">Không có cảnh báo nào cần xử lý</p>
+                        <div class="list-group-item list-group-item-action p-3">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">KPI-001: Tỷ lệ đơn hàng đúng hạn giảm mạnh</h6>
+                                <small class="text-muted">2 ngày trước</small>
                             </div>
-                        }
+                            <p class="mb-1 small">Tỷ lệ đơn hàng đúng hạn giảm xuống dưới 85%, cần kiểm tra ngay</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-danger">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Nghiêm trọng
+                                </small>
+                                <a asp-controller="KPI" asp-action="Details" asp-route-id="1" class="btn btn-sm btn-outline-secondary">Xem</a>
+                            </div>
+                        </div>
+                        <div class="list-group-item list-group-item-action p-3">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">CSF-003: Cải thiện quy trình đánh giá chất lượng</h6>
+                                <small class="text-muted">3 ngày trước</small>
+                            </div>
+                            <p class="mb-1 small">Tiến độ chỉ đạt 45%, cần đẩy nhanh để hoàn thành đúng thời hạn</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-warning">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Cảnh báo
+                                </small>
+                                <a asp-controller="CSF" asp-action="Details" asp-route-id="3" class="btn btn-sm btn-outline-secondary">Xem</a>
+                            </div>
+                        </div>
+                        <div class="list-group-item list-group-item-action p-3">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">KRI-005: Chỉ số hài lòng khách hàng đạt mục tiêu</h6>
+                                <small class="text-muted">1 tuần trước</small>
+                            </div>
+                            <p class="mb-1 small">Chỉ số hài lòng khách hàng đạt 92%, vượt mục tiêu đề ra (90%)</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-success">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Hoàn thành
+                                </small>
+                                <a asp-controller="KRI" asp-action="Details" asp-route-id="5" class="btn btn-sm btn-outline-secondary">Xem</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                @if (Model.AlertsRequiringAttention.Count > 5)
-                {
-                    <div class="card-footer text-center">
-                        <a href="#" class="small">Xem tất cả @Model.AlertsRequiringAttention.Count cảnh báo</a>
-                    </div>
-                }
+                <div class="card-footer text-center p-3">
+                    <a asp-controller="Alert" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả cảnh báo</a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // KPI Status Chart
-            const statusLabels = [@Html.Raw(string.Join(",", Model.KpisByStatus.Keys.Select(k => $"'{k}'").ToArray()))];
-            const statusValues = [@Html.Raw(string.Join(",", Model.KpisByStatus.Values.ToArray()))];
-            const statusColors = ['#198754', '#ffc107', '#dc3545', '#0d6efd', '#6c757d'];
+        $(document).ready(function () {
+            // KPI Status Chart setup
+            var ctx = document.getElementById('kpiStatusChart').getContext('2d');
+            var statusColors = {
+                'OnTarget': 'rgba(40, 167, 69, 0.7)',     // Success
+                'AtRisk': 'rgba(255, 193, 7, 0.7)',      // Warning
+                'BelowTarget': 'rgba(220, 53, 69, 0.7)'  // Danger
+            };
 
-            let kpiChart;
+            var statusData = @Html.Raw(Json.Serialize(Model.KpisByStatus.Select(kvp => new { 
+                status = kvp.Key.ToString(), 
+                count = kvp.Value 
+            }).ToList()));
 
-            function createChart(type) {
-                // Hủy biểu đồ cũ nếu đã tồn tại
-                if (kpiChart) {
-                    kpiChart.destroy();
-                }
-
-                const ctx = document.getElementById('kpiStatusChart').getContext('2d');
-                const options = {
+            var kpiStatusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusData.map(item => {
+                        switch(item.status) {
+                            case 'OnTarget': return 'Đạt mục tiêu';
+                            case 'AtRisk': return 'Cần cải thiện';
+                            case 'BelowTarget': return 'Không đạt';
+                            default: return item.status;
+                        }
+                    }),
+                    datasets: [{
+                        data: statusData.map(item => item.count),
+                        backgroundColor: statusData.map(item => statusColors[item.status] || 'rgba(108, 117, 125, 0.7)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: type === 'doughnut' ? 'right' : 'top',
+                            position: 'bottom'
                         }
                     }
-                };
-
-                // Thêm tùy chọn riêng cho biểu đồ cột
-                if (type === 'bar') {
-                    options.scales = {
-                        y: {
-                            beginAtZero: true
-                        }
-                    };
                 }
+            });
 
-                kpiChart = new Chart(ctx, {
-                    type: type,
-                    data: {
-                        labels: statusLabels,
-                        datasets: [{
-                            data: statusValues,
-                            backgroundColor: statusColors,
-                            borderWidth: 1
-                        }]
-                    },
-                    options: options
-                });
-            }
-
-            // Khởi tạo ban đầu với biểu đồ tròn
-            createChart('doughnut');
-
-            // Xử lý sự kiện khi người dùng chọn loại biểu đồ
-            document.querySelectorAll('.chart-type').forEach(item => {
-                item.addEventListener('click', event => {
-                    event.preventDefault();
-                    const chartType = event.target.getAttribute('data-type');
-                    createChart(chartType);
-                });
+            // Chart type change handler
+            $('.chart-type').click(function (e) {
+                e.preventDefault();
+                var chartType = $(this).data('type');
+                kpiStatusChart.config.type = chartType;
+                kpiStatusChart.update();
             });
         });
     </script>

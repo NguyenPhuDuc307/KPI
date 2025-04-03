@@ -18,6 +18,9 @@
                 <a asp-action="UpdateProgress" asp-route-id="@Model.Id" class="btn btn-success">
                     <i class="bi bi-graph-up me-1"></i> Cập nhật tiến độ
                 </a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i> Xóa
+                </a>
                 <a asp-action="Index" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left me-1"></i> Quay lại
                 </a>
@@ -108,77 +111,86 @@
             <!-- KPIs liên quan -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">KPIs liên quan</h5>
-                    <span class="badge bg-primary">@Model.LinkedKpis.Count()</span>
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Các chỉ số liên quan</h5>
+                    <div>
+                        <div class="btn-group">
+                            <a asp-controller="Kri" asp-action="Create" asp-route-csfId="@Model.Id"
+                                class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle"></i> Thêm KRI
+                            </a>
+                            <a asp-controller="PI" asp-action="Create" asp-route-csfId="@Model.Id"
+                                class="btn btn-success btn-sm">
+                                <i class="bi bi-plus-circle"></i> Thêm PI
+                            </a>
+                            <a asp-controller="Ri" asp-action="Create" asp-route-csfId="@Model.Id"
+                                class="btn btn-warning btn-sm">
+                                <i class="bi bi-plus-circle"></i> Thêm RI
+                            </a>
+                            <a asp-controller="Kpi" asp-action="Create" asp-route-csfId="@Model.Id"
+                                class="btn btn-info btn-sm">
+                                <i class="bi bi-plus-circle"></i> Thêm KPI
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    @if (Model.LinkedKpis != null && Model.LinkedKpis.Any())
+                <div class="card-body p-0">
+                    <!-- Chỉ số hiệu suất chính (KPI) -->
+                    <h6 class="bg-light p-3 mb-0 border-bottom">Chỉ số hiệu suất chính (KPI)</h6>
+
+                    @{
+                        var keyPerformanceIndicators = Model.LinkedKpis.Where(k =>
+                        k.KpiType == KPISolution.Models.Enums.KpiType.StandaloneKPI).ToList();
+                    }
+
+                    @if (keyPerformanceIndicators.Any())
                     {
                         <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
+                            <table class="table table-hover table-striped">
+                                <thead class="table-success text-white">
                                     <tr>
                                         <th>Mã</th>
                                         <th>Tên</th>
-                                        <th>Loại</th>
                                         <th>Mức ảnh hưởng</th>
                                         <th>Trạng thái</th>
+                                        <th>Giá trị hiện tại</th>
+                                        <th>Mục tiêu</th>
                                         <th>Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var kpi in Model.LinkedKpis)
+                                    @foreach (var kpi in keyPerformanceIndicators)
                                     {
                                         <tr>
                                             <td>@kpi.Code</td>
                                             <td>@kpi.Name</td>
-                                            <td>@kpi.KpiType.ToString()</td>
                                             <td>
-                                                @{
-                                                    var impactClass = kpi.ImpactLevel switch
-                                                    {
-                                                        ImpactLevel.High => "danger",
-                                                        ImpactLevel.Medium => "warning",
-                                                        ImpactLevel.Low => "info",
-                                                        _ => "secondary"
-                                                    };
-                                                }
-                                                <span class="badge bg-@impactClass">@kpi.ImpactLevel.ToString()</span>
+                                                <span class="badge @GetImpactLevelCssClass(kpi.ImpactLevel)">
+                                                    @kpi.ImpactLevelDisplay
+                                                </span>
                                             </td>
                                             <td>
-                                                @{
-                                                    var statusClass = kpi.Status switch
-                                                    {
-                                                        KpiStatus.Active => "success",
-                                                        KpiStatus.OnTarget => "success",
-                                                        KpiStatus.AtRisk => "warning",
-                                                        KpiStatus.BelowTarget => "danger",
-                                                        _ => "secondary"
-                                                    };
-                                                }
-                                                <span class="badge bg-@statusClass">@kpi.Status.ToString()</span>
+                                                <span class="badge @GetStatusCssClass(kpi.Status)">
+                                                    @kpi.Status
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                @(kpi.CurrentValue?.ToString() ?? "Không có dữ liệu")
+                                            </td>
+                                            <td class="text-end">
+                                                @kpi.TargetValue @kpi.Unit
                                             </td>
                                             <td>
-                                                @{
-                                                    // Xác định controller name dựa trên loại KPI
-                                                    string controllerName = kpi.KpiType.ToString();
-                                                    if (controllerName == "KeyResultIndicator")
-                                                    {
-                                                        controllerName = "Kri";
-                                                    }
-                                                    else if (controllerName == "PerformanceIndicator")
-                                                    {
-                                                        controllerName = "Pi";
-                                                    }
-                                                    else if (controllerName == "ResultIndicator")
-                                                    {
-                                                        controllerName = "Ri";
-                                                    }
+                                                @if (!kpi.IsSampleData)
+                                                {
+                                                    <a href="@Url.Action("Details", "Kpi", new { id = kpi.KpiId })"
+                                                        class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-info-circle"></i> Chi tiết
+                                                    </a>
                                                 }
-                                                <a href="@Url.Action("Details", controllerName, new { id = kpi.KpiId })"
-                                                    class="btn btn-sm btn-outline-primary">
-                                                    <i class="bi bi-eye"></i> Xem
-                                                </a>
+                                                else
+                                                {
+                                                    <span class="text-muted"><small>Dữ liệu mẫu</small></span>
+                                                }
                                             </td>
                                         </tr>
                                     }
@@ -188,19 +200,251 @@
                     }
                     else
                     {
-                        <div class="alert alert-info">
+                        <div class="p-4 text-center text-muted">
                             <i class="bi bi-info-circle me-2"></i>
-                            Chưa có KPI nào được liên kết với CSF này.
+                            Không có chỉ số hiệu suất chính (KPI) nào được liên kết.
+                        </div>
+                    }
+
+                    <!-- Chỉ số hiệu suất (PI) -->
+                    <h6 class="bg-light p-3 mb-0 border-bottom">Chỉ số hiệu suất (PI)</h6>
+
+                    @{
+                        var performanceIndicators = Model.LinkedKpis.Where(k =>
+                        k.KpiType == KPISolution.Models.Enums.KpiType.PerformanceIndicator).ToList();
+                    }
+
+                    @if (performanceIndicators.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-primary text-white">
+                                    <tr>
+                                        <th>Mã</th>
+                                        <th>Tên</th>
+                                        <th>Mức ảnh hưởng</th>
+                                        <th>Trạng thái</th>
+                                        <th>Giá trị hiện tại</th>
+                                        <th>Mục tiêu</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var kpi in performanceIndicators)
+                                    {
+                                        <tr>
+                                            <td>@kpi.Code</td>
+                                            <td>@kpi.Name</td>
+                                            <td>
+                                                <span class="badge @GetImpactLevelCssClass(kpi.ImpactLevel)">
+                                                    @kpi.ImpactLevelDisplay
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetStatusCssClass(kpi.Status)">
+                                                    @kpi.Status
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                @(kpi.CurrentValue?.ToString() ?? "Không có dữ liệu")
+                                            </td>
+                                            <td class="text-end">
+                                                @kpi.TargetValue @kpi.Unit
+                                            </td>
+                                            <td>
+                                                @if (!kpi.IsSampleData)
+                                                {
+                                                    <a href="@Url.Action("Details", "PI", new { id = kpi.KpiId })"
+                                                        class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-info-circle"></i> Chi tiết
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted"><small>Dữ liệu mẫu</small></span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Không có chỉ số hiệu suất (PI) nào được liên kết.
+                        </div>
+                    }
+
+                    <!-- Chỉ số kết quả chính (KRI) -->
+                    <h6 class="bg-light p-3 mb-0 border-bottom">Chỉ số kết quả chính (KRI)</h6>
+
+                    @{
+                        var keyResultIndicators = Model.LinkedKpis.Where(k =>
+                        k.KpiType == KPISolution.Models.Enums.KpiType.KeyResultIndicator).ToList();
+                    }
+
+                    @if (keyResultIndicators.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-danger text-white">
+                                    <tr>
+                                        <th>Mã</th>
+                                        <th>Tên</th>
+                                        <th>Mức ảnh hưởng</th>
+                                        <th>Trạng thái</th>
+                                        <th>Giá trị hiện tại</th>
+                                        <th>Mục tiêu</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var kpi in keyResultIndicators)
+                                    {
+                                        <tr>
+                                            <td>@kpi.Code</td>
+                                            <td>@kpi.Name</td>
+                                            <td>
+                                                <span class="badge @GetImpactLevelCssClass(kpi.ImpactLevel)">
+                                                    @kpi.ImpactLevelDisplay
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetStatusCssClass(kpi.Status)">
+                                                    @kpi.Status
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                @(kpi.CurrentValue?.ToString() ?? "Không có dữ liệu")
+                                            </td>
+                                            <td class="text-end">
+                                                @kpi.TargetValue @kpi.Unit
+                                            </td>
+                                            <td>
+                                                @if (!kpi.IsSampleData)
+                                                {
+                                                    <a href="@Url.Action("Details", "Kri", new { id = kpi.KpiId })"
+                                                        class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-info-circle"></i> Chi tiết
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted"><small>Dữ liệu mẫu</small></span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Không có chỉ số kết quả chính (KRI) nào được liên kết.
+                        </div>
+                    }
+
+                    <!-- Chỉ số kết quả (RI) -->
+                    <h6 class="bg-light p-3 mb-0 border-bottom">Chỉ số kết quả (RI)</h6>
+
+                    @{
+                        var resultIndicators = Model.LinkedKpis.Where(k =>
+                        k.KpiType == KPISolution.Models.Enums.KpiType.ResultIndicator).ToList();
+                    }
+
+                    @if (resultIndicators.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="table-warning text-dark">
+                                    <tr>
+                                        <th>Mã</th>
+                                        <th>Tên</th>
+                                        <th>Mức ảnh hưởng</th>
+                                        <th>Trạng thái</th>
+                                        <th>Giá trị hiện tại</th>
+                                        <th>Mục tiêu</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var kpi in resultIndicators)
+                                    {
+                                        <tr>
+                                            <td>@kpi.Code</td>
+                                            <td>@kpi.Name</td>
+                                            <td>
+                                                <span class="badge @GetImpactLevelCssClass(kpi.ImpactLevel)">
+                                                    @kpi.ImpactLevelDisplay
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @GetStatusCssClass(kpi.Status)">
+                                                    @kpi.Status
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                @(kpi.CurrentValue?.ToString() ?? "Không có dữ liệu")
+                                            </td>
+                                            <td class="text-end">
+                                                @kpi.TargetValue @kpi.Unit
+                                            </td>
+                                            <td>
+                                                @if (!kpi.IsSampleData)
+                                                {
+                                                    <a href="@Url.Action("Details", "Ri", new { id = kpi.KpiId })"
+                                                        class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-info-circle"></i> Chi tiết
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted"><small>Dữ liệu mẫu</small></span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center text-muted">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Không có chỉ số kết quả (RI) nào được liên kết.
                         </div>
                     }
                 </div>
             </div>
 
+            <!-- Button để cập nhật tiến độ nhanh -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Cập nhật nhanh</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p class="text-muted mb-3">Cập nhật tiến độ CSF mà không cần thông tin chi tiết</p>
+                    <button type="button" class="btn btn-primary" id="quickUpdateBtn">
+                        <i class="bi bi-lightning-fill me-1"></i> Cập nhật tiến độ nhanh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right column - Progress and KPIs -->
+        <div class="col-md-4">
             <!-- Lịch sử cập nhật -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Lịch sử cập nhật</h5>
-                    <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addUpdateModal">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Lịch sử cập nhật</h5>
+                    <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUpdateModal">
                         <i class="bi bi-plus-lg"></i> Cập nhật mới
                     </a>
                 </div>
@@ -242,50 +486,6 @@
                 </div>
             </div>
 
-            <!-- Modal cập nhật tiến độ -->
-            <div class="modal fade" id="addUpdateModal" tabindex="-1" aria-labelledby="updateModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="updateModalLabel">Cập nhật tiến độ</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form asp-action="AddUpdate" asp-controller="CSF" method="post">
-                            <div class="modal-body">
-                                <input type="hidden" name="CsfId" value="@Model.Id" />
-
-                                <div class="mb-3">
-                                    <label class="form-label">Tiến độ hiện tại</label>
-                                    <input type="range" class="form-range" min="0" max="100" step="5"
-                                        value="@Model.ProgressPercentage" id="progressRange" name="ProgressPercentage">
-                                    <div class="text-center" id="progressValue">@Model.ProgressPercentage%</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Ghi chú cập nhật</label>
-                                    <textarea class="form-control" name="Notes" rows="3" required></textarea>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                <button type="submit" class="btn btn-primary">Lưu cập nhật</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Button để cập nhật tiến độ nhanh -->
-            <div class="d-flex justify-content-end mb-3">
-                <button type="button" class="btn btn-primary" id="quickUpdateBtn">
-                    <i class="bi bi-lightning-fill me-1"></i> Cập nhật tiến độ nhanh
-                </button>
-            </div>
-        </div>
-
-        <!-- Right column - Progress and KPIs -->
-        <div class="col-md-4">
             <!-- Progress widget -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -340,60 +540,37 @@
                 </div>
             </div>
 
-            <!-- Linked KPIs -->
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h2 class="mb-0">KPIs liên quan</h2>
-                    <span class="badge bg-primary rounded-pill">@(Model.LinkedKpis?.Count ?? 0)</span>
-                </div>
-                <div class="card-body">
-                    @if (Model.LinkedKpis?.Any() == true)
-                    {
-                        <div class="list-group">
-                            @foreach (var kpi in Model.LinkedKpis)
-                            {
-                                string sidebarControllerName = kpi.KpiType.ToString();
-                                if (sidebarControllerName == "KeyResultIndicator")
-                                {
-                                    sidebarControllerName = "Kri";
-                                }
-                                else if (sidebarControllerName == "PerformanceIndicator")
-                                {
-                                    sidebarControllerName = "Pi";
-                                }
-                                else if (sidebarControllerName == "ResultIndicator")
-                                {
-                                    sidebarControllerName = "Ri";
-                                }
+            <!-- Modal cập nhật tiến độ -->
+            <div class="modal fade" id="addUpdateModal" tabindex="-1" aria-labelledby="updateModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="updateModalLabel">Cập nhật tiến độ</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form asp-action="AddUpdate" asp-controller="CSF" method="post">
+                            <div class="modal-body">
+                                <input type="hidden" name="CsfId" value="@Model.Id" />
 
-                                <a href="@Url.Action("Details", sidebarControllerName, new { id = kpi.KpiId })"
-                                    class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">@kpi.Code</h5>
-                                        <span class="badge @GetStatusCssClass("Unknown")">Status</span>
-                                    </div>
-                                    <p class="mb-1">@kpi.Name</p>
-                                    <small class="text-muted">
-                                        @kpi.RelationshipStrengthDisplay -
-                                        @if (kpi.Weight > 0)
-                                        {
-                                            <span>Trọng số: @kpi.Weight%</span>
-                                        }
-                                        else
-                                        {
-                                            <span>Không có trọng số</span>
-                                        }
-                                    </small>
-                                </a>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-info">
-                            Chưa có KPI nào được liên kết với CSF này.
-                        </div>
-                    }
+                                <div class="mb-3">
+                                    <label class="form-label">Tiến độ hiện tại</label>
+                                    <input type="range" class="form-range" min="0" max="100" step="5"
+                                        value="@Model.ProgressPercentage" id="progressRange" name="ProgressPercentage">
+                                    <div class="text-center" id="progressValue">@Model.ProgressPercentage%</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Ghi chú cập nhật</label>
+                                    <textarea class="form-control" name="Notes" rows="3" required></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu cập nhật</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -425,27 +602,25 @@
 }
 
 @functions {
-    public string GetStatusCssClass(string status)
+    public string GetStatusCssClass(KPISolution.Models.Enums.KpiStatus status)
     {
-        return status.ToLower() switch
+        return status switch
         {
-            "on track" or "đang tiến triển" => "bg-success",
-            "at risk" or "có rủi ro" => "bg-warning",
-            "delayed" or "chậm tiến độ" => "bg-danger",
-            "completed" or "hoàn thành" => "bg-info",
-            "not started" or "chưa bắt đầu" => "bg-secondary",
+            KPISolution.Models.Enums.KpiStatus.OnTarget => "bg-success",
+            KPISolution.Models.Enums.KpiStatus.AtRisk => "bg-warning",
+            KPISolution.Models.Enums.KpiStatus.BelowTarget => "bg-danger",
             _ => "bg-secondary"
         };
     }
 
-    public string GetProgressCssClass(int percentage)
+    public string GetImpactLevelCssClass(KPISolution.Models.Enums.ImpactLevel level)
     {
-        return percentage switch
+        return level switch
         {
-            >= 75 => "bg-success",
-            >= 50 => "bg-info",
-            >= 25 => "bg-warning",
-            _ => "bg-danger"
+            KPISolution.Models.Enums.ImpactLevel.Low => "bg-info",
+            KPISolution.Models.Enums.ImpactLevel.Medium => "bg-warning",
+            KPISolution.Models.Enums.ImpactLevel.High => "bg-danger",
+            _ => "bg-secondary"
         };
     }
 }

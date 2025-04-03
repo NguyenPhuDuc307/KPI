@@ -1,176 +1,294 @@
 @model KPISolution.Models.ViewModels.BusinessObjective.BusinessObjectiveListViewModel
 
 @{
-    ViewData["Title"] = "Mục tiêu kinh doanh";
+    ViewData["Title"] = "Business Objective (O)";
+    ViewData["Icon"] = "bi-bullseye";
+    ViewData["Subtitle"] = "Quản lý các mục tiêu và định hướng chiến lược của tổ chức";
+    ViewData["ShowFilterPanel"] = false;
+
+    if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+    {
+        ViewData["PrimaryButton"] = ("Thêm mới", "BusinessObjective", "Create", "", "bi-plus-lg");
+    }
 }
 
-<div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mt-4 mb-0"><i class="bi bi-bullseye me-2"></i>Mục tiêu kinh doanh</h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Mục tiêu kinh doanh</li>
-                </ol>
-            </nav>
-        </div>
-        <div>
-            <a asp-action="Create" class="btn btn-success">
-                <i class="bi bi-plus-circle me-1"></i> Thêm mục tiêu mới
-            </a>
-        </div>
+<!-- Bộ lọc -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Bộ lọc</h5>
+        <a class="btn btn-link p-0" data-bs-toggle="collapse" href="#filterCollapse" role="button">
+            <i class="bi bi-chevron-down"></i>
+        </a>
     </div>
-
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-white">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-filter me-1"></i> Bộ lọc</h5>
-                <button type="button" class="btn btn-sm btn-link" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false">
-                    <i class="bi bi-chevron-down"></i>
-                </button>
-            </div>
-        </div>
-        <div class="collapse show" id="filterCollapse">
-            <div class="card-body">
-                <form method="get" asp-action="Index">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label asp-for="SearchTerm" class="form-label">Tìm kiếm</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input asp-for="SearchTerm" class="form-control" placeholder="Nhập từ khóa...">
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <label asp-for="FilterPerspective" class="form-label">Phối cảnh</label>
-                            <select asp-for="FilterPerspective" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.BusinessPerspective>()" class="form-select">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label asp-for="FilterStatus" class="form-label">Trạng thái</label>
-                            <select asp-for="FilterStatus" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.ObjectiveStatus>()" class="form-select">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label asp-for="FilterPriority" class="form-label">Ưu tiên</label>
-                            <select asp-for="FilterPriority" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.PriorityLevel>()" class="form-select">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label asp-for="FilterTimeframe" class="form-label">Thời hạn</label>
-                            <select asp-for="FilterTimeframe" asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.TimeframeType>()" class="form-select">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-funnel me-1"></i> Lọc
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <form method="get" asp-action="Index">
+                <div class="row g-3">
+                    <div class="col-md-12 mb-2">
+                        <label class="mb-1">Tìm kiếm</label>
+                        <div class="input-group">
+                            <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control"
+                                placeholder="Nhập từ khóa...">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-search me-1"></i> Tìm kiếm
                             </button>
                         </div>
                     </div>
-                </form>
-            </div>
+                    <div class="col-md-3">
+                        <label>Phối cảnh</label>
+                        <select name="filterPerspective" class="form-select">
+                            <option value="">Tất cả</option>
+                            @foreach (BusinessPerspective perspective in Enum.GetValues(typeof(BusinessPerspective)))
+                            {
+                                <option value="@((int)perspective)" selected="@(Model.FilterPerspective == perspective)">
+                                    @perspective
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Trạng thái</label>
+                        <select name="filterStatus" class="form-select">
+                            <option value="">Tất cả</option>
+                            @foreach (ObjectiveStatus status in Enum.GetValues(typeof(ObjectiveStatus)))
+                            {
+                                <option value="@((int)status)" selected="@(Model.FilterStatus == status)">
+                                    @status
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Ưu tiên</label>
+                        <select name="filterPriority" class="form-select">
+                            <option value="">Tất cả</option>
+                            @foreach (PriorityLevel priority in Enum.GetValues(typeof(PriorityLevel)))
+                            {
+                                <option value="@((int)priority)" selected="@(Model.FilterPriority == priority)">
+                                    @priority
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Thời hạn</label>
+                        <select name="filterTimeframe" class="form-select">
+                            <option value="">Tất cả</option>
+                            @foreach (TimeframeType timeframe in Enum.GetValues(typeof(TimeframeType)))
+                            {
+                                <option value="@((int)timeframe)" selected="@(Model.FilterTimeframe == timeframe)">
+                                    @timeframe
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-funnel me-1"></i> Lọc
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header">
-            <i class="bi bi-table me-1"></i>
-            Danh sách mục tiêu
+<!-- Danh sách mục tiêu -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-transparent">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-table me-2"></i>Danh sách mục tiêu</h5>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tên mục tiêu</th>
-                            <th>Phối cảnh</th>
-                            <th>Phòng ban</th>
-                            <th>Trạng thái</th>
-                            <th>Tiến độ</th>
-                            <th>Ưu tiên</th>
-                            <th>Thời hạn</th>
-                            <th>Ngày hoàn thành</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model.Objectives != null && Model.Objectives.Any())
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <a href="@Url.Action("Index", new { 
+                                searchTerm = Model.SearchTerm, 
+                                filterPerspective = Model.FilterPerspective, 
+                                filterStatus = Model.FilterStatus,
+                                filterPriority = Model.FilterPriority,
+                                filterTimeframe = Model.FilterTimeframe,
+                                sortBy = "name",
+                                sortDirection = Model.SortBy.Equals("name", StringComparison.OrdinalIgnoreCase) ? Model.GetOppositeSortDirection() : "asc"
+                            })" class="text-dark text-decoration-none">
+                                Tên mục tiêu <i class="bi @Model.GetSortIcon("name")"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@Url.Action("Index", new { 
+                                searchTerm = Model.SearchTerm, 
+                                filterPerspective = Model.FilterPerspective, 
+                                filterStatus = Model.FilterStatus,
+                                filterPriority = Model.FilterPriority,
+                                filterTimeframe = Model.FilterTimeframe,
+                                sortBy = "perspective",
+                                sortDirection = Model.SortBy.Equals("perspective", StringComparison.OrdinalIgnoreCase) ? Model.GetOppositeSortDirection() : "asc"
+                            })" class="text-dark text-decoration-none">
+                                Phối cảnh <i class="bi @Model.GetSortIcon("perspective")"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@Url.Action("Index", new { 
+                                searchTerm = Model.SearchTerm, 
+                                filterPerspective = Model.FilterPerspective, 
+                                filterStatus = Model.FilterStatus,
+                                filterPriority = Model.FilterPriority,
+                                filterTimeframe = Model.FilterTimeframe,
+                                sortBy = "department",
+                                sortDirection = Model.SortBy.Equals("department", StringComparison.OrdinalIgnoreCase) ? Model.GetOppositeSortDirection() : "asc"
+                            })" class="text-dark text-decoration-none">
+                                Phòng ban <i class="bi @Model.GetSortIcon("department")"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@Url.Action("Index", new { 
+                                searchTerm = Model.SearchTerm, 
+                                filterPerspective = Model.FilterPerspective, 
+                                filterStatus = Model.FilterStatus,
+                                filterPriority = Model.FilterPriority,
+                                filterTimeframe = Model.FilterTimeframe,
+                                sortBy = "status",
+                                sortDirection = Model.SortBy.Equals("status", StringComparison.OrdinalIgnoreCase) ? Model.GetOppositeSortDirection() : "asc"
+                            })" class="text-dark text-decoration-none">
+                                Trạng thái <i class="bi @Model.GetSortIcon("status")"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@Url.Action("Index", new { 
+                                searchTerm = Model.SearchTerm, 
+                                filterPerspective = Model.FilterPerspective, 
+                                filterStatus = Model.FilterStatus,
+                                filterPriority = Model.FilterPriority,
+                                filterTimeframe = Model.FilterTimeframe,
+                                sortBy = "progress",
+                                sortDirection = Model.SortBy.Equals("progress", StringComparison.OrdinalIgnoreCase) ? Model.GetOppositeSortDirection() : "asc"
+                            })" class="text-dark text-decoration-none">
+                                Tiến độ <i class="bi @Model.GetSortIcon("progress")"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@Url.Action("Index", new { 
+                                searchTerm = Model.SearchTerm, 
+                                filterPerspective = Model.FilterPerspective, 
+                                filterStatus = Model.FilterStatus,
+                                filterPriority = Model.FilterPriority,
+                                filterTimeframe = Model.FilterTimeframe,
+                                sortBy = "priority",
+                                sortDirection = Model.SortBy.Equals("priority", StringComparison.OrdinalIgnoreCase) ? Model.GetOppositeSortDirection() : "asc"
+                            })" class="text-dark text-decoration-none">
+                                Ưu tiên <i class="bi @Model.GetSortIcon("priority")"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@Url.Action("Index", new { 
+                                searchTerm = Model.SearchTerm, 
+                                filterPerspective = Model.FilterPerspective, 
+                                filterStatus = Model.FilterStatus,
+                                filterPriority = Model.FilterPriority,
+                                filterTimeframe = Model.FilterTimeframe,
+                                sortBy = "timeframe",
+                                sortDirection = Model.SortBy.Equals("timeframe", StringComparison.OrdinalIgnoreCase) ? Model.GetOppositeSortDirection() : "asc"
+                            })" class="text-dark text-decoration-none">
+                                Thời hạn <i class="bi @Model.GetSortIcon("timeframe")"></i>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="@Url.Action("Index", new { 
+                                searchTerm = Model.SearchTerm, 
+                                filterPerspective = Model.FilterPerspective, 
+                                filterStatus = Model.FilterStatus,
+                                filterPriority = Model.FilterPriority,
+                                filterTimeframe = Model.FilterTimeframe,
+                                sortBy = "targetdate",
+                                sortDirection = Model.SortBy.Equals("targetdate", StringComparison.OrdinalIgnoreCase) ? Model.GetOppositeSortDirection() : "asc"
+                            })" class="text-dark text-decoration-none">
+                                Ngày hoàn thành <i class="bi @Model.GetSortIcon("targetdate")"></i>
+                            </a>
+                        </th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Objectives != null && Model.Objectives.Any())
+                    {
+                        foreach (var item in Model.Objectives)
                         {
-                                    foreach (var item in Model.Objectives)
-                                    {
-                                                <tr>
-                                                    <td>
-                                                        <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none text-dark fw-medium">
-                                                            @item.Name
-                                                        </a>
-                                                    </td>
-                                                    <td>
-                                                        <span class="@item.BusinessPerspectiveClass">
-                                                            <i class="bi bi-diagram-3 me-1"></i>
-                                                            @Html.DisplayFor(modelItem => item.BusinessPerspective)
-                                                        </span>
-                                                    </td>
-                                                    <td>@(string.IsNullOrEmpty(item.Department) ? "-" : item.Department)</td>
-                                                    <td><span class="@item.StatusBadgeClass">@Html.DisplayFor(modelItem => item.Status)</span></td>
-                                                    <td>
-                                                        <div class="progress" style="height: 10px;">
-                                                            <div class="progress-bar @(item.ProgressPercentage == 100 ? "bg-success" : item.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")" 
-                                                                role="progressbar" style="width: @(item.ProgressPercentage)%;" 
-                                                                aria-valuenow="@item.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
-                                                            </div>
-                                                        </div>
-                                                        <small class="text-muted">@item.ProgressPercentage%</small>
-                                                    </td>
-                                                    <td><span class="@item.PriorityBadgeClass">@Html.DisplayFor(modelItem => item.Priority)</span></td>
-                                                    <td><span class="@item.TimeframeBadgeClass">@Html.DisplayFor(modelItem => item.TimeframeType)</span></td>
-                                                    <td>@item.TargetDate.ToString("dd/MM/yyyy")</td>
-                                                    <td>
-                                                        <div class="btn-group">
-                                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
-                                                                <i class="bi bi-pencil"></i>
-                                                            </a>
-                                                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
-                                                                <i class="bi bi-eye"></i>
-                                                            </a>
-                                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">
-                                                                <i class="bi bi-trash"></i>
-                                                            </a>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                    }
-                        }
-                        else
-                        {
-                                    <tr>
-                                        <td colspan="9" class="text-center py-4">
-                                            <div class="text-muted mb-2">
-                                                <i class="bi bi-search" style="font-size: 2rem;"></i>
+                            <tr>
+                                <td>
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none fw-medium">
+                                        @item.Name
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="@item.BusinessPerspectiveClass">
+                                        <i class="bi bi-diagram-3 me-1"></i>
+                                        @item.BusinessPerspective
+                                    </span>
+                                </td>
+                                <td>@(string.IsNullOrEmpty(item.Department) ? "-" : item.Department)</td>
+                                <td><span class="@item.StatusBadgeClass">@item.Status</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar @(item.ProgressPercentage == 100 ? "bg-success" : item.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                                                role="progressbar" style="width: @(item.ProgressPercentage)%;"
+                                                aria-valuenow="@item.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
                                             </div>
-                                            <h5>Không tìm thấy mục tiêu kinh doanh nào</h5>
-                                            <p class="mb-0">Hãy tạo mục tiêu kinh doanh mới hoặc thay đổi bộ lọc tìm kiếm</p>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                        <span class="ms-2 small">@item.ProgressPercentage%</span>
+                                    </div>
+                                </td>
+                                <td><span class="@item.PriorityBadgeClass">@item.Priority</span></td>
+                                <td><span class="@item.TimeframeBadgeClass">@item.TimeframeType</span></td>
+                                <td>@item.TargetDate.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
                         }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <div class="text-muted mb-2">
+                                    <i class="bi bi-search" style="font-size: 2rem;"></i>
+                                </div>
+                                <h5>Không tìm thấy mục tiêu chiến lược nào</h5>
+                                <p class="mb-0">Hãy tạo mục tiêu mới hoặc thay đổi bộ lọc tìm kiếm</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
-            <script>
-                $(document).ready(function() {
-                    // Initialize select2
-                    $('.form-select').select2({
-                        theme: 'bootstrap-5'
-                    });
-                });
-            </script>
+    <script>
+        $(document).ready(function () {
+            // Initialize select2
+            $('.form-select').select2({
+                theme: 'bootstrap-5'
+            });
+        });
+    </script>
 }

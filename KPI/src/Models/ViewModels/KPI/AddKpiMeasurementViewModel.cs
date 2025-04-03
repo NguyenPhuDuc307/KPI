@@ -38,6 +38,13 @@ namespace KPISolution.Models.ViewModels.KPI
         public string Period { get; set; } = string.Empty;
 
         /// <summary>
+        /// The type of period (daily, weekly, monthly, quarterly, yearly)
+        /// </summary>
+        [Required]
+        [Display(Name = "Period Type")]
+        public PeriodType PeriodType { get; set; } = PeriodType.Monthly;
+
+        /// <summary>
         /// Status of the measurement
         /// </summary>
         [Required]
@@ -50,6 +57,13 @@ namespace KPISolution.Models.ViewModels.KPI
         [StringLength(500)]
         [Display(Name = "Notes")]
         public string? Notes { get; set; }
+
+        /// <summary>
+        /// Source of the measurement data
+        /// </summary>
+        [StringLength(200)]
+        [Display(Name = "Data Source")]
+        public string? DataSource { get; set; }
 
         /// <summary>
         /// KPI name (for display purposes)
@@ -73,6 +87,6 @@ namespace KPISolution.Models.ViewModels.KPI
         /// Target value (for display purposes)
         /// </summary>
         [Display(Name = "Target Value")]
-        public decimal TargetValue { get; set; }
+        public decimal? TargetValue { get; set; }
     }
 }

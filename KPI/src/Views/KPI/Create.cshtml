@@ -1,7 +1,7 @@
 @model KPISolution.Models.ViewModels.KPI.KpiViewModel
 @using KPISolution.Models.Enums
 @{
-    ViewData["Title"] = "Thêm KPI mới";
+    ViewData["Title"] = "Create Key Performance Indicator";
 }
 
 <div class="container-fluid px-4 pt-4 pb-5">
@@ -10,10 +10,20 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-1">
                     <li class="breadcrumb-item"><a asp-action="Index">KPI</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Thêm mới</li>
+                    <li class="breadcrumb-item active" aria-current="page">Create</li>
                 </ol>
             </nav>
-            <h1 class="h2 mb-0">Thêm KPI mới</h1>
+            <h1 class="h2 mb-0">Create Key Performance Indicator (KPI)</h1>
+        </div>
+    </div>
+
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle me-2 fs-5"></i>
+            <div>
+                <strong>Key Performance Indicator (KPI)</strong> là chỉ số hiệu suất chính được sử dụng để đo lường mức độ thành công trong việc đạt được các mục tiêu kinh doanh.
+                <br>KPI giúp đánh giá hiệu quả hoạt động và đưa ra những quyết định chiến lược kịp thời.
+            </div>
         </div>
     </div>
 
@@ -32,11 +42,12 @@
                                 <div class="form-floating">
                                     <select asp-for="KpiType" class="form-select">
                                         <option value="">-- Chọn loại KPI --</option>
-                                        <option value="KeyResultIndicator">Chỉ số kết quả then chốt (KRI)</option>
-                                        <option value="PerformanceIndicator">Chỉ số hiệu suất (PI)</option>
-                                        <option value="ResultIndicator">Chỉ số kết quả (RI)</option>
+                                        <option value="KeyResultIndicator">Key Result Indicator (KRI)</option>
+                                        <option value="ResultIndicator">Result Indicator (RI)</option>
+                                        <option value="PerformanceIndicator">Performance Indicator (PI)</option>
+                                        <option value="StandaloneKPI">Key Performance Indicator (KPI)</option>
                                     </select>
-                                    <label asp-for="KpiType">Loại KPI</label>
+                                    <label asp-for="KpiType">Loại KPI <span class="text-danger">*</span></label>
                                     <span asp-validation-for="KpiType" class="text-danger"></span>
                                 </div>
                             </div>
@@ -55,21 +66,21 @@
                                             }
                                         }
                                     </select>
-                                    <label asp-for="DepartmentId">Phòng ban</label>
+                                    <label asp-for="DepartmentId">Phòng ban <span class="text-danger">*</span></label>
                                     <span asp-validation-for="DepartmentId" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <input asp-for="Code" class="form-control" placeholder="Mã KPI">
-                                    <label asp-for="Code">Mã KPI</label>
+                                    <label asp-for="Code">Mã KPI <span class="text-danger">*</span></label>
                                     <span asp-validation-for="Code" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <input asp-for="Name" class="form-control" placeholder="Tên KPI">
-                                    <label asp-for="Name">Tên KPI</label>
+                                    <label asp-for="Name">Tên KPI <span class="text-danger">*</span></label>
                                     <span asp-validation-for="Name" class="text-danger"></span>
                                 </div>
                             </div>
@@ -89,7 +100,7 @@
                                                                      category.ToString())</option>
                                         }
                                     </select>
-                                    <label asp-for="Category">Danh mục</label>
+                                    <label asp-for="Category">Danh mục <span class="text-danger">*</span></label>
                                     <span asp-validation-for="Category" class="text-danger"></span>
                                 </div>
                             </div>
@@ -114,21 +125,21 @@
 
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-transparent">
-                        <h5 class="mb-0">Thông tin đo lường</h5>
+                        <h5 class="mb-0">Measurement Information</h5>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <input asp-for="TargetValue" class="form-control" placeholder="Giá trị mục tiêu">
-                                    <label asp-for="TargetValue">Giá trị mục tiêu</label>
+                                    <label asp-for="TargetValue">Giá trị mục tiêu <span class="text-danger">*</span></label>
                                     <span asp-validation-for="TargetValue" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <input asp-for="Unit" class="form-control" placeholder="Đơn vị đo">
-                                    <label asp-for="Unit">Đơn vị đo</label>
+                                    <label asp-for="Unit">Đơn vị đo <span class="text-danger">*</span></label>
                                     <span asp-validation-for="Unit" class="text-danger"></span>
                                 </div>
                             </div>
@@ -138,16 +149,16 @@
                                         <option value="">-- Chọn tần suất đo --</option>
                                         @foreach (MeasurementFrequency frequency in Enum.GetValues(typeof(MeasurementFrequency)))
                                         {
-                                            <option value="@frequency">@(frequency == MeasurementFrequency.Daily ? "Hàng ngày" :
-                                                                        frequency == MeasurementFrequency.Weekly ? "Hàng tuần" :
-                                                                        frequency == MeasurementFrequency.Biweekly ? "Hai tuần một lần" :
-                                                                        frequency == MeasurementFrequency.Monthly ? "Hàng tháng" :
-                                                                        frequency == MeasurementFrequency.Quarterly ? "Hàng quý" :
-                                                                        frequency == MeasurementFrequency.Semiannually ? "Nửa năm" :
-                                                                        frequency == MeasurementFrequency.Annually ? "Hàng năm" : "Tùy chỉnh")</option>
+                                            <option value="@frequency">@(frequency.ToString() == "Daily" ? "Hàng ngày" :
+                                                                        frequency.ToString() == "Weekly" ? "Hàng tuần" :
+                                                                        frequency.ToString() == "BiWeekly" ? "Hai tuần một lần" :
+                                                                        frequency.ToString() == "Monthly" ? "Hàng tháng" :
+                                                                        frequency.ToString() == "Quarterly" ? "Hàng quý" :
+                                                                        frequency.ToString() == "SemiAnnual" ? "Nửa năm" :
+                                                                        frequency.ToString() == "Annual" ? "Hàng năm" : "Tùy chỉnh")</option>
                                         }
                                     </select>
-                                    <label asp-for="Frequency">Tần suất đo</label>
+                                    <label asp-for="Frequency">Tần suất đo <span class="text-danger">*</span></label>
                                     <span asp-validation-for="Frequency" class="text-danger"></span>
                                 </div>
                             </div>
@@ -157,20 +168,20 @@
                                         <option value="">-- Chọn chiều hướng --</option>
                                         @foreach (MeasurementDirection direction in Enum.GetValues(typeof(MeasurementDirection)))
                                         {
-                                            <option value="@direction">@(direction == MeasurementDirection.HigherIsBetter ? "Cao hơn là tốt hơn" : 
-                                                                        direction == MeasurementDirection.LowerIsBetter ? "Thấp hơn là tốt hơn" : 
-                                                                        direction == MeasurementDirection.TargetIsBest ? "Đạt đúng mục tiêu" : 
+                                            <option value="@direction">@(direction.ToString() == "HigherIsBetter" ? "Cao hơn là tốt hơn" : 
+                                                                        direction.ToString() == "LowerIsBetter" ? "Thấp hơn là tốt hơn" : 
+                                                                        direction.ToString() == "CloserToTarget" ? "Đạt đúng mục tiêu" : 
                                                                         "Nằm trong phạm vi")</option>
                                         }
                                     </select>
-                                    <label asp-for="MeasurementDirection">Chiều hướng</label>
+                                    <label asp-for="MeasurementDirection">Chiều hướng <span class="text-danger">*</span></label>
                                     <span asp-validation-for="MeasurementDirection" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-floating">
                                     <input asp-for="EffectiveDate" class="form-control" type="date">
-                                    <label asp-for="EffectiveDate">Ngày hiệu lực</label>
+                                    <label asp-for="EffectiveDate">Ngày hiệu lực <span class="text-danger">*</span></label>
                                     <span asp-validation-for="EffectiveDate" class="text-danger"></span>
                                 </div>
                             </div>
@@ -197,26 +208,25 @@
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-transparent">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Liên kết với CSF</h5>
+                            <h5 class="mb-0">Critical Success Factor Links</h5>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="enableCsfLink" checked>
-                                <label class="form-check-label" for="enableCsfLink">Bật liên kết</label>
+                                <label class="form-check-label" for="enableCsfLink">Enable linkage</label>
                             </div>
                         </div>
                     </div>
                     <div class="card-body" id="csfLinkSection">
                         <div class="alert alert-info mb-3">
                             <i class="bi bi-info-circle me-2"></i>
-                            Liên kết KPI này với các Yếu tố thành công quan trọng (CSF) giúp theo dõi sự đóng góp của
-                            KPI vào mục tiêu tổng thể của tổ chức.
+                            Link this KPI to relevant Critical Success Factors to track how this indicator contributes to the overall organizational objectives.
                         </div>
 
                         <div class="row">
                             <div class="col-md-12">
-                                <select name="SelectedCsfIds" id="SelectedCsfIds" class="form-select" multiple
+                                <select name="SelectedCsfs" id="SelectedCsfIds" class="form-select" multiple
                                     style="height: 200px;">
                                     @{
-                                        var csfItems = ViewBag.CriticalSuccessFactors as IEnumerable<SelectListItem>;
+                                        var csfItems = ViewBag.CSFs as SelectList;
                                         if (csfItems != null)
                                         {
                                             foreach (var csf in csfItems)
@@ -226,8 +236,7 @@
                                         }
                                     }
                                 </select>
-                                <small class="text-muted d-block mt-1">Giữ Ctrl (Windows) hoặc Command (Mac) để chọn
-                                    nhiều mục</small>
+                                <small class="text-muted d-block mt-1">Hold Ctrl (Windows) or Command (Mac) to select multiple items</small>
                             </div>
                         </div>
                     </div>
@@ -235,10 +244,10 @@
 
                 <div class="d-flex justify-content-between">
                     <a asp-action="Index" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-1"></i>Quay lại
+                        <i class="bi bi-arrow-left me-1"></i>Back
                     </a>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save me-1"></i>Lưu KPI
+                        <i class="bi bi-save me-1"></i>Save
                     </button>
                 </div>
             </form>

@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using KPISolution.Data;
 using KPISolution.Data.Repositories.Interfaces;
 using KPISolution.Models.Entities.Organization;
 using KPISolution.Models.Enums;
@@ -17,20 +19,64 @@ namespace KPISolution.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<BusinessObjectiveController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public BusinessObjectiveController(IUnitOfWork unitOfWork, ILogger<BusinessObjectiveController> logger)
+        public BusinessObjectiveController(IUnitOfWork unitOfWork, ILogger<BusinessObjectiveController> logger, ApplicationDbContext context)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _context = context;
         }
 
         // GET: BusinessObjective
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchTerm, BusinessPerspective? filterPerspective, ObjectiveStatus? filterStatus, PriorityLevel? filterPriority, TimeframeType? filterTimeframe, string sortBy = "Name", string sortDirection = "asc")
         {
-            var objectives = await _unitOfWork.BusinessObjectives.GetAllAsync();
+            var objectives = await _context.BusinessObjectives
+                .Include(x => x.Department)
+                .Where(o => o.IsActive)
+                .ToListAsync();
+
+            // Apply filters
+            var filteredObjectives = objectives.AsEnumerable();
+
+            // Apply search term filter
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                filteredObjectives = filteredObjectives.Where(o =>
+                    o.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    o.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Apply perspective filter
+            if (filterPerspective.HasValue)
+            {
+                filteredObjectives = filteredObjectives.Where(o => o.BusinessPerspective == filterPerspective.Value);
+            }
+
+            // Apply status filter
+            if (filterStatus.HasValue)
+            {
+                filteredObjectives = filteredObjectives.Where(o => o.Status == filterStatus.Value);
+            }
+
+            // Apply priority filter
+            if (filterPriority.HasValue)
+            {
+                filteredObjectives = filteredObjectives.Where(o => o.Priority == filterPriority.Value);
+            }
+
+            // Apply timeframe filter
+            if (filterTimeframe.HasValue)
+            {
+                filteredObjectives = filteredObjectives.Where(o => o.Timeframe == filterTimeframe.Value);
+            }
+
+            // Apply sorting
+            filteredObjectives = ApplySorting(filteredObjectives, sortBy, sortDirection);
+
             var viewModel = new BusinessObjectiveListViewModel
             {
-                Objectives = objectives.Where(o => o.IsActive).Select(o => new BusinessObjectiveListItemViewModel
+                Objectives = filteredObjectives.Select(o => new BusinessObjectiveListItemViewModel
                 {
                     Id = o.Id,
                     Name = o.Name,
@@ -43,82 +89,275 @@ namespace KPISolution.Controllers
                     TargetDate = o.TargetDate,
                     Department = o.Department != null ? o.Department.Name : string.Empty,
                     TimeframeType = o.Timeframe
-                }).OrderBy(o => o.Name).ToList()
+                }).ToList(),
+                SearchTerm = searchTerm,
+                FilterPerspective = filterPerspective,
+                FilterStatus = filterStatus,
+                FilterPriority = filterPriority,
+                FilterTimeframe = filterTimeframe,
+                SortBy = sortBy,
+                SortDirection = sortDirection
             };
 
             return View(viewModel);
         }
 
+        private IEnumerable<BusinessObjective> ApplySorting(IEnumerable<BusinessObjective> objectives, string sortBy, string sortDirection)
+        {
+            // Default sorting
+            if (string.IsNullOrEmpty(sortBy))
+            {
+                sortBy = "Name";
+            }
+
+            var isAscending = string.IsNullOrEmpty(sortDirection) || sortDirection.Equals("asc", StringComparison.OrdinalIgnoreCase);
+
+            switch (sortBy.ToLower())
+            {
+                case "name":
+                    objectives = isAscending
+                        ? objectives.OrderBy(o => o.Name)
+                        : objectives.OrderByDescending(o => o.Name);
+                    break;
+                case "perspective":
+                    objectives = isAscending
+                        ? objectives.OrderBy(o => o.BusinessPerspective).ThenBy(o => o.Name)
+                        : objectives.OrderByDescending(o => o.BusinessPerspective).ThenBy(o => o.Name);
+                    break;
+                case "status":
+                    objectives = isAscending
+                        ? objectives.OrderBy(o => o.Status).ThenBy(o => o.Name)
+                        : objectives.OrderByDescending(o => o.Status).ThenBy(o => o.Name);
+                    break;
+                case "priority":
+                    objectives = isAscending
+                        ? objectives.OrderBy(o => o.Priority).ThenBy(o => o.Name)
+                        : objectives.OrderByDescending(o => o.Priority).ThenBy(o => o.Name);
+                    break;
+                case "progress":
+                    objectives = isAscending
+                        ? objectives.OrderBy(o => o.ProgressPercentage).ThenBy(o => o.Name)
+                        : objectives.OrderByDescending(o => o.ProgressPercentage).ThenBy(o => o.Name);
+                    break;
+                case "timeframe":
+                    objectives = isAscending
+                        ? objectives.OrderBy(o => o.Timeframe).ThenBy(o => o.Name)
+                        : objectives.OrderByDescending(o => o.Timeframe).ThenBy(o => o.Name);
+                    break;
+                case "targetdate":
+                    objectives = isAscending
+                        ? objectives.OrderBy(o => o.TargetDate).ThenBy(o => o.Name)
+                        : objectives.OrderByDescending(o => o.TargetDate).ThenBy(o => o.Name);
+                    break;
+                case "department":
+                    objectives = isAscending
+                        ? objectives.OrderBy(o => o.Department != null ? o.Department.Name : string.Empty).ThenBy(o => o.Name)
+                        : objectives.OrderByDescending(o => o.Department != null ? o.Department.Name : string.Empty).ThenBy(o => o.Name);
+                    break;
+            }
+
+            return objectives;
+        }
+
         // GET: BusinessObjective/Details/5
         public async Task<IActionResult> Details(Guid id)
         {
-            var objective = await _unitOfWork.BusinessObjectives.GetByIdAsync(id);
-            if (objective == null || !objective.IsActive)
+            try
             {
-                return NotFound();
-            }
+                var objective = await _context.BusinessObjectives
+                    .Include(x => x.Department)
+                    .FirstOrDefaultAsync(x => x.Id == id && x.IsActive);
 
-            // Get related CSFs
-            var allCsfs = await _unitOfWork.CriticalSuccessFactors.GetAllAsync();
-            var csfs = allCsfs.Where(c => c.BusinessObjectiveId == id && c.IsActive).ToList();
-
-            var viewModel = new BusinessObjectiveDetailsViewModel
-            {
-                Id = objective.Id,
-                Name = objective.Name,
-                Description = objective.Description,
-                BusinessPerspective = objective.BusinessPerspective,
-                Priority = objective.Priority,
-                Status = objective.Status,
-                ProgressPercentage = objective.ProgressPercentage,
-                StartDate = objective.StartDate,
-                TargetDate = objective.TargetDate,
-                CompletionDate = objective.CompletionDate,
-                Department = objective.Department?.Name,
-                Budget = objective.Budget,
-                Notes = objective.Notes,
-                FiscalYear = objective.FiscalYear,
-                Timeframe = objective.Timeframe,
-                RelatedCSFs = csfs.Select(c => new CsfListItemViewModel
+                if (objective == null)
                 {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Code = c.Code,
-                    Status = c.Status,
-                    ProgressPercentage = c.ProgressPercentage
-                }).ToList()
-            };
+                    return NotFound();
+                }
 
-            // Get child objectives if any
-            if (objective.ChildObjectives != null && objective.ChildObjectives.Any())
-            {
-                viewModel.ChildObjectives = objective.ChildObjectives.Where(o => o.IsActive).Select(o => new BusinessObjectiveListItemViewModel
-                {
-                    Id = o.Id,
-                    Name = o.Name,
-                    Status = o.Status,
-                    ProgressPercentage = o.ProgressPercentage,
-                    TargetDate = o.TargetDate
-                }).ToList();
-            }
+                // Lấy danh sách các CSF liên quan đến mục tiêu
+                var relatedCsfs = await _context.CriticalSuccessFactors
+                    .Where(csf => csf.BusinessObjectiveId == id && csf.IsActive)
+                    .ToListAsync();
 
-            // Get parent objective if any
-            if (objective.ParentObjectiveId.HasValue)
-            {
-                var parentObjective = await _unitOfWork.BusinessObjectives.GetByIdAsync(objective.ParentObjectiveId.Value);
-                if (parentObjective != null)
+                // Lấy danh sách các Yếu tố thành công (SF) liên quan
+                var relatedSfs = await _context.SuccessFactors
+                    .Where(sf => sf.BusinessObjectiveId == id && sf.IsActive)
+                    .ToListAsync();
+
+                // Lấy danh sách các chỉ số KPI, KRI, RI, PI liên quan - nếu interface KPIs chưa được triển khai, cần bổ sung
+                var relatedKpis = new List<dynamic>(); // Sẽ thay bằng danh sách KPI thực tế khi có
+
+                var parentId = objective.ParentObjectiveId;
+                BusinessObjective? parentObjective = null;
+                if (parentId.HasValue)
                 {
-                    viewModel.ParentObjective = new BusinessObjectiveListItemViewModel
+                    parentObjective = await _context.BusinessObjectives
+                        .Include(x => x.Department)
+                        .FirstOrDefaultAsync(x => x.Id == parentId.Value && x.IsActive);
+                }
+
+                // Lấy danh sách các mục tiêu con
+                var childObjectives = await _context.BusinessObjectives
+                    .Include(x => x.Department)
+                    .Where(o => o.ParentObjectiveId == id && o.IsActive)
+                    .ToListAsync();
+
+                var viewModel = new BusinessObjectiveDetailsViewModel
+                {
+                    Id = objective.Id,
+                    Name = objective.Name,
+                    Description = objective.Description,
+                    BusinessPerspective = objective.BusinessPerspective,
+                    BusinessPerspectiveDisplayText = GetBusinessPerspectiveText(objective.BusinessPerspective),
+                    Department = objective.Department?.Name ?? "-",
+                    FiscalYear = objective.FiscalYear ?? "-",
+                    TimeframeType = objective.Timeframe,
+                    StartDate = objective.StartDate,
+                    TargetDate = objective.TargetDate,
+                    CompletionDate = objective.CompletionDate,
+                    Budget = objective.Budget,
+                    Status = objective.Status,
+                    Priority = objective.Priority,
+                    ProgressPercentage = objective.ProgressPercentage,
+                    Notes = objective.Notes,
+                    ParentObjective = parentObjective != null ? new BusinessObjectiveSimpleViewModel
                     {
                         Id = parentObjective.Id,
                         Name = parentObjective.Name,
                         Status = parentObjective.Status,
-                        ProgressPercentage = parentObjective.ProgressPercentage
-                    };
-                }
-            }
+                        StatusBadgeClass = GetStatusBadgeClass(parentObjective.Status),
+                        ProgressPercentage = parentObjective.ProgressPercentage,
+                        TargetDate = parentObjective.TargetDate
+                    } : null,
+                    ChildObjectives = childObjectives.Select(child => new BusinessObjectiveSimpleViewModel
+                    {
+                        Id = child.Id,
+                        Name = child.Name,
+                        Status = child.Status,
+                        StatusBadgeClass = GetStatusBadgeClass(child.Status),
+                        ProgressPercentage = child.ProgressPercentage,
+                        TargetDate = child.TargetDate
+                    }).ToList(),
+                    RelatedCSFs = relatedCsfs.Select(csf => new CSFSimpleViewModel
+                    {
+                        Id = csf.Id,
+                        Code = csf.Code,
+                        Name = csf.Name,
+                        Status = csf.Status,
+                        StatusBadgeClass = GetCsfStatusBadgeClass(csf.Status),
+                        ProgressPercentage = csf.ProgressPercentage
+                    }).ToList(),
+                    // Thêm các SF liên quan
+                    RelatedSFs = relatedSfs.Select(sf => new SFSimpleViewModel
+                    {
+                        Id = sf.Id,
+                        Code = sf.Code,
+                        Name = sf.Name,
+                        Status = sf.Status,
+                        StatusBadgeClass = GetStatusBadgeClass(sf.Status),
+                        ProgressPercentage = sf.ProgressPercentage
+                    }).ToList(),
+                    // Tạm khởi tạo danh sách rỗng cho KPI, KRI, RI, PI
+                    RelatedKPIs = new List<KPISimpleViewModel>(),
+                    RelatedKRIs = new List<KPISimpleViewModel>(),
+                    RelatedRIs = new List<KPISimpleViewModel>(),
+                    RelatedPIs = new List<KPISimpleViewModel>()
+                };
 
-            return View(viewModel);
+                // Tính toán giá trị cho các badge và display text
+                viewModel.StatusBadgeClass = GetStatusBadgeClass(objective.Status);
+                viewModel.PriorityBadgeClass = GetPriorityBadgeClass(objective.Priority);
+                viewModel.ProgressBarClass = GetProgressBarClass(objective.ProgressPercentage);
+                viewModel.TimeframeDisplayText = GetTimeframeDisplayText(objective.Timeframe);
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving business objective details for ID: {Id}", id);
+                TempData["Error"] = "Đã xảy ra lỗi khi tải thông tin chi tiết mục tiêu.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        private string GetCsfStatusBadgeClass(CSFStatus status)
+        {
+            return status switch
+            {
+                CSFStatus.NotStarted => "badge bg-secondary",
+                CSFStatus.InProgress => "badge bg-primary",
+                CSFStatus.AtRisk => "badge bg-warning text-dark",
+                CSFStatus.Delayed => "badge bg-danger",
+                CSFStatus.Completed => "badge bg-success",
+                CSFStatus.Cancelled => "badge bg-dark",
+                _ => "badge bg-secondary"
+            };
+        }
+
+        // Hỗ trợ cho KPI status
+        private string GetKpiStatusBadgeClass(object status)
+        {
+            return "badge bg-secondary"; // Default badge cho KPI, sẽ triển khai chi tiết sau khi enum KpiStatus được định nghĩa
+        }
+
+        private string GetStatusBadgeClass(ObjectiveStatus status)
+        {
+            return status switch
+            {
+                ObjectiveStatus.NotStarted => "badge bg-secondary",
+                ObjectiveStatus.InProgress => "badge bg-primary",
+                ObjectiveStatus.OnHold => "badge bg-warning text-dark",
+                ObjectiveStatus.Completed => "badge bg-success",
+                ObjectiveStatus.Canceled => "badge bg-danger",
+                ObjectiveStatus.Delayed => "badge bg-info text-dark",
+                _ => "badge bg-secondary"
+            };
+        }
+
+        private string GetPriorityBadgeClass(PriorityLevel priority)
+        {
+            return priority switch
+            {
+                PriorityLevel.Low => "badge bg-success",
+                PriorityLevel.Medium => "badge bg-warning text-dark",
+                PriorityLevel.High => "badge bg-danger",
+                PriorityLevel.Critical => "badge bg-dark",
+                _ => "badge bg-secondary"
+            };
+        }
+
+        private string GetProgressBarClass(int progressPercentage)
+        {
+            return progressPercentage switch
+            {
+                100 => "progress-bar bg-success",
+                >= 75 => "progress-bar bg-info",
+                >= 50 => "progress-bar bg-primary",
+                >= 25 => "progress-bar bg-warning",
+                _ => "progress-bar bg-danger"
+            };
+        }
+
+        private string GetTimeframeDisplayText(TimeframeType timeframe)
+        {
+            return timeframe switch
+            {
+                TimeframeType.ShortTerm => "Ngắn hạn",
+                TimeframeType.MediumTerm => "Trung hạn",
+                TimeframeType.LongTerm => "Dài hạn",
+                _ => "Không xác định"
+            };
+        }
+
+        private string GetBusinessPerspectiveText(BusinessPerspective perspective)
+        {
+            return perspective switch
+            {
+                BusinessPerspective.Financial => "Tài chính",
+                BusinessPerspective.Customer => "Khách hàng",
+                BusinessPerspective.InternalProcess => "Quy trình nội bộ",
+                BusinessPerspective.LearningGrowth => "Học hỏi và phát triển",
+                _ => "Không xác định"
+            };
         }
 
         // GET: BusinessObjective/Create

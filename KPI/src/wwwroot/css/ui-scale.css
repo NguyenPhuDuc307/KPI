@@ -1,0 +1,71 @@
+/* UI Scaling Feature CSS */
+
+:root {
+  --ui-scale: 1;
+}
+
+.ui-scale-90 {
+  --ui-scale: 0.9;
+}
+
+.ui-scale-80 {
+  --ui-scale: 0.8;
+}
+
+.ui-scale-75 {
+  --ui-scale: 0.75;
+}
+
+.ui-scale-100 {
+  --ui-scale: 1;
+}
+
+html[data-scale] body {
+  zoom: var(--ui-scale);
+  -moz-transform: scale(var(--ui-scale));
+  -moz-transform-origin: 0 0;
+}
+
+/* UI Scale Controls */
+.ui-scale-controls {
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  z-index: 9999;
+  background: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ui-scale-controls .btn-group {
+  margin-bottom: 5px;
+}
+
+.ui-scale-controls .btn {
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+.ui-scale-controls .btn-toggle {
+  margin-bottom: 5px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Make sure UI scale controls still appear at full size */
+.ui-scale-controls * {
+  zoom: calc(1 / var(--ui-scale));
+  -moz-transform: scale(calc(1 / var(--ui-scale)));
+} 

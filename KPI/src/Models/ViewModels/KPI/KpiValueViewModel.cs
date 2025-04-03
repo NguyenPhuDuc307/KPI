@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using KPISolution.Models.Entities.Measurement;
 
@@ -20,6 +21,18 @@ namespace KPISolution.Models.ViewModels.KPI
         public Guid KpiId { get; set; }
 
         /// <summary>
+        /// Code of the KPI for display purposes
+        /// </summary>
+        [Display(Name = "Mã KPI")]
+        public string KpiCode { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Name of the KPI
+        /// </summary>
+        [Display(Name = "Tên KPI")]
+        public string KpiName { get; set; } = string.Empty;
+
+        /// <summary>
         /// Type of KPI (KRI, RI, PI)
         /// </summary>
         [Display(Name = "KPI Type")]
@@ -28,7 +41,7 @@ namespace KPISolution.Models.ViewModels.KPI
         /// <summary>
         /// The actual measured value
         /// </summary>
-        [Display(Name = "Actual Value")]
+        [Display(Name = "Giá trị")]
         public decimal ActualValue { get; set; }
 
         /// <summary>
@@ -38,10 +51,10 @@ namespace KPISolution.Models.ViewModels.KPI
         public decimal? TargetValue { get; set; }
 
         /// <summary>
-        /// The date and time of measurement
+        /// Date when the measurement was taken
         /// </summary>
-        [Display(Name = "Measurement Date")]
-        [DataType(DataType.DateTime)]
+        [Display(Name = "Ngày đo")]
+        [DataType(DataType.Date)]
         public DateTime MeasurementDate { get; set; }
 
         /// <summary>
@@ -51,9 +64,9 @@ namespace KPISolution.Models.ViewModels.KPI
         public string Period { get; set; } = string.Empty;
 
         /// <summary>
-        /// Comments or notes about this measurement
+        /// Additional notes about the measurement
         /// </summary>
-        [Display(Name = "Notes")]
+        [Display(Name = "Ghi chú")]
         public string? Notes { get; set; }
 
         /// <summary>
@@ -92,16 +105,27 @@ namespace KPISolution.Models.ViewModels.KPI
         public string StatusCssClass { get; set; } = string.Empty;
 
         /// <summary>
-        /// Creator of this measurement
+        /// User who created the measurement
         /// </summary>
-        [Display(Name = "Created By")]
-        public string? CreatedBy { get; set; }
+        [Display(Name = "Người tạo")]
+        public string CreatedBy { get; set; } = string.Empty;
 
         /// <summary>
-        /// Date when this measurement was recorded
+        /// Date and time when the measurement was created
         /// </summary>
-        [Display(Name = "Created At")]
-        [DataType(DataType.DateTime)]
+        [Display(Name = "Ngày tạo")]
         public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// User who last updated the measurement
+        /// </summary>
+        [Display(Name = "Người cập nhật")]
+        public string? UpdatedBy { get; set; }
+
+        /// <summary>
+        /// Date and time when the measurement was last updated
+        /// </summary>
+        [Display(Name = "Ngày cập nhật")]
+        public DateTime? UpdatedAt { get; set; }
     }
 }

@@ -1,263 +1,163 @@
 @model KPISolution.Models.ViewModels.KPI.KpiListViewModel
+@using KPISolution.Models.Enums
 @{
-    ViewData["Title"] = "Danh sách chỉ số kết quả (RI)";
+    ViewData["Title"] = "Quản lý chỉ số kết quả";
+    ViewData["Icon"] = "bi-graph-down";
+    ViewData["Subtitle"] = "Quản lý các chỉ số kết quả của tổ chức";
+    ViewData["ShowFilterPanel"] = true;
+
+    if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+    {
+        ViewData["PrimaryButton"] = ("Tạo RI mới", "RI", "Create", "", "bi-plus-circle");
+    }
 }
 
-<div class="container-fluid px-4 pt-4 pb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h2 mb-0">Danh sách chỉ số kết quả (RI)</h1>
+@section FilterContent {
+    <form asp-controller="RI" asp-action="Index" method="get" id="filterForm">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Phòng ban</label>
+                    <select asp-for="Filter.DepartmentId" asp-items="Model.Departments" class="form-select"
+                        id="departmentFilter">
+                        <option value="">Tất cả phòng ban</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Danh mục</label>
+                    <select asp-for="Filter.Category" asp-items="Model.Categories" class="form-select" id="categoryFilter">
+                        <option value="">Tất cả danh mục</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select asp-for="Filter.Status" class="form-select" id="statusFilter">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="@KpiStatus.OnTarget">Theo kế hoạch</option>
+                        <option value="@KpiStatus.AtRisk">Có rủi ro</option>
+                        <option value="@KpiStatus.BelowTarget">Không theo kế hoạch</option>
+                        <option value="@KpiStatus.Draft">Chưa bắt đầu</option>
+                        <option value="@KpiStatus.Active">Hoạt động</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Từ khoá</label>
+                    <input asp-for="Filter.SearchTerm" class="form-control" placeholder="Nhập từ khoá tìm kiếm" />
+                </div>
+            </div>
         </div>
-        @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
-        {
-            <div>
-                <a asp-controller="Ri" asp-action="Create" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-1"></i>Thêm RI mới
+        <div class="row">
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary" id="applyFilter">
+                    <i class="bi bi-funnel me-1"></i>Lọc
+                </button>
+                <a asp-controller="RI" asp-action="Index" class="btn btn-outline-secondary" id="resetFilter">
+                    <i class="bi bi-x-circle me-1"></i>Đặt lại
                 </a>
             </div>
-        }
+        </div>
+    </form>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Danh sách chỉ số kết quả (RI)</h5>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-download me-1"></i>Xuất dữ liệu
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                <li><a class="dropdown-item d-flex align-items-center" href="#"><i
+                            class="bi bi-file-excel me-2"></i>Excel</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="#"><i
+                            class="bi bi-file-pdf me-2"></i>PDF</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="#"><i class="bi bi-printer me-2"></i>In báo
+                        cáo</a></li>
+            </ul>
+        </div>
     </div>
-
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-transparent">
-                    <h5 class="mb-0">Bộ lọc</h5>
-                </div>
-                <div class="card-body">
-                    <form asp-controller="Ri" asp-action="Index" method="get" id="filterForm">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <input asp-for="Filter.SearchTerm" class="form-control" placeholder="Tìm kiếm">
-                                    <label asp-for="Filter.SearchTerm">Tìm kiếm (mã, tên, mô tả)</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <select asp-for="Filter.Department" asp-items="Model.Departments"
-                                        class="form-select auto-submit">
-                                        <option value="">-- Tất cả phòng ban --</option>
-                                    </select>
-                                    <label asp-for="Filter.Department">Phòng ban</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <select asp-for="Filter.ProcessArea" class="form-select auto-submit">
-                                        <option value="">-- Tất cả lĩnh vực --</option>
-                                        <option value="CoreBusiness">Kinh doanh cốt lõi</option>
-                                        <option value="Support">Hỗ trợ</option>
-                                        <option value="Management">Quản lý</option>
-                                        <option value="Production">Sản xuất</option>
-                                        <option value="Sales">Bán hàng</option>
-                                        <option value="ServiceDelivery">Dịch vụ</option>
-                                        <option value="CustomerRelationship">Quan hệ khách hàng</option>
-                                        <option value="ProductDevelopment">Phát triển sản phẩm</option>
-                                        <option value="Distribution">Phân phối</option>
-                                        <option value="SupplyChain">Chuỗi cung ứng</option>
-                                        <option value="QualityAssurance">Đảm bảo chất lượng</option>
-                                        <option value="Marketing">Marketing</option>
-                                        <option value="IT">CNTT</option>
-                                        <option value="HR">Nhân sự</option>
-                                        <option value="Financial">Tài chính</option>
-                                        <option value="Other">Khác</option>
-                                    </select>
-                                    <label asp-for="Filter.ProcessArea">Lĩnh vực quy trình</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <select asp-for="Filter.Status" class="form-select auto-submit">
-                                        <option value="">-- Tất cả trạng thái --</option>
-                                        <option value="Active">Hoạt động</option>
-                                        <option value="Inactive">Không hoạt động</option>
-                                        <option value="Draft">Nháp</option>
-                                        <option value="UnderReview">Đang xem xét</option>
-                                        <option value="Archived">Đã lưu trữ</option>
-                                    </select>
-                                    <label asp-for="Filter.Status">Trạng thái</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <select asp-for="Filter.SortBy" class="form-select auto-submit">
-                                        <option value="Code">Mã RI</option>
-                                        <option value="Name">Tên RI</option>
-                                        <option value="Department">Phòng ban</option>
-                                        <option value="Status">Trạng thái</option>
-                                        <option value="CreatedDate">Ngày tạo</option>
-                                        <option value="LastUpdated">Cập nhật lần cuối</option>
-                                    </select>
-                                    <label asp-for="Filter.SortBy">Sắp xếp theo</label>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-floating">
-                                    <select asp-for="Filter.SortDirection" class="form-select auto-submit">
-                                        <option value="Ascending">Tăng dần</option>
-                                        <option value="Descending">Giảm dần</option>
-                                    </select>
-                                    <label asp-for="Filter.SortDirection">Thứ tự</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center h-100">
-                                    <button type="submit" class="btn btn-primary me-2">
-                                        <i class="bi bi-search me-1"></i>Tìm kiếm
-                                    </button>
-                                    <a asp-controller="Ri" asp-action="Index" class="btn btn-outline-secondary">
-                                        <i class="bi bi-x-circle me-1"></i>Xóa bộ lọc
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card shadow-sm">
-                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0">Kết quả tìm kiếm</h5>
-                        <span class="text-muted small">Tìm thấy @Model.TotalCount RI</span>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Mã</th>
-                                    <th>Tên</th>
-                                    <th>Lĩnh vực quy trình</th>
-                                    <th>Phòng ban</th>
-                                    <th>KRI cha</th>
-                                    <th>Đơn vị đo</th>
-                                    <th>Giá trị mục tiêu</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (Model.KpiItems != null && Model.KpiItems.Any())
-                                {
-                                    foreach (var item in Model.KpiItems)
-                                    {
-                                        <tr>
-                                            <td>@item.Code</td>
-                                            <td>@item.Name</td>
-                                            <td>@item.ProcessArea</td>
-                                            <td>@item.Department</td>
-                                            <td>@(item.ParentKpiCode ?? "-")</td>
-                                            <td>@item.MeasurementUnit</td>
-                                            <td>@item.TargetValue</td>
-                                            <td>
-                                                @switch (item.StatusString)
-                                                {
-                                                    case "Active":
-                                                        <span class="badge bg-success">Hoạt động</span>
-                                                        break;
-                                                    case "Inactive":
-                                                        <span class="badge bg-secondary">Không hoạt động</span>
-                                                        break;
-                                                    case "Draft":
-                                                        <span class="badge bg-warning text-dark">Nháp</span>
-                                                        break;
-                                                    case "UnderReview":
-                                                        <span class="badge bg-info">Đang xem xét</span>
-                                                        break;
-                                                    case "Archived":
-                                                        <span class="badge bg-dark">Đã lưu trữ</span>
-                                                        break;
-                                                    default:
-                                                        <span class="badge bg-light text-dark">@item.StatusString</span>
-                                                        break;
-                                                }
-                                            </td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <a asp-controller="Ri" asp-action="Details" asp-route-id="@item.Id"
-                                                        class="btn btn-sm btn-outline-primary">
-                                                        <i class="bi bi-eye"></i>
-                                                    </a>
-                                                    @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
-                                                    {
-                                                        <a asp-controller="Ri" asp-action="Edit" asp-route-id="@item.Id"
-                                                            class="btn btn-sm btn-outline-secondary">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </a>
-                                                        <a asp-controller="Ri" asp-action="Delete" asp-route-id="@item.Id"
-                                                            class="btn btn-sm btn-outline-danger">
-                                                            <i class="bi bi-trash"></i>
-                                                        </a>
-                                                    }
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                                else
-                                {
-                                    <tr>
-                                        <td colspan="9" class="text-center py-4">
-                                            <div class="text-muted mb-2">Không tìm thấy chỉ số kết quả nào.</div>
-                                            <a asp-controller="Ri" asp-action="Create" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-plus-circle me-1"></i>Thêm RI mới
-                                            </a>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer bg-transparent">
-                    @if (Model.TotalCount > 0)
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="riTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã RI</th>
+                        <th>Tên</th>
+                        <th>Phòng ban</th>
+                        <th>Giá trị hiện tại</th>
+                        <th>Mục tiêu</th>
+                        <th>Trạng thái</th>
+                        <th>Người phụ trách</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.KpiItems != null && Model.KpiItems.Any())
                     {
-                        var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
-                        <nav>
-                            <ul class="pagination justify-content-center mb-0">
-                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-                                    <a class="page-link" asp-controller="Ri" asp-action="Index"
-                                        asp-route-page="@(Model.CurrentPage - 1)" asp-route-sortBy="@Model.Filter.SortBy"
-                                        asp-route-sortDirection="@Model.Filter.SortDirection"
-                                        asp-route-searchTerm="@Model.Filter.SearchTerm"
-                                        asp-route-department="@Model.Filter.Department"
-                                        asp-route-status="@Model.Filter.Status"
-                                        asp-route-processArea="@Model.Filter.ProcessArea">
-                                        <i class="bi bi-chevron-left"></i>
-                                    </a>
-                                </li>
-                                @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(totalPages,
-                                                            Model.CurrentPage + 2); i++)
-                                {
-                                    <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
-                                        <a class="page-link" asp-controller="Ri" asp-action="Index" asp-route-page="@i"
-                                            asp-route-sortBy="@Model.Filter.SortBy"
-                                            asp-route-sortDirection="@Model.Filter.SortDirection"
-                                            asp-route-searchTerm="@Model.Filter.SearchTerm"
-                                            asp-route-department="@Model.Filter.Department"
-                                            asp-route-status="@Model.Filter.Status"
-                                            asp-route-processArea="@Model.Filter.ProcessArea">@i</a>
-                                    </li>
-                                }
-                                <li class="page-item @(Model.CurrentPage >= totalPages ? "disabled" : "")">
-                                    <a class="page-link" asp-controller="Ri" asp-action="Index"
-                                        asp-route-page="@(Model.CurrentPage + 1)" asp-route-sortBy="@Model.Filter.SortBy"
-                                        asp-route-sortDirection="@Model.Filter.SortDirection"
-                                        asp-route-searchTerm="@Model.Filter.SearchTerm"
-                                        asp-route-department="@Model.Filter.Department"
-                                        asp-route-status="@Model.Filter.Status"
-                                        asp-route-processArea="@Model.Filter.ProcessArea">
-                                        <i class="bi bi-chevron-right"></i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
+                        @foreach (var item in Model.KpiItems)
+                        {
+                            <tr>
+                                <td><a asp-action="Details" asp-route-id="@item.Id"
+                                        class="fw-medium text-decoration-none">@item.Code</a></td>
+                                <td>@item.Name</td>
+                                <td>@item.Department</td>
+                                <td>@(item.CurrentValue.HasValue ? $"{item.CurrentValue} {item.MeasurementUnit}" : "-")</td>
+                                <td>@($"{item.TargetValue} {item.MeasurementUnit}")</td>
+                                <td><span
+                                        class="badge @(item.Status == KpiStatus.OnTarget ? "bg-success" : item.Status == KpiStatus.AtRisk ? "bg-warning" : item.Status == KpiStatus.BelowTarget ? "bg-danger" : item.Status == KpiStatus.Draft ? "bg-secondary" : "bg-primary")">@item.StatusString</span>
+                                </td>
+                                <td>@item.ExecutiveOwner</td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"
+                                            title="Xem chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"
+                                                title="Chỉnh sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger"
+                                                title="Xoá">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
-                </div>
-            </div>
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-clipboard-data fs-3 d-block mb-3"></i>
+                                    <p>Không tìm thấy chỉ số kết quả nào.</p>
+                                    <p>Hãy thử thay đổi bộ lọc hoặc thêm mới chỉ số kết quả.</p>
+                                    @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+                                    {
+                                        <div class="mt-3">
+                                            <a asp-action="Create" class="btn btn-outline-primary">
+                                                <i class="bi bi-plus-circle me-1"></i>Tạo RI mới
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -265,9 +165,29 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // Auto-submit the form when select values change
-            $('.auto-submit').change(function () {
-                $('#filterForm').submit();
+            // Initialize DataTable
+            $('#riTable').DataTable({
+                "pageLength": 10,
+                "language": {
+                    "lengthMenu": "Hiển thị _MENU_ bản ghi",
+                    "zeroRecords": "Không tìm thấy bản ghi phù hợp",
+                    "info": "Hiển thị _START_ đến _END_ của _TOTAL_ bản ghi",
+                    "infoEmpty": "Không có bản ghi nào",
+                    "infoFiltered": "(lọc từ _MAX_ bản ghi)",
+                    "search": "Tìm kiếm:",
+                    "paginate": {
+                        "first": "Đầu",
+                        "last": "Cuối",
+                        "next": "Sau",
+                        "previous": "Trước"
+                    }
+                }
+            });
+
+            // Initialize select2 for better dropdown UX
+            $('.form-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
             });
         });
     </script>

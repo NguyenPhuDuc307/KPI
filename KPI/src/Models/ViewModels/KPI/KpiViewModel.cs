@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using KPISolution.Models.Enums;
+using System.Collections.Generic;
 
 namespace KPISolution.Models.ViewModels.KPI
 {
@@ -152,6 +153,20 @@ namespace KPISolution.Models.ViewModels.KPI
         public ActivityType? ActivityType { get; set; }
 
         /// <summary>
+        /// Indicates whether this is a Key Result Indicator (KRI). If true, this RI
+        /// is considered a KRI for the organization.
+        /// </summary>
+        [Display(Name = "Is Key Result Indicator (KRI)")]
+        public bool IsRIKey { get; set; } = false;
+
+        /// <summary>
+        /// Indicates whether this is a Key Performance Indicator (KPI). If true, this PI
+        /// is considered a KPI for the organization.
+        /// </summary>
+        [Display(Name = "Is Key Performance Indicator (KPI)")]
+        public bool IsPIKey { get; set; } = false;
+
+        /// <summary>
         /// Gets or sets the performance level for the PI
         /// </summary>
         [Display(Name = "Performance Level")]
@@ -187,5 +202,23 @@ namespace KPISolution.Models.ViewModels.KPI
         [Display(Name = "Effective Date")]
         [DataType(DataType.Date)]
         public DateTime? EffectiveDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the selected CSF IDs
+        /// </summary>
+        [Display(Name = "Critical Success Factors")]
+        public List<Guid>? SelectedCsfIds { get; set; }
+
+        /// <summary>
+        /// Parent Result Indicator ID for Performance Indicators
+        /// </summary>
+        [Display(Name = "Parent Result Indicator")]
+        public Guid? RIId { get; set; }
+
+        /// <summary>
+        /// Parent Key Result Indicator ID for direct Performance Indicators
+        /// </summary>
+        [Display(Name = "Parent Key Result Indicator")]
+        public Guid? KRIId { get; set; }
     }
 }

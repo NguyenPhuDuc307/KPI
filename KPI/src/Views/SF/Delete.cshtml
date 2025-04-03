@@ -1,0 +1,195 @@
+@model KPISolution.Models.Entities.Objective.SuccessFactor
+@{
+    ViewData["Title"] = "Xóa yếu tố thành công";
+    var cannotDelete = ViewBag.CannotDelete != null && ViewBag.CannotDelete;
+    var relatedCsfCount = ViewBag.RelatedCsfCount != null ? ViewBag.RelatedCsfCount : 0;
+}
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mt-4"><i class="bi bi-trash-fill me-2"></i>Xóa yếu tố thành công</h1>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
+
+    @if (cannotDelete)
+    {
+        <div class="alert alert-danger mb-4">
+            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Không thể xóa!</h5>
+            <p>Không thể xóa yếu tố thành công này vì có <strong>@relatedCsfCount CSF</strong> đang tham chiếu đến nó.
+                Bạn cần chỉnh sửa các CSF này trước khi xóa yếu tố thành công này.</p>
+            <hr>
+            <p class="mb-1">Để bỏ liên kết CSF:</p>
+            <ol>
+                <li>Truy cập vào các CSF được liệt kê bên dưới</li>
+                <li>Chọn "Chỉnh sửa" trên mỗi CSF</li>
+                <li>Trong phần chỉnh sửa, hãy thay đổi trường "Yếu tố thành công" thành một giá trị khác hoặc để trống</li>
+                <li>Lưu thay đổi</li>
+                <li>Sau khi đã bỏ liên kết tất cả CSF, quay lại trang này để xóa yếu tố thành công</li>
+            </ol>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger mb-4">
+            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Cảnh báo!</h5>
+            <p>Bạn có chắc chắn muốn xóa yếu tố thành công này không? Hành động này không thể hoàn tác.</p>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Thông tin yếu tố thành công
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Mã:</div>
+                        <div class="col-md-9">@Model.Code</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Tên:</div>
+                        <div class="col-md-9">@Model.Name</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Mô tả:</div>
+                        <div class="col-md-9">@Html.Raw(Model.Description)</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Phòng ban:</div>
+                        <div class="col-md-9">@(Model.Department?.Name ?? "Không có")</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Mục tiêu kinh doanh:</div>
+                        <div class="col-md-9">@(Model.BusinessObjective?.Name ?? "Không có")</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Chủ sở hữu:</div>
+                        <div class="col-md-9">@Model.Owner</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Ngày bắt đầu:</div>
+                        <div class="col-md-9">@Model.StartDate.ToString("dd/MM/yyyy")</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3 fw-bold">Ngày kết thúc dự kiến:</div>
+                        <div class="col-md-9">@(Model.TargetDate.ToString("dd/MM/yyyy"))</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Trạng thái
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Trạng thái:</div>
+                        <div class="col-md-8">
+                            @{
+                                var statusBadge = Model.Status switch
+                                {
+                                    ObjectiveStatus.NotStarted => "badge bg-secondary",
+                                    ObjectiveStatus.InProgress => "badge bg-primary",
+                                    ObjectiveStatus.OnHold => "badge bg-warning text-dark",
+                                    ObjectiveStatus.Completed => "badge bg-success",
+                                    ObjectiveStatus.Canceled => "badge bg-danger",
+                                    ObjectiveStatus.Delayed => "badge bg-info text-dark",
+                                    _ => "badge bg-secondary"
+                                };
+                            }
+                            <span class="@statusBadge">@Model.Status</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Ưu tiên:</div>
+                        <div class="col-md-8">
+                            @{
+                                var priorityBadge = Model.Priority switch
+                                {
+                                    PriorityLevel.Low => "badge bg-success",
+                                    PriorityLevel.Medium => "badge bg-warning text-dark",
+                                    PriorityLevel.High => "badge bg-danger",
+                                    PriorityLevel.Critical => "badge bg-dark",
+                                    _ => "badge bg-secondary"
+                                };
+                            }
+                            <span class="@priorityBadge">@Model.Priority</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 fw-bold">Tiến độ:</div>
+                        <div class="col-md-8">@Model.ProgressPercentage%</div>
+                    </div>
+                </div>
+            </div>
+
+            @if (ViewBag.RelatedCsfs != null)
+            {
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-danger text-white">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        CSF đang tham chiếu
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">Các CSF sau đang tham chiếu đến yếu tố thành công này:</p>
+                        <ul class="list-group">
+                            @foreach (var csf in
+                                                    (IEnumerable<KPISolution.Models.Entities.CSF.CriticalSuccessFactor>)ViewBag.RelatedCsfs)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span>@csf.Name</span>
+                                        <small class="text-muted d-block">@csf.Code</small>
+                                    </div>
+                                    <a href="/CSF/Edit/@csf.Id" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div class="d-grid gap-2">
+                    @if (!cannotDelete)
+                    {
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Xác nhận xóa
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-danger" disabled>
+                            <i class="bi bi-trash me-1"></i> Không thể xóa
+                        </button>
+                    }
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-primary">
+                        <i class="bi bi-info-circle me-1"></i> Xem chi tiết
+                    </a>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -37,6 +37,12 @@ namespace KPISolution.Models.Entities.KPI
         public virtual ICollection<RI>? RelatedRIs { get; set; }
 
         /// <summary>
+        /// Collection of direct Performance Indicators (PIs) that contribute to this KRI
+        /// without going through a Result Indicator (RI)
+        /// </summary>
+        public virtual ICollection<PI>? DirectPIs { get; set; }
+
+        /// <summary>
         /// Board or executive level owner of this KRI
         /// </summary>
         [StringLength(100)]

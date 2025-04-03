@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using KPISolution.Models.Entities.Base;
 using KPISolution.Models.Entities.KPI;
+using KPISolution.Models.Entities.Objective;
 using KPISolution.Models.Entities.Organization;
 using KPISolution.Models.Enums;
 
@@ -36,6 +37,19 @@ namespace KPISolution.Models.Entities.CSF
         [StringLength(20)]
         [Display(Name = "CSF Code")]
         public string Code { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The Success Factor this CSF is related to
+        /// </summary>
+        [Required]
+        [Display(Name = "Success Factor")]
+        public Guid SuccessFactorId { get; set; }
+
+        /// <summary>
+        /// Navigation property to the Success Factor
+        /// </summary>
+        [ForeignKey("SuccessFactorId")]
+        public virtual SuccessFactor SuccessFactor { get; set; } = null!;
 
         /// <summary>
         /// The strategic objective this CSF is related to
@@ -134,6 +148,16 @@ namespace KPISolution.Models.Entities.CSF
         /// Collection of KPI-CSF relationship mappings
         /// </summary>
         public virtual ICollection<CSFKPI>? CSFKPIs { get; set; }
+
+        /// <summary>
+        /// Collection of Result Indicators (RIs) associated with this CSF
+        /// </summary>
+        public virtual ICollection<RI>? ResultIndicators { get; set; }
+
+        /// <summary>
+        /// Collection of Performance Indicators (PIs) associated with this CSF
+        /// </summary>
+        public virtual ICollection<PI>? PerformanceIndicators { get; set; }
 
         /// <summary>
         /// Collection of progress updates for this CSF

@@ -7,8 +7,11 @@ using KPISolution.Models.Entities.CSF;
 using KPISolution.Models.Entities.KPI;
 using KPISolution.Models.Entities.Measurement;
 using KPISolution.Models.Entities.Notification;
+using KPISolution.Models.Entities.Objective;
 using KPISolution.Models.Entities.Organization;
 using KPISolution.Models.Entities.Dashboard;
+using KPISolution.Models.Entities.Base;
+using System.Collections.Concurrent;
 
 namespace KPISolution.Data.Repositories.Implementation
 {
@@ -19,47 +22,77 @@ namespace KPISolution.Data.Repositories.Implementation
     {
         private readonly ApplicationDbContext _context;
         private IDbContextTransaction? _transaction;
-        private bool _disposed;
+        private bool _disposed = false;
+        private readonly ConcurrentDictionary<Type, object> _repositories = new ConcurrentDictionary<Type, object>();
+
+        // Success Factor and Objective repositories
+        private IRepository<SuccessFactor>? _successFactors;
+
+        // CSF repositories
+        private IRepository<CriticalSuccessFactor>? _criticalSuccessFactors;
+        private IRepository<CSFProgress>? _csfProgresses;
+        private IRepository<CSFKPI>? _csfKpis;
+
+        // Organization repositories
+        private IRepository<Department>? _departments;
+        private IRepository<BusinessObjective>? _businessObjectives;
+
+        // KPI related repositories
+        private IRepository<KRI>? _kris;
+        private IRepository<PI>? _pis;
+        private IRepository<RI>? _ris;
+        private IRepository<Models.Entities.KPI.KPI>? _kpis;
+        private IRepository<KpiValue>? _kpiValues;
+        private IRepository<KpiMeasurement>? _kpiMeasurements;
+        private IRepository<Target>? _targets;
+        private IRepository<Threshold>? _thresholds;
+
+        // Notification repositories
+        private IRepository<KPISolution.Models.Entities.Notification.Notification>? _notifications;
+
+        // Dashboard repositories
+        private IRepository<CustomDashboard>? _customDashboards;
+        private IRepository<DashboardItem>? _dashboardItems;
 
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
-            CriticalSuccessFactors = new Repository<CriticalSuccessFactor>(_context);
-            CSFProgresses = new Repository<CSFProgress>(_context);
-            CSFKPIs = new Repository<CSFKPI>(_context);
-            KRIs = new Repository<KRI>(_context);
-            PIs = new Repository<PI>(_context);
-            RIs = new Repository<RI>(_context);
-            KpiValues = new Repository<KpiValue>(_context);
-            KpiMeasurements = new Repository<KpiMeasurement>(_context);
-            Targets = new Repository<Target>(_context);
-            Thresholds = new Repository<Threshold>(_context);
-            Departments = new Repository<Department>(_context);
-            BusinessObjectives = new Repository<BusinessObjective>(_context);
-            Notifications = new Repository<KPISolution.Models.Entities.Notification.Notification>(_context);
-
-            // Dashboard repositories
-            CustomDashboards = new Repository<CustomDashboard>(_context);
-            DashboardItems = new Repository<DashboardItem>(_context);
         }
 
-        public IRepository<CriticalSuccessFactor> CriticalSuccessFactors { get; private set; }
-        public IRepository<CSFProgress> CSFProgresses { get; private set; }
-        public IRepository<CSFKPI> CSFKPIs { get; private set; }
-        public IRepository<KRI> KRIs { get; private set; }
-        public IRepository<PI> PIs { get; private set; }
-        public IRepository<RI> RIs { get; private set; }
-        public IRepository<KpiValue> KpiValues { get; private set; }
-        public IRepository<KpiMeasurement> KpiMeasurements { get; private set; }
-        public IRepository<Target> Targets { get; private set; }
-        public IRepository<Threshold> Thresholds { get; private set; }
-        public IRepository<Department> Departments { get; private set; }
-        public IRepository<BusinessObjective> BusinessObjectives { get; private set; }
-        public IRepository<KPISolution.Models.Entities.Notification.Notification> Notifications { get; private set; }
+        // Success Factor and Objective repositories
+        public IRepository<SuccessFactor> SuccessFactors => _successFactors ??= new Repository<SuccessFactor>(_context);
+
+        // CSF repositories
+        public IRepository<CriticalSuccessFactor> CriticalSuccessFactors => _criticalSuccessFactors ??= new Repository<CriticalSuccessFactor>(_context);
+        public IRepository<CSFProgress> CSFProgresses => _csfProgresses ??= new Repository<CSFProgress>(_context);
+        public IRepository<CSFKPI> CSFKPIs => _csfKpis ??= new Repository<CSFKPI>(_context);
+
+        // Organization repositories
+        public IRepository<Department> Departments => _departments ??= new Repository<Department>(_context);
+        public IRepository<BusinessObjective> BusinessObjectives => _businessObjectives ??= new Repository<BusinessObjective>(_context);
+
+        // KPI related repositories
+        public IRepository<KRI> KRIs => _kris ??= new Repository<KRI>(_context);
+        public IRepository<PI> PIs => _pis ??= new Repository<PI>(_context);
+        public IRepository<RI> RIs => _ris ??= new Repository<RI>(_context);
+        public IRepository<Models.Entities.KPI.KPI> KPIs => _kpis ??= new Repository<Models.Entities.KPI.KPI>(_context);
+        public IRepository<KpiValue> KpiValues => _kpiValues ??= new Repository<KpiValue>(_context);
+        public IRepository<KpiMeasurement> KpiMeasurements => _kpiMeasurements ??= new Repository<KpiMeasurement>(_context);
+        public IRepository<Target> Targets => _targets ??= new Repository<Target>(_context);
+        public IRepository<Threshold> Thresholds => _thresholds ??= new Repository<Threshold>(_context);
+
+        // Notification repositories
+        public IRepository<KPISolution.Models.Entities.Notification.Notification> Notifications => _notifications ??= new Repository<KPISolution.Models.Entities.Notification.Notification>(_context);
 
         // Dashboard repositories
-        public IRepository<CustomDashboard> CustomDashboards { get; private set; }
-        public IRepository<DashboardItem> DashboardItems { get; private set; }
+        public IRepository<CustomDashboard> CustomDashboards => _customDashboards ??= new Repository<CustomDashboard>(_context);
+        public IRepository<DashboardItem> DashboardItems => _dashboardItems ??= new Repository<DashboardItem>(_context);
+
+        /// <inheritdoc/>
+        public IRepository<T> Repository<T>() where T : BaseEntity
+        {
+            return (IRepository<T>)_repositories.GetOrAdd(typeof(T), type => new Repository<T>(_context));
+        }
 
         /// <inheritdoc/>
         public async Task<int> SaveChangesAsync()
@@ -83,19 +116,11 @@ namespace KPISolution.Data.Repositories.Implementation
                     await _transaction.CommitAsync();
                 }
             }
-            catch
-            {
-                if (_transaction != null)
-                {
-                    await _transaction.RollbackAsync();
-                }
-                throw;
-            }
             finally
             {
                 if (_transaction != null)
                 {
-                    _transaction.Dispose();
+                    await _transaction.DisposeAsync();
                     _transaction = null;
                 }
             }
@@ -104,11 +129,20 @@ namespace KPISolution.Data.Repositories.Implementation
         /// <inheritdoc/>
         public async Task RollbackTransactionAsync()
         {
-            if (_transaction != null)
+            try
             {
-                await _transaction.RollbackAsync();
-                _transaction.Dispose();
-                _transaction = null;
+                if (_transaction != null)
+                {
+                    await _transaction.RollbackAsync();
+                }
+            }
+            finally
+            {
+                if (_transaction != null)
+                {
+                    await _transaction.DisposeAsync();
+                    _transaction = null;
+                }
             }
         }
 
@@ -127,12 +161,15 @@ namespace KPISolution.Data.Repositories.Implementation
         /// <param name="disposing">Whether to dispose managed resources</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!_disposed && disposing)
+            if (!_disposed)
             {
-                _context.Dispose();
-                _transaction?.Dispose();
+                if (disposing)
+                {
+                    _context.Dispose();
+                    _transaction?.Dispose();
+                }
+                _disposed = true;
             }
-            _disposed = true;
         }
     }
 }

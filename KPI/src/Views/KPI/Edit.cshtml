@@ -135,13 +135,13 @@
                                     <select asp-for="MeasurementFrequency" class="form-select">
                                         @foreach (MeasurementFrequency frequency in Enum.GetValues(typeof(MeasurementFrequency)))
                                         {
-                                            <option value="@frequency">@(frequency == MeasurementFrequency.Daily ? "Hàng ngày" :
-                                                                        frequency == MeasurementFrequency.Weekly ? "Hàng tuần" :
-                                                                        frequency == MeasurementFrequency.Biweekly ? "Hai tuần một lần" :
-                                                                        frequency == MeasurementFrequency.Monthly ? "Hàng tháng" :
-                                                                        frequency == MeasurementFrequency.Quarterly ? "Hàng quý" :
-                                                                        frequency == MeasurementFrequency.Semiannually ? "Nửa năm" :
-                                                                        frequency == MeasurementFrequency.Annually ? "Hàng năm" : "Tùy chỉnh")</option>
+                                            <option value="@frequency">@(frequency.ToString() == "Daily" ? "Hàng ngày" :
+                                                                        frequency.ToString() == "Weekly" ? "Hàng tuần" :
+                                                                        frequency.ToString() == "BiWeekly" ? "Hai tuần một lần" :
+                                                                        frequency.ToString() == "Monthly" ? "Hàng tháng" :
+                                                                        frequency.ToString() == "Quarterly" ? "Hàng quý" :
+                                                                        frequency.ToString() == "SemiAnnual" ? "Nửa năm" :
+                                                                        frequency.ToString() == "Annual" ? "Hàng năm" : "Tùy chỉnh")</option>
                                         }
                                     </select>
                                     <label asp-for="MeasurementFrequency">Tần suất đo</label>
@@ -153,9 +153,9 @@
                                     <select asp-for="MeasurementDirection" class="form-select">
                                         @foreach (MeasurementDirection direction in Enum.GetValues(typeof(MeasurementDirection)))
                                         {
-                                            <option value="@direction">@(direction == MeasurementDirection.HigherIsBetter ? "Cao hơn là tốt hơn" : 
-                                                                        direction == MeasurementDirection.LowerIsBetter ? "Thấp hơn là tốt hơn" : 
-                                                                        direction == MeasurementDirection.TargetIsBest ? "Đạt đúng mục tiêu" : 
+                                            <option value="@direction">@(direction.ToString() == "HigherIsBetter" ? "Cao hơn là tốt hơn" : 
+                                                                        direction.ToString() == "LowerIsBetter" ? "Thấp hơn là tốt hơn" : 
+                                                                        direction.ToString() == "CloserToTarget" ? "Đạt đúng mục tiêu" : 
                                                                         "Nằm trong phạm vi")</option>
                                         }
                                     </select>

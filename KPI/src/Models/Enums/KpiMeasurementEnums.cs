@@ -105,90 +105,6 @@ namespace KPISolution.Models.Enums
     }
 
     /// <summary>
-    /// Represents the frequency of measurement for a KPI
-    /// </summary>
-    public enum MeasurementFrequency
-    {
-        /// <summary>
-        /// Daily measurement
-        /// </summary>
-        [Display(Name = "Daily")]
-        Daily = 1,
-
-        /// <summary>
-        /// Weekly measurement
-        /// </summary>
-        [Display(Name = "Weekly")]
-        Weekly = 2,
-
-        /// <summary>
-        /// Biweekly measurement
-        /// </summary>
-        [Display(Name = "Biweekly")]
-        Biweekly = 3,
-
-        /// <summary>
-        /// Monthly measurement
-        /// </summary>
-        [Display(Name = "Monthly")]
-        Monthly = 4,
-
-        /// <summary>
-        /// Quarterly measurement
-        /// </summary>
-        [Display(Name = "Quarterly")]
-        Quarterly = 5,
-
-        /// <summary>
-        /// Semi-annual measurement
-        /// </summary>
-        [Display(Name = "Semiannually")]
-        Semiannually = 6,
-
-        /// <summary>
-        /// Annual measurement
-        /// </summary>
-        [Display(Name = "Annually")]
-        Annually = 7,
-
-        /// <summary>
-        /// Custom period
-        /// </summary>
-        [Display(Name = "Custom")]
-        Custom = 99
-    }
-
-    /// <summary>
-    /// Represents the measurement direction for a KPI
-    /// </summary>
-    public enum MeasurementDirection
-    {
-        /// <summary>
-        /// Higher values are better (e.g., profit, customer satisfaction)
-        /// </summary>
-        [Display(Name = "Higher is Better")]
-        HigherIsBetter = 1,
-
-        /// <summary>
-        /// Lower values are better (e.g., costs, defects)
-        /// </summary>
-        [Display(Name = "Lower is Better")]
-        LowerIsBetter = 2,
-
-        /// <summary>
-        /// Values closer to target are better (e.g., temperature, inventory levels)
-        /// </summary>
-        [Display(Name = "Target is Best")]
-        TargetIsBest = 3,
-
-        /// <summary>
-        /// Values within a range are best
-        /// </summary>
-        [Display(Name = "Range is Best")]
-        RangeIsBest = 4
-    }
-
-    /// <summary>
     /// Status of a KPI
     /// </summary>
     public enum KpiStatus
@@ -249,7 +165,7 @@ namespace KPISolution.Models.Enums
     }
 
     /// <summary>
-    /// Performance trend indicating how a KPI is trending over time
+    /// Represents the performance trend of a KPI over time
     /// </summary>
     public enum PerformanceTrend
     {
@@ -285,26 +201,38 @@ namespace KPISolution.Models.Enums
     }
 
     /// <summary>
-    /// Type of indicator (Leading or Lagging)
+    /// Type of period for measurements
     /// </summary>
-    public enum IndicatorType
+    public enum PeriodType
     {
         /// <summary>
-        /// Leading indicators predict future performance
+        /// Daily period
         /// </summary>
-        [Display(Name = "Leading")]
-        Leading = 1,
+        [Display(Name = "Daily")]
+        Daily = 0,
 
         /// <summary>
-        /// Lagging indicators measure past performance
+        /// Weekly period
         /// </summary>
-        [Display(Name = "Lagging")]
-        Lagging = 2,
+        [Display(Name = "Weekly")]
+        Weekly = 1,
 
         /// <summary>
-        /// Real-time indicators measure current performance
+        /// Monthly period
         /// </summary>
-        [Display(Name = "Real-Time")]
-        RealTime = 3
+        [Display(Name = "Monthly")]
+        Monthly = 2,
+
+        /// <summary>
+        /// Quarterly period
+        /// </summary>
+        [Display(Name = "Quarterly")]
+        Quarterly = 3,
+
+        /// <summary>
+        /// Yearly period
+        /// </summary>
+        [Display(Name = "Yearly")]
+        Yearly = 4
     }
 }

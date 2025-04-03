@@ -215,6 +215,13 @@ namespace KPISolution.Models.ViewModels.KPI
         public Guid? ParentKriId { get; set; }
 
         /// <summary>
+        /// Indicates whether this is a Key Result Indicator (KRI). If true, this Result Indicator
+        /// is considered a KRI for the organization.
+        /// </summary>
+        [Display(Name = "Is Key Result Indicator (KRI)")]
+        public bool IsRIKey { get; set; } = false;
+
+        /// <summary>
         /// Process area (for RIs)
         /// </summary>
         [Display(Name = "Process Area")]
@@ -281,11 +288,18 @@ namespace KPISolution.Models.ViewModels.KPI
         public ActivityType? ActivityType { get; set; }
 
         /// <summary>
+        /// Indicates whether this is a Key Performance Indicator (KPI). If true, this Performance Indicator
+        /// is considered a KPI for the organization.
+        /// </summary>
+        [Display(Name = "Is Key Performance Indicator (KPI)")]
+        public bool IsPIKey { get; set; } = false;
+
+        /// <summary>
         /// Performance level for PIs
         /// </summary>
         [Range(1, 5)]
         [Display(Name = "Performance Level")]
-        public int? PerformanceLevel { get; set; }
+        public string? PerformanceLevel { get; set; }
 
         /// <summary>
         /// Indicator type for PIs
@@ -304,7 +318,7 @@ namespace KPISolution.Models.ViewModels.KPI
         /// Parent RI ID for PIs
         /// </summary>
         [Display(Name = "Parent RI")]
-        public Guid? ParentRiId { get; set; }
+        public Guid? RIId { get; set; }
 
         /// <summary>
         /// List of activity types for dropdown

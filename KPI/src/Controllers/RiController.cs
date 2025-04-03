@@ -103,13 +103,15 @@ namespace KPISolution.Controllers
                 // Apply sorting
                 query = ApplySorting(query, filter.SortBy, filter.SortDirection);
 
-                // Get total count before pagination
+                // Get total count for pagination
                 viewModel.TotalCount = query.Count();
 
                 // Apply pagination
-                var ris = query.Skip((page - 1) * viewModel.PageSize)
-                              .Take(viewModel.PageSize)
-                              .ToList();
+                var ris = query
+                            .OrderBy(r => r.Id)
+                            .Skip((page - 1) * viewModel.PageSize)
+                            .Take(viewModel.PageSize)
+                            .ToList();
 
                 // Map to view models and add RI-specific information
                 viewModel.KpiItems = ris.Select(k =>
@@ -212,9 +214,29 @@ namespace KPISolution.Controllers
                     }
                 }
 
+                // Get related PIs that have this RI as their parent
+                var allPIs = await _unitOfWork.PIs.GetAllAsync();
+                var relatedPIs = allPIs
+                    .Where(p => p.RIId == id)
+                    .ToList();
+
+                if (relatedPIs.Any())
+                {
+                    // Initialize collection for related PIs if not already initialized
+                    viewModel.RelatedPIs ??= new List<LinkedKpiViewModel>();
+
+                    // Map and add each related PI
+                    foreach (var pi in relatedPIs)
+                    {
+                        var piViewModel = _mapper.Map<LinkedKpiViewModel>(pi);
+                        viewModel.RelatedPIs.Add(piViewModel);
+                    }
+                }
+
                 // Set RI-specific properties
                 viewModel.ProcessArea = ri.ProcessArea;
                 viewModel.ParentKriId = ri.ParentKriId;
+                viewModel.IsRIKey = ri.IsKey;
 
                 return View("Details", viewModel);
             }
@@ -229,9 +251,10 @@ namespace KPISolution.Controllers
         /// Displays the form for creating a new RI
         /// </summary>
         /// <param name="kriId">Optional parent KRI ID</param>
+        /// <param name="csfId">Optional CSF ID to link this RI with</param>
         /// <returns>Create RI view</returns>
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Create(Guid? kriId = null)
+        public async Task<IActionResult> Create(Guid? kriId = null, Guid? csfId = null)
         {
             try
             {
@@ -241,7 +264,8 @@ namespace KPISolution.Controllers
                     Departments = await GetDepartmentSelectList(),
                     CriticalSuccessFactors = await GetCsfSelectList(),
                     ParentKris = await GetKriSelectList(),
-                    ProcessAreas = GetEnumSelectList<ProcessArea>()
+                    ProcessAreas = GetEnumSelectList<ProcessArea>(),
+                    RelatedPis = await GetPiSelectList()
                 };
 
                 // If kriId is provided, preselect the parent KRI
@@ -256,6 +280,34 @@ namespace KPISolution.Controllers
                         // Inherit some properties from parent KRI
                         viewModel.Department = kri.Department;
                         viewModel.Owner = kri.ResponsiblePerson;
+                    }
+                }
+
+                // Nếu csfId được truyền vào, tự động thêm vào danh sách CSF được chọn
+                if (csfId.HasValue)
+                {
+                    // Kiểm tra sự tồn tại của CSF
+                    var csf = await _unitOfWork.CriticalSuccessFactors.GetByIdAsync(csfId.Value);
+                    if (csf != null)
+                    {
+                        // Khởi tạo danh sách nếu null
+                        viewModel.SelectedCsfIds ??= new List<Guid>();
+                        // Thêm csfId vào danh sách
+                        viewModel.SelectedCsfIds.Add(csfId.Value);
+
+                        // Có thể lấy thêm thông tin từ CSF để điền trước cho RI
+                        if (!string.IsNullOrEmpty(csf.Department?.Name))
+                        {
+                            viewModel.Department = csf.Department.Name;
+                        }
+
+                        if (!string.IsNullOrEmpty(csf.Owner))
+                        {
+                            viewModel.Owner = csf.Owner;
+                        }
+
+                        // Sinh mã tự động dựa trên mã CSF
+                        viewModel.Code = $"RI-{csf.Code}-{DateTime.Now.ToString("yyyyMMdd")}";
                     }
                 }
 
@@ -276,7 +328,7 @@ namespace KPISolution.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Create(CreateKpiViewModel viewModel)
+        public async Task<IActionResult> Create(CreateKpiViewModel viewModel, [FromForm] List<Guid> SelectedPis)
         {
             // Force KPI type to be RI
             viewModel.KpiType = KpiType.ResultIndicator;
@@ -287,6 +339,7 @@ namespace KPISolution.Controllers
                 viewModel.CriticalSuccessFactors = await GetCsfSelectList();
                 viewModel.ParentKris = await GetKriSelectList();
                 viewModel.ProcessAreas = GetEnumSelectList<ProcessArea>();
+                viewModel.RelatedPis = await GetPiSelectList();
                 return View("Create", viewModel);
             }
 
@@ -306,6 +359,9 @@ namespace KPISolution.Controllers
                     ri.ParentKriId = viewModel.ParentKriId;
                 }
 
+                // Set IsKey property to indicate whether this RI is a KRI
+                ri.IsKey = viewModel.IsRIKey;
+
                 // Set audit fields
                 ri.CreatedAt = DateTime.UtcNow;
                 ri.CreatedBy = User.GetUserId();
@@ -321,9 +377,24 @@ namespace KPISolution.Controllers
                         {
                             CsfId = csfId,
                             KpiId = ri.Id,
+                            KpiType = KpiType.ResultIndicator,
                             CreatedAt = DateTime.UtcNow,
                             CreatedBy = User.GetUserId()
                         });
+                    }
+                }
+
+                // Update related PIs to link with this RI
+                if (SelectedPis != null && SelectedPis.Any())
+                {
+                    var pis = await _unitOfWork.PIs.GetAllAsync();
+                    var selectedPis = pis.Where(pi => SelectedPis.Contains(pi.Id)).ToList();
+
+                    foreach (var pi in selectedPis)
+                    {
+                        pi.RIId = ri.Id;
+                        pi.UpdatedAt = DateTime.UtcNow;
+                        pi.UpdatedBy = User.GetUserId();
                     }
                 }
 
@@ -376,6 +447,7 @@ namespace KPISolution.Controllers
                 // Set RI-specific properties
                 viewModel.ProcessArea = ri.ProcessArea;
                 viewModel.ParentKriId = ri.ParentKriId;
+                viewModel.IsRIKey = ri.IsKey;
 
                 // Get selected CSF IDs
                 var csfKpis = await _unitOfWork.CSFKPIs.GetAllAsync();
@@ -440,53 +512,155 @@ namespace KPISolution.Controllers
                 if (!authResult.Succeeded)
                     return Forbid();
 
-                // Update RI properties
-                _mapper.Map(viewModel, ri);
-
-                // Set RI-specific properties if not mapped by AutoMapper
-                if (viewModel.ProcessArea.HasValue)
+                try
                 {
-                    ri.ProcessArea = viewModel.ProcessArea.Value;
-                }
-
-                if (viewModel.ParentKriId.HasValue)
-                {
-                    ri.ParentKriId = viewModel.ParentKriId;
-                }
-
-                // Set audit fields
-                ri.ModifiedAt = DateTime.UtcNow;
-                ri.ModifiedBy = User.GetUserId();
-
-                await _unitOfWork.RIs.UpdateAsync(ri);
-
-                // Update CSF links
-                // First remove existing links
-                var existingLinks = (await _unitOfWork.CSFKPIs.GetAllAsync())
-                    .Where(ck => ck.KpiId == id)
-                    .ToList();
-
-                foreach (var link in existingLinks)
-                {
-                    await _unitOfWork.CSFKPIs.DeleteAsync(link);
-                }
-
-                // Then add new links
-                if (viewModel.SelectedCsfIds != null && viewModel.SelectedCsfIds.Any())
-                {
-                    foreach (var csfId in viewModel.SelectedCsfIds)
+                    // Đảm bảo Unit và MeasurementUnit có giá trị đồng nhất
+                    if (string.IsNullOrEmpty(viewModel.Unit) && !string.IsNullOrEmpty(viewModel.MeasurementUnit))
                     {
-                        await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
+                        viewModel.Unit = viewModel.MeasurementUnit;
+                    }
+                    else if (!string.IsNullOrEmpty(viewModel.Unit) && string.IsNullOrEmpty(viewModel.MeasurementUnit))
+                    {
+                        viewModel.MeasurementUnit = viewModel.Unit;
+                    }
+
+                    // Thay đổi cách thức mapping để tránh lỗi AutoMapper
+                    // Map các thuộc tính cơ bản thủ công thay vì sử dụng AutoMapper
+                    ri.Name = viewModel.Name;
+                    ri.Code = viewModel.Code;
+                    ri.Description = viewModel.Description;
+                    ri.Unit = !string.IsNullOrEmpty(viewModel.MeasurementUnit) ? viewModel.MeasurementUnit : viewModel.Unit;
+                    ri.TargetValue = viewModel.TargetValue;
+                    ri.MinimumValue = viewModel.MinimumValue;
+                    ri.MaximumValue = viewModel.MaximumValue;
+                    ri.Weight = viewModel.Weight;
+                    ri.Frequency = viewModel.MeasurementFrequency;
+                    ri.Department = viewModel.Department;
+                    ri.ResponsiblePerson = viewModel.Owner;
+                    ri.MeasurementDirection = viewModel.MeasurementDirection;
+                    ri.EffectiveDate = viewModel.EffectiveDate;
+                    ri.Status = viewModel.Status;
+                }
+                catch (Exception mapEx)
+                {
+                    _logger.LogError(mapEx, "Error occurred during manual mapping of RI properties with ID: {RiId}", id);
+                    ModelState.AddModelError("", "Error during property mapping: " + mapEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.ParentKris = await GetKriSelectList();
+                    viewModel.ProcessAreas = GetEnumSelectList<ProcessArea>();
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    // Cập nhật các thuộc tính đặc thù của RI
+                    if (viewModel.ProcessArea.HasValue)
+                    {
+                        ri.ProcessArea = viewModel.ProcessArea.Value;
+                    }
+
+                    if (viewModel.ParentKriId.HasValue)
+                    {
+                        ri.ParentKriId = viewModel.ParentKriId;
+                    }
+
+                    // Các thuộc tính bổ sung của RI
+                    ri.ResponsibleManager = viewModel.ResponsibleManager;
+                    ri.MeasurementScope = viewModel.MeasurementScope;
+                    ri.TimeFrame = viewModel.TimeFrame;
+                    ri.ResultType = viewModel.ResultType;
+                    ri.ContributionPercentage = viewModel.ContributionPercentage;
+                    ri.DataSource = viewModel.DataSource;
+                    ri.Formula = viewModel.CalculationMethod ?? viewModel.Formula;
+
+                    // Set IsKey property to indicate whether this RI is a KRI
+                    ri.IsKey = viewModel.IsRIKey;
+
+                    // Set audit fields
+                    ri.ModifiedAt = DateTime.UtcNow;
+                    ri.ModifiedBy = User.GetUserId();
+                }
+                catch (Exception specialPropsEx)
+                {
+                    _logger.LogError(specialPropsEx, "Error occurred during mapping special properties of RI with ID: {RiId}", id);
+                    ModelState.AddModelError("", "Error during special properties mapping: " + specialPropsEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.ParentKris = await GetKriSelectList();
+                    viewModel.ProcessAreas = GetEnumSelectList<ProcessArea>();
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    await _unitOfWork.RIs.UpdateAsync(ri);
+                }
+                catch (Exception updateEx)
+                {
+                    _logger.LogError(updateEx, "Error occurred during UpdateAsync for RI with ID: {RiId}", id);
+                    ModelState.AddModelError("", "Error during UpdateAsync: " + updateEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.ParentKris = await GetKriSelectList();
+                    viewModel.ProcessAreas = GetEnumSelectList<ProcessArea>();
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    // Update CSF links
+                    // First remove existing links
+                    var existingLinks = (await _unitOfWork.CSFKPIs.GetAllAsync())
+                        .Where(ck => ck.KpiId == id)
+                        .ToList();
+
+                    foreach (var link in existingLinks)
+                    {
+                        await _unitOfWork.CSFKPIs.DeleteAsync(link);
+                    }
+
+                    // Then add new links
+                    if (viewModel.SelectedCsfIds != null && viewModel.SelectedCsfIds.Any())
+                    {
+                        foreach (var csfId in viewModel.SelectedCsfIds)
                         {
-                            CsfId = csfId,
-                            KpiId = ri.Id,
-                            CreatedAt = DateTime.UtcNow,
-                            CreatedBy = User.GetUserId()
-                        });
+                            await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
+                            {
+                                CsfId = csfId,
+                                KpiId = ri.Id,
+                                KpiType = KpiType.ResultIndicator,
+                                CreatedAt = DateTime.UtcNow,
+                                CreatedBy = User.GetUserId()
+                            });
+                        }
                     }
                 }
+                catch (Exception csfEx)
+                {
+                    _logger.LogError(csfEx, "Error occurred during CSF links update for RI with ID: {RiId}", id);
+                    ModelState.AddModelError("", "Error during CSF links update: " + csfEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.ParentKris = await GetKriSelectList();
+                    viewModel.ProcessAreas = GetEnumSelectList<ProcessArea>();
+                    return View("Edit", viewModel);
+                }
 
-                await _unitOfWork.SaveChangesAsync();
+                try
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                }
+                catch (Exception saveEx)
+                {
+                    _logger.LogError(saveEx, "Error occurred during SaveChangesAsync for RI with ID: {RiId}", id);
+                    ModelState.AddModelError("", "Error during SaveChangesAsync: " + saveEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.ParentKris = await GetKriSelectList();
+                    viewModel.ProcessAreas = GetEnumSelectList<ProcessArea>();
+                    return View("Edit", viewModel);
+                }
 
                 return RedirectToAction(nameof(Index));
             }
@@ -624,6 +798,125 @@ namespace KPISolution.Controllers
             }
         }
 
+        // GET: RI/PromoteToKri/5
+        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
+        public async Task<IActionResult> PromoteToKri(Guid id)
+        {
+            var ri = await _unitOfWork.RIs.GetByIdAsync(id);
+            if (ri == null || !ri.IsActive)
+            {
+                return NotFound();
+            }
+
+            var viewModel = _mapper.Map<KpiDetailsViewModel>(ri);
+            viewModel.KpiType = KpiType.ResultIndicator;
+
+            // Get department name if available
+            if (!string.IsNullOrEmpty(ri.Department))
+            {
+                var departments = await _unitOfWork.Departments.GetAllAsync();
+                var department = departments.FirstOrDefault(d => d.Name == ri.Department);
+                if (department != null)
+                {
+                    viewModel.DepartmentName = department.Name;
+                }
+            }
+
+            return View(viewModel);
+        }
+
+        // POST: RI/PromoteToKri/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
+        public async Task<IActionResult> PromoteToKri(Guid id, KpiDetailsViewModel viewModel)
+        {
+            if (id != viewModel.Id)
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                // Lấy thông tin RI
+                var ri = await _unitOfWork.RIs.GetByIdAsync(id);
+                if (ri == null || !ri.IsActive)
+                {
+                    return NotFound();
+                }
+
+                // Tạo mới một KRI từ RI hiện tại
+                var kri = new KRI
+                {
+                    Id = Guid.NewGuid(),
+                    Name = ri.Name,
+                    Description = ri.Description,
+                    Code = "KRI-" + ri.Code.Replace("RI-", ""),
+                    Unit = ri.Unit,
+                    Formula = ri.Formula,
+                    TargetValue = ri.TargetValue,
+                    MinimumValue = ri.MinimumValue,
+                    MaximumValue = ri.MaximumValue,
+                    Weight = ri.Weight,
+                    Frequency = ri.Frequency,
+                    Department = ri.Department,
+                    ResponsiblePerson = ri.ResponsiblePerson,
+                    EffectiveDate = ri.EffectiveDate,
+                    Status = ri.Status,
+                    MeasurementDirection = ri.MeasurementDirection,
+                    PerformanceTrend = ri.PerformanceTrend,
+                    // KRI-specific properties
+                    StrategicObjective = "Chuyển đổi từ RI",
+                    BusinessArea = BusinessArea.Other,
+                    ImpactLevel = ImpactLevel.Medium,
+                    ConfidenceLevel = 50, // Trung bình
+                    ExecutiveOwner = ri.ResponsiblePerson,
+                    // Audit fields
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = User.GetUserId(),
+                    UpdatedAt = DateTime.UtcNow,
+                    UpdatedBy = User.GetUserId()
+                };
+
+                // Thêm KRI mới
+                await _unitOfWork.KRIs.AddAsync(kri);
+
+                // Đánh dấu RI đã có KRI và không hoạt động
+                ri.IsActive = false;
+                ri.UpdatedAt = DateTime.UtcNow;
+                ri.UpdatedBy = User.GetUserId();
+                _unitOfWork.RIs.Update(ri);
+
+                // Chuyển đổi các CSF-KPI liên quan nếu có
+                var csfkpis = await _unitOfWork.CSFKPIs.GetAllAsync();
+                var riCsfKpis = csfkpis.Where(c => c.KpiId == ri.Id).ToList();
+
+                foreach (var csfkpi in riCsfKpis)
+                {
+                    await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
+                    {
+                        CsfId = csfkpi.CsfId,
+                        KpiId = kri.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = User.GetUserId()
+                    });
+                }
+
+                // Lưu thay đổi
+                await _unitOfWork.SaveChangesAsync();
+
+                TempData["Success"] = "Chỉ số kết quả đã được chuyển đổi thành KRI thành công!";
+                return RedirectToAction("Details", "KRI", new { id = kri.Id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error promoting RI to KRI");
+                TempData["Error"] = "Đã xảy ra lỗi khi chuyển đổi RI thành KRI.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+        }
+
         // Helper methods
 
         /// <summary>
@@ -647,7 +940,7 @@ namespace KPISolution.Controllers
                 .OrderBy(d => d.Name)
                 .Select(d => new SelectListItem
                 {
-                    Value = d.Id.ToString(),
+                    Value = d.Name,
                     Text = d.Name
                 })
                 .ToList();
@@ -687,6 +980,26 @@ namespace KPISolution.Controllers
                 {
                     Value = k.Id.ToString(),
                     Text = $"{k.Code} - {k.Name}"
+                })
+                .ToList();
+
+            return new SelectList(items, "Value", "Text");
+        }
+
+        /// <summary>
+        /// Gets a select list of PIs for dropdowns
+        /// </summary>
+        /// <returns>List of SelectListItem for PIs</returns>
+        private async Task<SelectList> GetPiSelectList()
+        {
+            var pis = await _unitOfWork.PIs.GetAllAsync();
+            var items = pis
+                .OrderBy(p => p.Name)
+                .Where(p => !p.RIId.HasValue) // Only include PIs not already linked to an RI
+                .Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = $"{p.Code} - {p.Name}"
                 })
                 .ToList();
 

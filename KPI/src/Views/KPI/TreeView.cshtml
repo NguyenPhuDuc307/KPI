@@ -1,0 +1,274 @@
+@model KPISolution.Models.ViewModels.KPI.KpiTreeViewModel
+@{
+    ViewData["Title"] = "Cây chỉ số";
+}
+
+<div class="container-fluid px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-3 me-2"></i>Cây chỉ số KPI
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-4">
+                                <span class="badge bg-primary me-1">
+                                    <i class="bi bi-bullseye me-1"></i> KRI
+                                </span>
+                                <small>Chỉ số kết quả chính</small>
+                            </div>
+                            <div class="me-4">
+                                <span class="badge bg-success me-1">
+                                    <i class="bi bi-graph-up me-1"></i> RI
+                                </span>
+                                <small>Chỉ số kết quả</small>
+                            </div>
+                            <div>
+                                <span class="badge bg-info me-1">
+                                    <i class="bi bi-speedometer me-1"></i> PI
+                                </span>
+                                <small>Chỉ số hoạt động</small>
+                            </div>
+                        </div>
+                        <div class="form-text text-muted">
+                            Nhấp vào mũi tên <i class="bi bi-chevron-right"></i> để mở rộng hoặc thu gọn các nhánh
+                        </div>
+                    </div>
+
+                    <div class="kpi-tree">
+                        @if (Model.KeyResultIndicators.Any())
+                        {
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2 mb-3">Chỉ số kết quả chính (KRIs)</h6>
+                                    <div class="tree">
+                                        <ul class="list-unstyled">
+                                            @foreach (var kri in Model.KeyResultIndicators)
+                                            {
+                                                    <li>
+                                                        @if (kri.HasChildren)
+                                                        {
+                                                                <span class="tree-expander collapsed" data-bs-toggle="collapse" data-bs-target="#kri-@kri.Id">
+                                                                    <i class="bi bi-chevron-right"></i>
+                                                                </span>
+                                                        }
+                                                        else
+                                                        {
+                                                                <span class="tree-spacer"></span>
+                                                        }
+                                                        <span class="badge bg-primary me-2">
+                                                            <i class="@kri.GetTypeIcon() me-1"></i> KRI
+                                                        </span>
+                                                        <a asp-controller="@kri.GetController()" asp-action="Details" asp-route-id="@kri.Id" class="text-decoration-none">
+                                                            <strong>@kri.Code</strong> - @kri.Name
+                                                        </a>
+                                                        <small class="text-muted ms-2">(@kri.Department)</small>
+                                                        <small class="badge bg-secondary ms-2">@kri.Status</small>
+
+                                                        @if (kri.HasChildren)
+                                                        {
+                                                                <div class="collapse mt-2 ms-4" id="kri-@kri.Id">
+                                                                    <ul class="list-unstyled">
+                                                                        @foreach (var ri in kri.Children)
+                                                                        {
+                                                                                <li class="mt-2">
+                                                                                    @if (ri.HasChildren)
+                                                                                    {
+                                                                                            <span class="tree-expander collapsed" data-bs-toggle="collapse" data-bs-target="#ri-@ri.Id">
+                                                                                                <i class="bi bi-chevron-right"></i>
+                                                                                            </span>
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                            <span class="tree-spacer"></span>
+                                                                                    }
+                                                                                    <span class="badge bg-success me-2">
+                                                                                        <i class="@ri.GetTypeIcon() me-1"></i> RI
+                                                                                    </span>
+                                                                                    <a asp-controller="@ri.GetController()" asp-action="Details" asp-route-id="@ri.Id" class="text-decoration-none">
+                                                                                        <strong>@ri.Code</strong> - @ri.Name
+                                                                                    </a>
+                                                                                    <small class="text-muted ms-2">(@ri.Department)</small>
+                                                                                    <small class="badge bg-secondary ms-2">@ri.Status</small>
+
+                                                                                    @if (ri.HasChildren)
+                                                                                    {
+                                                                                            <div class="collapse mt-2 ms-4" id="ri-@ri.Id">
+                                                                                                <ul class="list-unstyled">
+                                                                                                    @foreach (var pi in ri.Children)
+                                                                                                    {
+                                                                                                            <li class="mt-2">
+                                                                                                                <span class="tree-spacer"></span>
+                                                                                                                <span class="badge bg-info me-2">
+                                                                                                                    <i class="@pi.GetTypeIcon() me-1"></i> PI
+                                                                                                                </span>
+                                                                                                                <a asp-controller="@pi.GetController()" asp-action="Details" asp-route-id="@pi.Id" class="text-decoration-none">
+                                                                                                                    <strong>@pi.Code</strong> - @pi.Name
+                                                                                                                </a>
+                                                                                                                <small class="text-muted ms-2">(@pi.Department)</small>
+                                                                                                                <small class="badge bg-secondary ms-2">@pi.Status</small>
+                                                                                                            </li>
+                                                                                                    }
+                                                                                                </ul>
+                                                                                            </div>
+                                                                                    }
+                                                                                </li>
+                                                                        }
+                                                                    </ul>
+                                                                </div>
+                                                        }
+                                                    </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                        }
+
+                        @if (Model.ResultIndicators.Any())
+                        {
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2 mb-3">Chỉ số kết quả độc lập (RIs)</h6>
+                                    <div class="tree">
+                                        <ul class="list-unstyled">
+                                            @foreach (var ri in Model.ResultIndicators)
+                                            {
+                                                    <li>
+                                                        @if (ri.HasChildren)
+                                                        {
+                                                                <span class="tree-expander collapsed" data-bs-toggle="collapse" data-bs-target="#ri-@ri.Id">
+                                                                    <i class="bi bi-chevron-right"></i>
+                                                                </span>
+                                                        }
+                                                        else
+                                                        {
+                                                                <span class="tree-spacer"></span>
+                                                        }
+                                                        <span class="badge bg-success me-2">
+                                                            <i class="@ri.GetTypeIcon() me-1"></i> RI
+                                                        </span>
+                                                        <a asp-controller="@ri.GetController()" asp-action="Details" asp-route-id="@ri.Id" class="text-decoration-none">
+                                                            <strong>@ri.Code</strong> - @ri.Name
+                                                        </a>
+                                                        <small class="text-muted ms-2">(@ri.Department)</small>
+                                                        <small class="badge bg-secondary ms-2">@ri.Status</small>
+
+                                                        @if (ri.HasChildren)
+                                                        {
+                                                                <div class="collapse mt-2 ms-4" id="ri-@ri.Id">
+                                                                    <ul class="list-unstyled">
+                                                                        @foreach (var pi in ri.Children)
+                                                                        {
+                                                                                <li class="mt-2">
+                                                                                    <span class="tree-spacer"></span>
+                                                                                    <span class="badge bg-info me-2">
+                                                                                        <i class="@pi.GetTypeIcon() me-1"></i> PI
+                                                                                    </span>
+                                                                                    <a asp-controller="@pi.GetController()" asp-action="Details" asp-route-id="@pi.Id" class="text-decoration-none">
+                                                                                        <strong>@pi.Code</strong> - @pi.Name
+                                                                                    </a>
+                                                                                    <small class="text-muted ms-2">(@pi.Department)</small>
+                                                                                    <small class="badge bg-secondary ms-2">@pi.Status</small>
+                                                                                </li>
+                                                                        }
+                                                                    </ul>
+                                                                </div>
+                                                        }
+                                                    </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                        }
+
+                        @if (Model.PerformanceIndicators.Any())
+                        {
+                                <div>
+                                    <h6 class="border-bottom pb-2 mb-3">Chỉ số hoạt động độc lập (PIs)</h6>
+                                    <div class="tree">
+                                        <ul class="list-unstyled">
+                                            @foreach (var pi in Model.PerformanceIndicators)
+                                            {
+                                                    <li>
+                                                        <span class="tree-spacer"></span>
+                                                        <span class="badge bg-info me-2">
+                                                            <i class="@pi.GetTypeIcon() me-1"></i> PI
+                                                        </span>
+                                                        <a asp-controller="@pi.GetController()" asp-action="Details" asp-route-id="@pi.Id" class="text-decoration-none">
+                                                            <strong>@pi.Code</strong> - @pi.Name
+                                                        </a>
+                                                        <small class="text-muted ms-2">(@pi.Department)</small>
+                                                        <small class="badge bg-secondary ms-2">@pi.Status</small>
+                                                    </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                        }
+
+                        @if (!Model.KeyResultIndicators.Any() && !Model.ResultIndicators.Any() && !Model.PerformanceIndicators.Any())
+                        {
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Chưa có chỉ số nào trong hệ thống. Hãy tạo các chỉ số để hiển thị cây chỉ số.
+                                </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+        <style>
+            .kpi-tree {
+                font-size: 0.9rem;
+            }
+
+            .tree-expander {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                text-align: center;
+                cursor: pointer;
+                color: #6c757d;
+            }
+
+            .tree-expander.collapsed .bi-chevron-right {
+                transition: transform 0.2s;
+            }
+
+            .tree-expander:not(.collapsed) .bi-chevron-right {
+                transform: rotate(90deg);
+                transition: transform 0.2s;
+            }
+
+            .tree-spacer {
+                display: inline-block;
+                width: 20px;
+            }
+
+            .tree ul {
+                position: relative;
+            }
+
+            .tree ul li {
+                position: relative;
+                padding: 4px 0;
+            }
+        </style>
+}
+
+@section Scripts {
+        <script>
+            $(document).ready(function () {
+                // Toggle the icon rotation when collapsing/expanding tree nodes
+                $('.tree-expander').on('click', function () {
+                    $(this).toggleClass('collapsed');
+                });
+            });
+        </script>
+}

@@ -2,41 +2,50 @@
 
 @{
     ViewData["Title"] = "Bảng điều khiển tùy chỉnh";
+    ViewData["Icon"] = "bi-layout-wtf";
+    ViewData["Subtitle"] = "Bảng điều khiển được cá nhân hóa cho " + Model.UserName;
+    ViewData["ShowFilterPanel"] = false;
+
+    ViewData["PrimaryButton"] = ("Thêm widget", "Dashboard", "Custom", "", "bi-plus-circle");
+}
+
+@section Scripts {
+    <!-- Link nút thêm widget từ PageTitle -->
+    <script>
+        $(document).ready(function () {
+            // Tìm nút "Thêm widget" từ _PageTitle và thêm sự kiện click để mở modal
+            $('a.btn-primary').filter(function () {
+                return $(this).text().trim().indexOf('Thêm widget') !== -1;
+            }).attr('data-bs-toggle', 'modal')
+                .attr('data-bs-target', '#addWidgetModal')
+                .attr('href', 'javascript:void(0);');
+        });
+    </script>
 }
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">@Model.Title</h1>
-            <p class="text-muted small mb-0">Bảng điều khiển được cá nhân hóa cho @Model.UserName</p>
-        </div>
-        <div>
-            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal"
-                data-bs-target="#addWidgetModal">
-                <i class="bi bi-plus-circle me-1"></i>Thêm widget
+    <div class="d-flex justify-content-end mb-3">
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary" id="saveLayoutBtn">
+                <i class="bi bi-save me-1"></i>Lưu thay đổi
             </button>
-            <div class="btn-group">
-                <button type="button" class="btn btn-primary" id="saveLayoutBtn">
-                    <i class="bi bi-save me-1"></i>Lưu thay đổi
-                </button>
-                <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="visually-hidden">Tùy chọn</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
-                            data-bs-target="#editDashboardModal">Chỉnh sửa thông tin</a></li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li>
-                        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" id="deleteDashboardForm">
-                            <button type="button" class="dropdown-item text-danger" onclick="confirmDelete()">Xóa bảng
-                                điều khiển</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
+            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Tùy chọn</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editDashboardModal">Chỉnh
+                        sửa thông tin</a></li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li>
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" id="deleteDashboardForm">
+                        <button type="button" class="dropdown-item text-danger" onclick="confirmDelete()">Xóa bảng
+                            điều khiển</button>
+                    </form>
+                </li>
+            </ul>
         </div>
     </div>
 

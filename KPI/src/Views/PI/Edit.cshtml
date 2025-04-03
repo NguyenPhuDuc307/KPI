@@ -18,12 +18,28 @@
         </div>
     </div>
 
+    <!-- Error message section -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Lỗi!</strong> Vui lòng kiểm tra lại thông tin và thử lại.
+                <ul class="mb-0 mt-2">
+                    @foreach (var modelError in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                            <li>@modelError.ErrorMessage</li>
+                    }
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+    }
+
     <div class="row">
         <div class="col-lg-12">
             <form asp-action="Edit" method="post">
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="KpiType" value="PerformanceIndicator" />
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div asp-validation-summary="ModelOnly" class="text-danger d-none"></div>
 
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-transparent">
@@ -58,22 +74,46 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
+                                <div class="form-check pt-3">
+                                    <input asp-for="IsPIKey" class="form-check-input" type="checkbox">
+                                    <label asp-for="IsPIKey" class="form-check-label">Là chỉ số hiệu suất quan trọng (KPI)</label>
+                                    <div class="form-text">Đánh dấu nếu chỉ số này là một KPI - chỉ số hiệu suất có tầm quan trọng chiến lược.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
                                 <div class="form-floating">
-                                    <select asp-for="Category" class="form-select">
-                                        <option value="">-- Chọn danh mục --</option>
-                                        @foreach (KpiCategory category in Enum.GetValues(typeof(KpiCategory)))
+                                    @{
+                                        var categories = new[]
                                         {
-                                            <option value="@category">@(category == KpiCategory.Financial ? "Tài chính" :
-                                                                     category == KpiCategory.Customer ? "Khách hàng" :
-                                                                     category == KpiCategory.Operational ? "Quy trình nội bộ" :
-                                                                     category == KpiCategory.LearningAndGrowth ? "Học tập và phát triển" :
-                                                                     category == KpiCategory.Environmental ? "Môi trường" :
-                                                                     category == KpiCategory.Social ? "Xã hội" :
-                                                                     category == KpiCategory.Governance ? "Quản trị" :
-                                                                     category.ToString())</option>
-                                        }
-                                    </select>
-                                    <label asp-for="Category">Danh mục</label>
+                                            new { Value = 1, Text = "Tài chính" },
+                                            new { Value = 2, Text = "Khách hàng" },
+                                            new { Value = 3, Text = "Quy trình nội bộ" },
+                                            new { Value = 4, Text = "Học tập và phát triển" },
+                                            new { Value = 5, Text = "Môi trường" },
+                                            new { Value = 6, Text = "Xã hội" },
+                                            new { Value = 7, Text = "Quản trị" },
+                                            new { Value = 8, Text = "Chất lượng" },
+                                            new { Value = 9, Text = "Đổi mới" },
+                                            new { Value = 10, Text = "Năng suất" },
+                                            new { Value = 11, Text = "Nhân sự" },
+                                            new { Value = 12, Text = "CNTT" },
+                                            new { Value = 13, Text = "An toàn" },
+                                            new { Value = 14, Text = "Dự án" },
+                                            new { Value = 15, Text = "Rủi ro" },
+                                            new { Value = 16, Text = "Khác" }
+                                        };
+                                        
+                                        // Create items for select list
+                                        var categoryItems = categories.Select(c => new SelectListItem
+                                        {
+                                            Value = c.Value.ToString(),
+                                            Text = c.Text,
+                                            Selected = (int)Model.Category == c.Value
+                                        });
+                                    }
+                                    <select id="CategorySelect" class="form-select" asp-items="categoryItems"></select>
+                                    <input type="hidden" id="Category" name="Category" asp-for="Category" />
+                                    <label for="CategorySelect">Danh mục</label>
                                     <span asp-validation-for="Category" class="text-danger"></span>
                                 </div>
                             </div>
@@ -84,6 +124,15 @@
                                     </select>
                                     <label asp-for="ActivityType">Loại hoạt động</label>
                                     <span asp-validation-for="ActivityType" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select asp-for="IndicatorType" asp-items="Model.IndicatorTypes" class="form-select">
+                                        <option value="">-- Chọn loại chỉ số --</option>
+                                    </select>
+                                    <label asp-for="IndicatorType">Loại chỉ số</label>
+                                    <span asp-validation-for="IndicatorType" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -146,9 +195,24 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
-                                    <input asp-for="MeasurementUnit" class="form-control" placeholder="Đơn vị đo">
+                                    <input asp-for="MeasurementUnit" id="MeasurementUnit" class="form-control" placeholder="Đơn vị đo">
                                     <label asp-for="MeasurementUnit">Đơn vị đo</label>
                                     <span asp-validation-for="MeasurementUnit" class="text-danger"></span>
+                                    <input type="hidden" asp-for="Unit" id="Unit" value="@Model.MeasurementUnit" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="MinimumValue" class="form-control" placeholder="Giá trị tối thiểu">
+                                    <label asp-for="MinimumValue">Giá trị tối thiểu</label>
+                                    <span asp-validation-for="MinimumValue" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="MaximumValue" class="form-control" placeholder="Giá trị tối đa">
+                                    <label asp-for="MaximumValue">Giá trị tối đa</label>
+                                    <span asp-validation-for="MaximumValue" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -156,14 +220,14 @@
                                     <select asp-for="MeasurementFrequency" class="form-select">
                                         @foreach (MeasurementFrequency frequency in Enum.GetValues(typeof(MeasurementFrequency)))
                                         {
-                                            <option value="@frequency">@(frequency == MeasurementFrequency.Daily ? "Hàng ngày" :
-                                                                        frequency == MeasurementFrequency.Weekly ? "Hàng tuần" :
-                                                                        frequency == MeasurementFrequency.Biweekly ? "Hai tuần một lần" :
-                                                                        frequency == MeasurementFrequency.Monthly ? "Hàng tháng" :
-                                                                        frequency == MeasurementFrequency.Quarterly ? "Hàng quý" :
-                                                                        frequency == MeasurementFrequency.Semiannually ? "Nửa năm" :
-                                                                        frequency == MeasurementFrequency.Annually ? "Hàng năm" : "Tùy chỉnh")</option>
-                                        }
+                                                <option value="@frequency">@(frequency.ToString() == "Daily" ? "Hàng ngày" :
+                                                                                                                                                    frequency.ToString() == "Weekly" ? "Hàng tuần" :
+                                                                                                                                                    frequency.ToString() == "BiWeekly" ? "Hai tuần một lần" :
+                                                                                                                                                    frequency.ToString() == "Monthly" ? "Hàng tháng" :
+                                                                                                                                                    frequency.ToString() == "Quarterly" ? "Hàng quý" :
+                                                                                                                                                    frequency.ToString() == "SemiAnnual" ? "Nửa năm" :
+                                                                                                                                                    frequency.ToString() == "Annual" ? "Hàng năm" : "Tùy chỉnh")</option>
+                                                                                }
                                     </select>
                                     <label asp-for="MeasurementFrequency">Tần suất đo</label>
                                     <span asp-validation-for="MeasurementFrequency" class="text-danger"></span>
@@ -174,11 +238,11 @@
                                     <select asp-for="MeasurementDirection" class="form-select">
                                         @foreach (MeasurementDirection direction in Enum.GetValues(typeof(MeasurementDirection)))
                                         {
-                                            <option value="@direction">@(direction == MeasurementDirection.HigherIsBetter ? "Cao hơn là tốt hơn" : 
-                                                                        direction == MeasurementDirection.LowerIsBetter ? "Thấp hơn là tốt hơn" : 
-                                                                        direction == MeasurementDirection.TargetIsBest ? "Đạt đúng mục tiêu" : 
-                                                                        "Nằm trong phạm vi")</option>
-                                        }
+                                                <option value="@direction">@(direction.ToString() == "HigherIsBetter" ? "Cao hơn là tốt hơn" : 
+                                                                                                                                                    direction.ToString() == "LowerIsBetter" ? "Thấp hơn là tốt hơn" : 
+                                                                                                                                                    direction.ToString() == "CloserToTarget" ? "Đạt đúng mục tiêu" : 
+                                                                                                                                                    "Nằm trong phạm vi")</option>
+                                                                                }
                                     </select>
                                     <label asp-for="MeasurementDirection">Chiều hướng</label>
                                     <span asp-validation-for="MeasurementDirection" class="text-danger"></span>
@@ -220,6 +284,21 @@
                         <div class="form-group">
                             <select asp-for="SelectedCsfIds" asp-items="Model.CriticalSuccessFactors" class="form-select" multiple>
                             </select>
+                            <small class="form-text text-muted">Chọn các yếu tố thành công mà PI này góp phần thực hiện</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">Chỉ số kết quả (RI) liên quan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <select asp-for="RIId" asp-items="Model.ParentRis" class="form-select">
+                                <option value="">-- Chọn chỉ số kết quả liên quan --</option>
+                            </select>
+                            <small class="form-text text-muted">Chọn chỉ số kết quả mà chỉ số hoạt động này góp phần thực hiện</small>
                         </div>
                     </div>
                 </div>
@@ -243,19 +322,132 @@
 </div>
 
 @section Scripts {
-    <script>
-        $(document).ready(function () {
-            // Initialize select2 for dropdowns
-            $('.form-select').select2({
-                theme: 'bootstrap-5'
-            });
+        <script>
+            $(document).ready(function () {
+                // Ensure Unit has a value by copying from MeasurementUnit
+                var measurementUnitValue = $("#MeasurementUnit").val();
+                $("#Unit").val(measurementUnitValue || "");
+            
+                // Get the current category value
+                var categoryValue = @((int)Model.Category);
+                $("#Category").val(categoryValue);
+            
+                // Initialize select2 for dropdowns
+                $('.form-select').select2({
+                    theme: 'bootstrap-5'
+                });
 
-            // Initialize multi-select for CSFs
-            $('#SelectedCsfIds').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Chọn các yếu tố thành công liên quan',
-                allowClear: true
+                // Force Category selection after Select2 initialization
+                setTimeout(function() {
+                    $("#CategorySelect").val(categoryValue).trigger('change');
+                }, 100);
+            
+                // Keep hidden field in sync with dropdown
+                $("#CategorySelect").on('change', function() {
+                    $("#Category").val($(this).val());
+                });
+
+                // Initialize multi-select for CSFs
+                $('#SelectedCsfIds').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Chọn các yếu tố thành công liên quan',
+                    allowClear: true
+                });
+
+                // Synchronize MeasurementUnit and Unit fields
+                $("#MeasurementUnit").on("change keyup", function() {
+                    $("#Unit").val($(this).val());
+                });
+            
+                // Ensure Unit gets set initially
+                $("#Unit").val($("#MeasurementUnit").val());
+
+                // Check and initialize required fields
+                if (!$("#MinimumValue").val()) {
+                    $("#MinimumValue").val(0);
+                }
+            
+                if (!$("#MaximumValue").val()) {
+                    // Set maximum value to 100 if not specified
+                    $("#MaximumValue").val(100);
+                }
+
+                // Handle form submission
+                $("form").on("submit", function (e) {
+                    // Ensure Category value is set from dropdown
+                    $("#Category").val($("#CategorySelect").val());
+                
+                    // Log form values for debugging
+                    console.log("Category value:", $("#CategorySelect").val());
+                    console.log("Hidden Category value:", $("#Category").val());
+                    console.log("Form data:", $(this).serialize());
+                
+                    // Ensure Unit and MeasurementUnit are in sync
+                    $("#Unit").val($("#MeasurementUnit").val());
+                
+                    // Make sure we have values for required fields
+                    var hasErrors = false;
+                
+                    if (!$("#MeasurementUnit").val()) {
+                        $("#MeasurementUnit").addClass("is-invalid");
+                        hasErrors = true;
+                    }
+                
+                    // Make sure we have values for Category
+                    if (!$("#CategorySelect").val()) {
+                        $("#CategorySelect").closest('.form-floating').find('.select2-selection').addClass("is-invalid");
+                        hasErrors = true;
+                    }
+                
+                    // Set default values for empty fields
+                    if (!$("#MinimumValue").val()) {
+                        $("#MinimumValue").val(0);
+                    }
+                
+                    if (!$("#MaximumValue").val()) {
+                        $("#MaximumValue").val(100);
+                    }
+                
+                    if (hasErrors) {
+                        alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+                        e.preventDefault();
+                        return false;
+                    }
+                
+                    // All is well, submit the form
+                    return true;
+                });
+
+                // Add enhanced validation display
+                $("form").validate({
+                    errorElement: "span",
+                    errorClass: "text-danger",
+                    highlight: function (element, errorClass, validClass) {
+                        $(element).addClass("is-invalid");
+                    },
+                    unhighlight: function (element, errorClass, validClass) {
+                        $(element).removeClass("is-invalid");
+                    },
+                    errorPlacement: function (error, element) {
+                        error.addClass("invalid-feedback");
+                        element.closest(".form-group").append(error);
+                    },
+                    invalidHandler: function (form, validator) {
+                        // Show error summary at the top
+                        var errors = validator.numberOfInvalids();
+                        if (errors) {
+                            // Scroll to first invalid element
+                            $('html, body').animate({
+                                scrollTop: $(validator.errorList[0].element).offset().top - 100
+                            }, 500);
+                        }
+                    }
+                });
+            
+                // Special handling for Select2 validation
+                $('.form-select').on('select2:select select2:unselect', function (e) {
+                    $(this).trigger('change');
+                });
             });
-        });
-    </script>
+        </script>
 }

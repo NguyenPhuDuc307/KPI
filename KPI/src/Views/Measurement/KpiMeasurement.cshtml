@@ -1,0 +1,326 @@
+@{
+    ViewData["Title"] = "Đo lường KPI";
+    ViewData["Icon"] = "bi-graph-up";
+    ViewData["Subtitle"] = "Cập nhật giá trị đo lường cho KPI";
+    ViewData["ShowFilterPanel"] = false;
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Thông tin chỉ số KPI-001: Tỷ lệ đơn hàng đúng hạn</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mã KPI</label>
+                            <p>KPI-001</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên KPI</label>
+                            <p>Tỷ lệ đơn hàng đúng hạn</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mô tả</label>
+                            <p>Tỷ lệ phần trăm đơn hàng được giao đúng thời hạn cam kết với khách hàng</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Công thức tính</label>
+                            <p>
+                                <span class="fst-italic">(Số đơn hàng giao đúng hạn / Tổng số đơn hàng) x 100%</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Phòng ban</label>
+                            <p>Sản xuất</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Người phụ trách</label>
+                            <p>Nguyễn Văn A</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tần suất đo lường</label>
+                            <p>Hàng tuần</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Đơn vị đo</label>
+                            <p>%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex align-items-center">
+                            <h5 class="mb-0 me-auto">Ngưỡng đánh giá</h5>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil me-1"></i>Chỉnh sửa
+                            </button>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-success mb-3">Đạt mục tiêu</h6>
+                                        <p class="mb-0">≥ 95%</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-warning mb-3">Cần cải thiện</h6>
+                                        <p class="mb-0">90% - 94%</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-danger mb-3">Không đạt</h6>
+                                        <p class="mb-0">< 90%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Dữ liệu đo lường theo thời gian</h5>
+                <div class="btn-group">
+                    <a asp-action="AddMeasurement" asp-route-kpiId="1" class="btn btn-sm btn-success">
+                        <i class="bi bi-plus-circle me-1"></i>Thêm đo lường
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-gear-fill"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#">Xem theo tuần</a></li>
+                        <li><a class="dropdown-item" href="#">Xem theo tháng</a></li>
+                        <li><a class="dropdown-item" href="#">Xem theo quý</a></li>
+                        <li><a class="dropdown-item" href="#">Xem theo năm</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="measurementChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Trạng thái hiện tại</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <div class="display-6 fw-bold mb-2">92%</div>
+                    <div class="text-muted">Cập nhật: 15/05/2023</div>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 92%" aria-valuenow="92"
+                        aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="mb-3">
+                    <span class="badge bg-warning p-2">Cần cải thiện</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="small text-muted">Mục tiêu</div>
+                        <div>95%</div>
+                    </div>
+                    <div>
+                        <div class="small text-muted">Kỳ trước</div>
+                        <div>90% <i class="bi bi-arrow-up-short text-success"></i></div>
+                    </div>
+                    <div>
+                        <div class="small text-muted">Xu hướng</div>
+                        <div><i class="bi bi-arrow-up-circle-fill text-success"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lịch sử đo lường</h5>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="exportHistoryDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i>Xuất dữ liệu
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportHistoryDropdown">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-file-excel me-2"></i>Excel</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-file-pdf me-2"></i>PDF</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-printer me-2"></i>In báo cáo</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="historyTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>STT</th>
+                                <th>Thời gian</th>
+                                <th>Giá trị</th>
+                                <th>Trạng thái</th>
+                                <th>Ghi chú</th>
+                                <th>Người cập nhật</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>15/05/2023</td>
+                                <td>92%</td>
+                                <td>
+                                    <span class="badge bg-warning">Cần cải thiện</span>
+                                </td>
+                                <td>Đạt kết quả tốt hơn so với kỳ trước</td>
+                                <td>Nguyễn Văn A</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>08/05/2023</td>
+                                <td>90%</td>
+                                <td>
+                                    <span class="badge bg-warning">Cần cải thiện</span>
+                                </td>
+                                <td>Tăng nhẹ so với kỳ trước</td>
+                                <td>Nguyễn Văn A</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>01/05/2023</td>
+                                <td>88%</td>
+                                <td>
+                                    <span class="badge bg-danger">Không đạt</span>
+                                </td>
+                                <td>Nhiều đơn hàng bị trễ do thiếu nguyên liệu</td>
+                                <td>Nguyễn Văn A</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable
+            $('#historyTable').DataTable({
+                "pageLength": 10,
+                "language": {
+                    "lengthMenu": "Hiển thị _MENU_ bản ghi",
+                    "zeroRecords": "Không tìm thấy bản ghi phù hợp",
+                    "info": "Hiển thị _START_ đến _END_ của _TOTAL_ bản ghi",
+                    "infoEmpty": "Không có bản ghi nào",
+                    "infoFiltered": "(lọc từ _MAX_ bản ghi)",
+                    "search": "Tìm kiếm:",
+                    "paginate": {
+                        "first": "Đầu",
+                        "last": "Cuối",
+                        "next": "Sau",
+                        "previous": "Trước"
+                    }
+                }
+            });
+
+            // Chart setup
+            var ctx = document.getElementById('measurementChart').getContext('2d');
+            var measurementChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['01/05', '08/05', '15/05'],
+                    datasets: [
+                        {
+                            label: 'Giá trị đo lường',
+                            data: [88, 90, 92],
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Mục tiêu',
+                            data: [95, 95, 95],
+                            backgroundColor: 'transparent',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 80,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+} 

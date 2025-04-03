@@ -1,4 +1,4 @@
-@model KPISolution.Models.ViewModels.KPI.KpiViewModel
+@model KPISolution.Models.ViewModels.KPI.KpiDetailsViewModel
 
 @{
     ViewData["Title"] = "Xác nhận xóa PI";
@@ -25,7 +25,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Mã PI</label>
-                                <p class="form-control-plaintext">@Model.Name</p>
+                                <p class="form-control-plaintext">@Model.Code</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -42,8 +42,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label fw-bold">Loại hoạt động</label>
-                                <p class="form-control-plaintext">@Model.Type</p>
+                                <label class="form-label fw-bold">Trạng thái</label>
+                                <p class="form-control-plaintext">@Model.Status</p>
                             </div>
                         </div>
                         <div class="col-12">

@@ -1,0 +1,37 @@
+{
+    "version": "1.0",
+    "defaultProvider": "cdnjs",
+    "libraries": [
+        {
+            "library": "jquery-validate@1.19.5",
+            "destination": "wwwroot/lib/jquery-validation/",
+            "files": ["jquery.validate.min.js"]
+        },
+        {
+            "library": "jquery-validation-unobtrusive@4.0.0",
+            "destination": "wwwroot/lib/jquery-validation-unobtrusive/",
+            "files": ["jquery.validate.unobtrusive.min.js"]
+        },
+        {
+            "library": "tinymce@6.8.3",
+            "destination": "wwwroot/lib/tinymce/",
+            "files": [
+                "tinymce.min.js",
+                "themes/silver/theme.min.js",
+                "plugins/image/plugin.min.js",
+                "plugins/link/plugin.min.js",
+                "plugins/code/plugin.min.js",
+                "plugins/table/plugin.min.js",
+                "plugins/lists/plugin.min.js",
+                "plugins/advlist/plugin.min.js",
+                "plugins/wordcount/plugin.min.js",
+                "plugins/media/plugin.min.js",
+                "plugins/fullscreen/plugin.min.js",
+                "plugins/searchreplace/plugin.min.js",
+                "skins/ui/oxide/skin.min.css",
+                "skins/ui/oxide/content.min.css",
+                "skins/content/default/content.min.css"
+            ]
+        }
+    ]
+}

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using KPISolution.Models.Entities.Base;
@@ -53,7 +55,14 @@ namespace KPISolution.Models.Entities.KPI
         /// </summary>
         [Display(Name = "Target Value")]
         [Column(TypeName = "decimal(18,4)")]
-        public decimal TargetValue { get; set; }
+        public decimal? TargetValue { get; set; }
+
+        /// <summary>
+        /// Current value of the KPI
+        /// </summary>
+        [Display(Name = "Current Value")]
+        [Column(TypeName = "decimal(18,4)")]
+        public decimal? CurrentValue { get; set; }
 
         /// <summary>
         /// Minimum acceptable value for the KPI
@@ -135,5 +144,10 @@ namespace KPISolution.Models.Entities.KPI
         /// </summary>
         [Display(Name = "Performance Trend")]
         public PerformanceTrend? PerformanceTrend { get; set; }
+
+        /// <summary>
+        /// Collection of measurement values
+        /// </summary>
+        public virtual ICollection<KpiValue> Values { get; set; } = new List<KpiValue>();
     }
 }

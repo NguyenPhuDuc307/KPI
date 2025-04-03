@@ -1,208 +1,555 @@
 @model KPISolution.Models.ViewModels.BusinessObjective.BusinessObjectiveDetailsViewModel
 
 @{
-    ViewData["Title"] = "Chi tiết mục tiêu";
+    ViewData["Title"] = "Business Objective";
+    ViewData["Icon"] = "bi-bullseye";
+    ViewData["Subtitle"] = "Chi tiết Business Objective (O) của tổ chức";
+    
+    // Nút chính và các nút lệnh phụ
+    ViewData["PrimaryButton"] = (
+        "Chỉnh sửa", 
+        "BusinessObjective", 
+        "Edit", 
+        Model.Id.ToString(), 
+        "bi-pencil"
+    );
+    
+    ViewData["CommandButtons"] = new[] {
+        (
+            "Xóa",
+            "BusinessObjective",
+            "Delete",
+            Model.Id.ToString(),
+            "bi-trash"
+        ),
+        (
+            "Quay lại",
+            "BusinessObjective",
+            "Index",
+            "",
+            "bi-arrow-left"
+        )
+    };
 }
 
 <div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mt-4 mb-0"><i class="bi bi-bullseye me-2"></i>Chi tiết mục tiêu</h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-                    <li class="breadcrumb-item"><a asp-controller="BusinessObjective" asp-action="Index">Mục tiêu kinh
-                            doanh</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
-                </ol>
-            </nav>
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">@Model.Name</h5>
+            <span class="@Model.StatusBadgeClass">@Html.DisplayFor(model => model.Status)</span>
         </div>
-        <div>
-            <div class="btn-group">
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
-                    <i class="bi bi-pencil me-1"></i> Chỉnh sửa
-                </a>
-                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
-                    <i class="bi bi-trash me-1"></i> Xóa
-                </a>
-                <a asp-action="Index" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left me-1"></i> Quay lại
-                </a>
+        <div class="card-body">
+            <div class="mb-4">
+                <p class="text-muted">@Model.Description</p>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Tiến độ thực hiện</h5>
+                <span class="badge @(Model.ProgressPercentage == 100 ? "bg-success" : Model.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning text-dark")"
+                    id="progressText">
+                    @Model.ProgressPercentage%
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar fw-bold @(Model.ProgressPercentage == 100 ? "bg-success" : Model.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                        role="progressbar" id="mainProgressBar"
+                        style="width: @Model.ProgressPercentage%; min-width: 2rem; transition: width 0.3s ease;"
+                        aria-valuenow="@Model.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                        @Model.ProgressPercentage%
+                    </div>
+                </div>
+            </div>
+
+            @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+            {
+                <div class="mt-3">
+                    <input type="range" class="form-range" id="progressSlider" value="@Model.ProgressPercentage"
+                        min="0" max="100" step="1">
+                </div>
+                <div class="d-flex justify-content-end mt-2">
+                    <button type="button" id="updateProgress" class="btn btn-primary">
+                        <i class="bi bi-check2-circle me-1"></i>Cập nhật
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Indicators Section -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="objectiveDetailsTabs" role="tablist">
+                <!-- Success Factor tab -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="success-factors-tab" data-bs-toggle="tab" data-bs-target="#success-factors"
+                        type="button" role="tab" aria-controls="success-factors" aria-selected="true">
+                        <i class="bi bi-check2-square me-1"></i> Success Factor
+                    </button>
+                </li>
+                <!-- Result Indicator tab -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="result-indicators-tab" data-bs-toggle="tab" data-bs-target="#result-indicators" 
+                        type="button" role="tab" aria-controls="result-indicators" aria-selected="false">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Result Indicator
+                    </button>
+                </li>
+                <!-- Performance Indicator tab -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="performance-indicators-tab" data-bs-toggle="tab" data-bs-target="#performance-indicators" 
+                        type="button" role="tab" aria-controls="performance-indicators" aria-selected="false">
+                        <i class="bi bi-graph-up-arrow me-1"></i> Performance Indicator
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="tab-content" id="objectiveDetailsTabsContent">
+                <!-- Success Factor tab content -->
+                <div class="tab-pane fade show active" id="success-factors" role="tabpanel" aria-labelledby="success-factors-tab">
+                    <div class="row">
+                        <!-- CSF Section -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-primary"><i class="bi bi-check2-square me-1"></i> Critical Success Factor (CSF)</h5>
+                                    <a href="@Url.Action("Create", "CSF", new { businessObjectiveId = Model.Id })"
+                                        class="btn btn-sm btn-primary">
+                                        <i class="bi bi-plus-lg me-1"></i> Thêm
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.RelatedCSFs.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Mã</th>
+                                                        <th>Tên CSF</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Tiến độ</th>
+                                                        <th>Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var csf in Model.RelatedCSFs)
+                                                    {
+                                                        <tr>
+                                                            <td>@csf.Code</td>
+                                                            <td>@csf.Name</td>
+                                                            <td><span class="@csf.StatusBadgeClass">@csf.Status</span></td>
+                                                            <td>
+                                                                <div class="progress" style="height: 8px;">
+                                                                    <div class="progress-bar @(csf.ProgressPercentage == 100 ? "bg-success" : csf.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                                                                        role="progressbar" style="width: @(csf.ProgressPercentage)%;"
+                                                                        aria-valuenow="@csf.ProgressPercentage" aria-valuemin="0"
+                                                                        aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                <small>@csf.ProgressPercentage%</small>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <a asp-controller="CSF" asp-action="Details" asp-route-id="@csf.Id"
+                                                                        class="btn btn-sm btn-info">
+                                                                        <i class="bi bi-eye"></i>
+                                                                    </a>
+                                                                    <a asp-controller="CSF" asp-action="Edit" asp-route-id="@csf.Id"
+                                                                        class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-pencil"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i> Chưa có CSF nào được tạo cho mục tiêu này.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SF Section -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-success"><i class="bi bi-check-circle me-1"></i> Success Factor (SF)</h5>
+                                    <a href="@Url.Action("Create", "SF", new { businessObjectiveId = Model.Id })"
+                                        class="btn btn-sm btn-success">
+                                        <i class="bi bi-plus-lg me-1"></i> Thêm
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.RelatedSFs.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Mã</th>
+                                                        <th>Tên SF</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Tiến độ</th>
+                                                        <th>Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var sf in Model.RelatedSFs)
+                                                    {
+                                                        <tr>
+                                                            <td>@sf.Code</td>
+                                                            <td>@sf.Name</td>
+                                                            <td><span class="@sf.StatusBadgeClass">@sf.Status</span></td>
+                                                            <td>
+                                                                <div class="progress" style="height: 8px;">
+                                                                    <div class="progress-bar @(sf.ProgressPercentage == 100 ? "bg-success" : sf.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                                                                        role="progressbar" style="width: @(sf.ProgressPercentage)%;"
+                                                                        aria-valuenow="@sf.ProgressPercentage" aria-valuemin="0"
+                                                                        aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                <small>@sf.ProgressPercentage%</small>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <a asp-controller="SF" asp-action="Details" asp-route-id="@sf.Id"
+                                                                        class="btn btn-sm btn-info">
+                                                                        <i class="bi bi-eye"></i>
+                                                                    </a>
+                                                                    <a asp-controller="SF" asp-action="Edit" asp-route-id="@sf.Id"
+                                                                        class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-pencil"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i> Chưa có SF nào được tạo cho mục tiêu này.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result Indicator tab content -->
+                <div class="tab-pane fade" id="result-indicators" role="tabpanel" aria-labelledby="result-indicators-tab">
+                    <div class="row">
+                        <!-- KRI Section -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-danger">
+                                <div class="card-header bg-danger bg-opacity-10 d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Key Result Indicator (KRI)</h5>
+                                    <a href="@Url.Action("Create", "KRI", new { businessObjectiveId = Model.Id })"
+                                        class="btn btn-sm btn-danger">
+                                        <i class="bi bi-plus-lg me-1"></i> Thêm
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.RelatedKRIs.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Mã</th>
+                                                        <th>Tên KRI</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Tiến độ</th>
+                                                        <th>Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var kri in Model.RelatedKRIs)
+                                                    {
+                                                        <tr>
+                                                            <td>@kri.Code</td>
+                                                            <td>@kri.Name</td>
+                                                            <td><span class="@kri.StatusBadgeClass">@kri.Status</span></td>
+                                                            <td>
+                                                                <div class="progress" style="height: 8px;">
+                                                                    <div class="progress-bar @(kri.ProgressPercentage == 100 ? "bg-success" : kri.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                                                                        role="progressbar" style="width: @(kri.ProgressPercentage)%;"
+                                                                        aria-valuenow="@kri.ProgressPercentage" aria-valuemin="0"
+                                                                        aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                <small>@kri.ProgressPercentage%</small>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <a asp-controller="KRI" asp-action="Details" asp-route-id="@kri.Id"
+                                                                        class="btn btn-sm btn-info">
+                                                                        <i class="bi bi-eye"></i>
+                                                                    </a>
+                                                                    <a asp-controller="KRI" asp-action="Edit" asp-route-id="@kri.Id"
+                                                                        class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-pencil"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i> Chưa có KRI nào được tạo cho mục tiêu này.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RI Section -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-warning">
+                                <div class="card-header bg-warning bg-opacity-10 d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-warning"><i class="bi bi-exclamation-circle me-1"></i> Result Indicator (RI)</h5>
+                                    <a href="@Url.Action("Create", "RI", new { businessObjectiveId = Model.Id })"
+                                        class="btn btn-sm btn-warning text-dark">
+                                        <i class="bi bi-plus-lg me-1"></i> Thêm
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.RelatedRIs.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Mã</th>
+                                                        <th>Tên RI</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Tiến độ</th>
+                                                        <th>Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var ri in Model.RelatedRIs)
+                                                    {
+                                                        <tr>
+                                                            <td>@ri.Code</td>
+                                                            <td>@ri.Name</td>
+                                                            <td><span class="@ri.StatusBadgeClass">@ri.Status</span></td>
+                                                            <td>
+                                                                <div class="progress" style="height: 8px;">
+                                                                    <div class="progress-bar @(ri.ProgressPercentage == 100 ? "bg-success" : ri.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                                                                        role="progressbar" style="width: @(ri.ProgressPercentage)%;"
+                                                                        aria-valuenow="@ri.ProgressPercentage" aria-valuemin="0"
+                                                                        aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                <small>@ri.ProgressPercentage%</small>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <a asp-controller="RI" asp-action="Details" asp-route-id="@ri.Id"
+                                                                        class="btn btn-sm btn-info">
+                                                                        <i class="bi bi-eye"></i>
+                                                                    </a>
+                                                                    <a asp-controller="RI" asp-action="Edit" asp-route-id="@ri.Id"
+                                                                        class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-pencil"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i> Chưa có RI nào được tạo cho mục tiêu này.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Indicator tab content -->
+                <div class="tab-pane fade" id="performance-indicators" role="tabpanel" aria-labelledby="performance-indicators-tab">
+                    <div class="row">
+                        <!-- KPI Section -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-info">
+                                <div class="card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-info"><i class="bi bi-graph-up-arrow me-1"></i> Key Performance Indicator (KPI)</h5>
+                                    <a href="@Url.Action("Create", "KPI", new { businessObjectiveId = Model.Id })"
+                                        class="btn btn-sm btn-info">
+                                        <i class="bi bi-plus-lg me-1"></i> Thêm
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.RelatedKPIs.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Mã</th>
+                                                        <th>Tên KPI</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Tiến độ</th>
+                                                        <th>Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var kpi in Model.RelatedKPIs)
+                                                    {
+                                                        <tr>
+                                                            <td>@kpi.Code</td>
+                                                            <td>@kpi.Name</td>
+                                                            <td><span class="@kpi.StatusBadgeClass">@kpi.Status</span></td>
+                                                            <td>
+                                                                <div class="progress" style="height: 8px;">
+                                                                    <div class="progress-bar @(kpi.ProgressPercentage == 100 ? "bg-success" : kpi.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                                                                        role="progressbar" style="width: @(kpi.ProgressPercentage)%;"
+                                                                        aria-valuenow="@kpi.ProgressPercentage" aria-valuemin="0"
+                                                                        aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                <small>@kpi.ProgressPercentage%</small>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <a asp-controller="KPI" asp-action="Details" asp-route-id="@kpi.Id"
+                                                                        class="btn btn-sm btn-info">
+                                                                        <i class="bi bi-eye"></i>
+                                                                    </a>
+                                                                    <a asp-controller="KPI" asp-action="Edit" asp-route-id="@kpi.Id"
+                                                                        class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-pencil"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i> Chưa có KPI nào được tạo cho mục tiêu này.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PI Section -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-header bg-secondary bg-opacity-10 d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-secondary"><i class="bi bi-bar-chart me-1"></i> Performance Indicator (PI)</h5>
+                                    <a href="@Url.Action("Create", "PI", new { businessObjectiveId = Model.Id })"
+                                        class="btn btn-sm btn-secondary">
+                                        <i class="bi bi-plus-lg me-1"></i> Thêm
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    @if (Model.RelatedPIs.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Mã</th>
+                                                        <th>Tên PI</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Tiến độ</th>
+                                                        <th>Thao tác</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var pi in Model.RelatedPIs)
+                                                    {
+                                                        <tr>
+                                                            <td>@pi.Code</td>
+                                                            <td>@pi.Name</td>
+                                                            <td><span class="@pi.StatusBadgeClass">@pi.Status</span></td>
+                                                            <td>
+                                                                <div class="progress" style="height: 8px;">
+                                                                    <div class="progress-bar @(pi.ProgressPercentage == 100 ? "bg-success" : pi.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                                                                        role="progressbar" style="width: @(pi.ProgressPercentage)%;"
+                                                                        aria-valuenow="@pi.ProgressPercentage" aria-valuemin="0"
+                                                                        aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                                <small>@pi.ProgressPercentage%</small>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group">
+                                                                    <a asp-controller="PI" asp-action="Details" asp-route-id="@pi.Id"
+                                                                        class="btn btn-sm btn-info">
+                                                                        <i class="bi bi-eye"></i>
+                                                                    </a>
+                                                                    <a asp-controller="PI" asp-action="Edit" asp-route-id="@pi.Id"
+                                                                        class="btn btn-sm btn-primary">
+                                                                        <i class="bi bi-pencil"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i> Chưa có PI nào được tạo cho mục tiêu này.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="row">
         <div class="col-xl-8">
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-info-circle me-1"></i> Thông tin mục tiêu</h5>
-                    <span class="@Model.StatusBadgeClass">@Html.DisplayFor(model => model.Status)</span>
-                </div>
-                <div class="card-body">
-                    <h4 class="mb-3">@Model.Name</h4>
-
-                    <div class="mb-4">
-                        <p class="text-muted">@Model.Description</p>
-                    </div>
-
-                    <div class="progress mb-2" style="height: 20px;">
-                        <div class="@Model.ProgressBarClass" role="progressbar"
-                            style="width: @Model.ProgressPercentage%;" aria-valuenow="@Model.ProgressPercentage"
-                            aria-valuemin="0" aria-valuemax="100">
-                            @Model.ProgressPercentage%
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <div class="progress-update-form">
-                            <form id="progressUpdateForm" class="row g-2">
-                                <input type="hidden" id="objectiveId" value="@Model.Id" />
-                                <div class="col-md-8">
-                                    <input type="range" class="form-range" id="progressSlider"
-                                        value="@Model.ProgressPercentage" min="0" max="100" step="5">
-                                </div>
-                                <div class="col-md-2">
-                                    <input type="number" class="form-control" id="progressValue"
-                                        value="@Model.ProgressPercentage" min="0" max="100">
-                                </div>
-                                <div class="col-md-2">
-                                    <button type="submit" class="btn btn-primary w-100">Cập nhật</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <hr />
-
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h5>Thông tin cơ bản</h5>
-                            <table class="table table-borderless table-sm">
-                                <tr>
-                                    <th class="text-nowrap" style="width: 40%;">Phối cảnh:</th>
-                                    <td>@Model.BusinessPerspectiveDisplayText</td>
-                                </tr>
-                                <tr>
-                                    <th>Phòng ban:</th>
-                                    <td>@(string.IsNullOrEmpty(Model.Department) ? "-" : Model.Department)</td>
-                                </tr>
-                                <tr>
-                                    <th>Mức độ ưu tiên:</th>
-                                    <td><span class="@Model.PriorityBadgeClass">@Html.DisplayFor(model =>
-                                                                                        model.Priority)</span></td>
-                                </tr>
-                                <tr>
-                                    <th>Thời hạn:</th>
-                                    <td>@Model.TimeframeDisplayText</td>
-                                </tr>
-                                <tr>
-                                    <th>Năm tài chính:</th>
-                                    <td>@(string.IsNullOrEmpty(Model.FiscalYear) ? "-" : Model.FiscalYear)</td>
-                                </tr>
-                                <tr>
-                                    <th>Ngân sách:</th>
-                                    <td>@(Model.Budget.HasValue ? string.Format("{0:N0} VNĐ", Model.Budget) : "-")</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Thời gian</h5>
-                            <table class="table table-borderless table-sm">
-                                <tr>
-                                    <th style="width: 40%;">Ngày bắt đầu:</th>
-                                    <td>@Model.StartDate.ToString("dd/MM/yyyy")</td>
-                                </tr>
-                                <tr>
-                                    <th>Dự kiến hoàn thành:</th>
-                                    <td>@Model.TargetDate.ToString("dd/MM/yyyy")</td>
-                                </tr>
-                                <tr>
-                                    <th>Thời gian còn lại:</th>
-                                    <td>
-                                        @{
-                                            var remainingDays = (Model.TargetDate - DateTime.Today).Days;
-                                            var badgeClass = remainingDays < 0 ? "badge bg-danger" : remainingDays < 7 ?
-                                            "badge bg-warning text-dark" : "badge bg-success";
-                                        }
-                                        <span class="@badgeClass">
-                                            @(remainingDays < 0 ? "Quá hạn " + Math.Abs(remainingDays) + " ngày" :
-                                                                                        remainingDays + " ngày")
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Ngày hoàn thành:</th>
-                                    <td>@(Model.CompletionDate.HasValue ?
-                                                                                Model.CompletionDate.Value.ToString("dd/MM/yyyy") : "-")</td>
-                                </tr>
-                                <tr>
-                                    <th>Trạng thái:</th>
-                                    <td><span class="@Model.StatusBadgeClass">@Html.DisplayFor(model =>
-                                                                                        model.Status)</span></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-
-                    @if (!string.IsNullOrEmpty(Model.Notes))
-                    {
-                        <div class="mb-4">
-                            <h5>Ghi chú</h5>
-                            <div class="p-3 bg-light rounded">
-                                <p class="mb-0">@Model.Notes</p>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-
-            @if (Model.RelatedCSFs.Any())
+            @if (!string.IsNullOrEmpty(Model.Notes))
             {
                 <div class="card mb-4 shadow-sm">
                     <div class="card-header">
-                        <i class="bi bi-check2-square me-1"></i> Yếu tố thành công quan trọng (CSF)
+                        <h5 class="mb-0"><i class="bi bi-sticky me-1"></i> Ghi chú</h5>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Mã</th>
-                                        <th>Tên CSF</th>
-                                        <th>Trạng thái</th>
-                                        <th>Tiến độ</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var csf in Model.RelatedCSFs)
-                                    {
-                                        <tr>
-                                            <td>@csf.Code</td>
-                                            <td>@csf.Name</td>
-                                            <td><span class="@csf.StatusBadgeClass">@Html.DisplayFor(modelItem =>
-                                                                                                csf.Status)</span></td>
-                                    <td>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar @(csf.ProgressPercentage == 100 ? "bg-success" : csf.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
-                                                role="progressbar" style="width: @(csf.ProgressPercentage)%;"
-                                                aria-valuenow="@csf.ProgressPercentage" aria-valuemin="0"
-                                                aria-valuemax="100">
-                                            </div>
-                                        </div>
-                                        <small>@csf.ProgressPercentage%</small>
-                                    </td>
-                                    <td>
-                                        <a asp-controller="CSF" asp-action="Details" asp-route-id="@csf.Id"
-                                            class="btn btn-sm btn-info">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                                                }
-                                </tbody>
-                            </table>
+                        <div class="p-3 bg-light rounded">
+                            <p class="mb-0">@Model.Notes</p>
                         </div>
                     </div>
                 </div>
@@ -237,7 +584,7 @@
                                 @if (Model.ParentObjective != null)
                                 {
                                     <span class="@Model.ParentObjective.StatusBadgeClass">@Html.DisplayFor(model =>
-                                                                                        model.ParentObjective!.Status)</span>
+                                                                    model.ParentObjective!.Status)</span>
                                     <span class="ms-2">@Model.ParentObjective.ProgressPercentage%</span>
                                 }
                             </div>
@@ -282,46 +629,141 @@
             }
         </div>
     </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-1"></i> Thông tin cơ bản</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <th class="text-nowrap" style="width: 40%;">Phối cảnh:</th>
+                            <td>@Model.BusinessPerspectiveDisplayText</td>
+                        </tr>
+                        <tr>
+                            <th>Phòng ban:</th>
+                            <td>@(string.IsNullOrEmpty(Model.Department) ? "-" : Model.Department)</td>
+                        </tr>
+                        <tr>
+                            <th>Mức độ ưu tiên:</th>
+                            <td><span class="@Model.PriorityBadgeClass">@Html.DisplayFor(model => model.Priority)</span></td>
+                        </tr>
+                        <tr>
+                            <th>Thời hạn:</th>
+                            <td>@Model.TimeframeDisplayText</td>
+                        </tr>
+                        <tr>
+                            <th>Năm tài chính:</th>
+                            <td>@(string.IsNullOrEmpty(Model.FiscalYear) ? "-" : Model.FiscalYear)</td>
+                        </tr>
+                        <tr>
+                            <th>Ngân sách:</th>
+                            <td>@(Model.Budget.HasValue ? string.Format("{0:N0} VNĐ", Model.Budget) : "-")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calendar-event me-1"></i> Thời gian</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <th style="width: 40%;">Ngày bắt đầu:</th>
+                            <td>@Model.StartDate.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                        <tr>
+                            <th>Dự kiến hoàn thành:</th>
+                            <td>@Model.TargetDate.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                        <tr>
+                            <th>Thời gian còn lại:</th>
+                            <td>
+                                @{
+                                    var remainingDays = (Model.TargetDate - DateTime.Today).Days;
+                                    var badgeClass = remainingDays < 0 ? "badge bg-danger" : remainingDays < 7 ?
+                                    "badge bg-warning text-dark" : "badge bg-success";
+                                }
+                                <span class="@badgeClass">
+                                    @(remainingDays < 0 ? "Quá hạn " + Math.Abs(remainingDays) + " ngày" :
+                                                                                remainingDays + " ngày")
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Ngày hoàn thành:</th>
+                            <td>@(Model.CompletionDate.HasValue ?
+                                                                        Model.CompletionDate.Value.ToString("dd/MM/yyyy") : "-")</td>
+                        </tr>
+                        <tr>
+                            <th>Trạng thái:</th>
+                            <td><span class="@Model.StatusBadgeClass">@Html.DisplayFor(model => model.Status)</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // Sync the slider and number input
-            $('#progressSlider').on('input', function () {
-                $('#progressValue').val($(this).val());
+            var progressBar = $('#mainProgressBar');
+            var progressText = $('#progressText');
+            var updateButton = $('#updateProgress');
+            var slider = $('#progressSlider');
+
+            // Handle slider input
+            slider.on('input', function () {
+                var value = $(this).val();
+
+                // Update progress bar
+                progressBar.css('width', value + '%');
+                progressBar.text(value + '%');
+
+                // Update status text and badge
+                progressText.text(value + '%');
+
+                // Update colors based on value
+                var newBarClass = value == 100 ? 'bg-success' : value >= 50 ? 'bg-primary' : 'bg-warning';
+                var newBadgeClass = 'badge ' + (value == 100 ? 'bg-success' : value >= 50 ? 'bg-primary' : 'bg-warning text-dark');
+
+                progressBar.removeClass('bg-success bg-primary bg-warning').addClass(newBarClass);
+                progressText.removeClass('bg-success bg-primary bg-warning text-dark').addClass(newBadgeClass);
             });
 
-            $('#progressValue').on('input', function () {
-                $('#progressSlider').val($(this).val());
-            });
-
-            // Submit progress update
-            $('#progressUpdateForm').on('submit', function (e) {
-                e.preventDefault();
-
-                var objectiveId = $('#objectiveId').val();
-                var progress = $('#progressValue').val();
+            // Handle update button click
+            updateButton.on('click', function () {
+                var value = slider.val();
+                updateButton.prop('disabled', true);
 
                 $.ajax({
-                    url: '@Url.Action("UpdateProgress", "BusinessObjective")',
+                    url: '/BusinessObjective/UpdateProgress',
                     type: 'POST',
-                    data: { id: objectiveId, progress: progress },
-                    success: function (response) {
-                        if (response.success) {
-                            toastr.success('Tiến độ đã được cập nhật thành công');
-                            setTimeout(function () {
-                                location.reload();
-                            }, 1000);
-                        } else {
-                            toastr.error('Có lỗi xảy ra khi cập nhật tiến độ');
-                        }
+                    data: {
+                        id: '@Model.Id',
+                        progress: value,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
                     },
-                    error: function () {
-                        toastr.error('Có lỗi xảy ra khi cập nhật tiến độ');
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        location.reload();
                     }
                 });
             });
         });
     </script>
+    @Html.AntiForgeryToken()
 }

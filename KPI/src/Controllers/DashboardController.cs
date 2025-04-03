@@ -103,19 +103,48 @@ namespace KPISolution.Controllers
                     viewModel.KpisByStatus[status] = viewModel.KriSummaries.Count(k => k.Status == status);
                 }
 
-                // Thêm dữ liệu mẫu cho hiển thị nếu không có KPI nào
+                // Add hierarchy structure counts from database
+                var objectives = await _unitOfWork.BusinessObjectives.GetAllAsync();
+                var successFactors = await _unitOfWork.SuccessFactors.GetAllAsync();
+                var criticalSuccessFactors = await _unitOfWork.CriticalSuccessFactors.GetAllAsync();
+                var pis = await _unitOfWork.PIs.GetAllAsync();
+                var ris = await _unitOfWork.RIs.GetAllAsync();
+                var keyResultIndicators = await _unitOfWork.KRIs.GetAllAsync();
+
+                // Populate hierarchy counts
+                viewModel.ObjectiveCount = objectives.Count();
+                viewModel.SfCount = successFactors.Count();
+                viewModel.CsfCount = criticalSuccessFactors.Count();
+                viewModel.IndicatorCount = pis.Count() + ris.Count();
+                viewModel.KeyIndicatorCount = keyResultIndicators.Count();
+
+                // If no data exists, provide sample data for display
+                if (viewModel.ObjectiveCount == 0) viewModel.ObjectiveCount = 8;
+                if (viewModel.SfCount == 0) viewModel.SfCount = 8;
+                if (viewModel.CsfCount == 0) viewModel.CsfCount = 6;
+                if (viewModel.IndicatorCount == 0) viewModel.IndicatorCount = 72;
+                if (viewModel.KeyIndicatorCount == 0) viewModel.KeyIndicatorCount = 144;
+
+                // For KPI status cards, use a different count than the hierarchy display
+                // This separates hierarchy item counts from KPI status counts
                 if (viewModel.TotalKpiCount == 0)
                 {
-                    // Thêm dữ liệu mẫu cho KPI status để hiển thị biểu đồ
-                    viewModel.KpisByStatus[KpiStatus.Active] = 12;
-                    viewModel.KpisByStatus[KpiStatus.Draft] = 3;
-                    viewModel.KpisByStatus[KpiStatus.UnderReview] = 2;
-                    viewModel.KpisByStatus[KpiStatus.OnTarget] = 8;
-                    viewModel.KpisByStatus[KpiStatus.AtRisk] = 4;
-                    viewModel.KpisByStatus[KpiStatus.BelowTarget] = 2;
+                    // The TotalKpiCount value will be used in the status summary cards
+                    viewModel.TotalKpiCount = 144;
 
-                    viewModel.TotalKpiCount = viewModel.KpisByStatus.Values.Sum();
+                    // Add sample data for KPI status chart
+                    viewModel.KpisByStatus[KpiStatus.OnTarget] = 60;
+                    viewModel.KpisByStatus[KpiStatus.AtRisk] = 24;
+                    viewModel.KpisByStatus[KpiStatus.BelowTarget] = 24;
+                    viewModel.KpisByStatus[KpiStatus.Active] = 15;
+                    viewModel.KpisByStatus[KpiStatus.Draft] = 13;
+                    viewModel.KpisByStatus[KpiStatus.UnderReview] = 8;
                 }
+
+                // Calculate the OnTargetPercentage based on the sample data
+                viewModel.OnTargetPercentage = viewModel.TotalKpiCount > 0 && viewModel.KpisByStatus.ContainsKey(KpiStatus.OnTarget)
+                    ? (decimal)viewModel.KpisByStatus[KpiStatus.OnTarget] / viewModel.TotalKpiCount * 100
+                    : 0;
 
                 // Thêm dữ liệu mẫu cho hiệu suất theo phòng ban nếu không có dữ liệu
                 if (!viewModel.PerformanceByDepartment.Any() || viewModel.PerformanceByDepartment.All(d => d.KpiCount == 0))

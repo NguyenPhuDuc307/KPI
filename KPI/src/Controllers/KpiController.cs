@@ -72,13 +72,15 @@ namespace KPISolution.Controllers
                 // Get KPIs by filter
                 var kpis = await GetKpisByFilterAsync(filter);
 
-                // Get total count before pagination
-                viewModel.TotalCount = kpis.Count;
+                // Get the total count before pagination
+                viewModel.TotalCount = kpis.Count();
 
                 // Apply pagination
-                kpis = kpis.Skip((page - 1) * viewModel.PageSize)
-                          .Take(viewModel.PageSize)
-                          .ToList();
+                kpis = kpis
+                    .OrderBy(k => k.Id)
+                    .Skip((page - 1) * viewModel.PageSize)
+                    .Take(viewModel.PageSize)
+                    .ToList();
 
                 // Map to view models
                 viewModel.KpiItems = kpis.Select(k => _mapper.Map<KpiListItemViewModel>(k)).ToList();
@@ -108,33 +110,11 @@ namespace KPISolution.Controllers
                 // Find the KPI in any of the repositories
                 KpiBase? kpi = await FindKpiByIdAsync(id.Value);
 
-                // Nếu không tìm thấy KPI, tạo KPI mẫu với ID đã cho
+                // Nếu không tìm thấy KPI, trả về NotFound
                 if (kpi == null)
                 {
-                    _logger.LogWarning("KPI not found with ID {KpiId}. Creating sample KPI for display.", id);
-
-                    // Tạo KPI mẫu với loại KRI
-                    kpi = new KRI
-                    {
-                        Id = id.Value,
-                        Name = "Revenue Growth Rate",
-                        Code = "KRI-FIN-001",
-                        Description = "Measures the rate at which the company's revenue is increasing or decreasing compared to previous periods",
-                        Unit = "%",
-                        TargetValue = 15,
-                        MinimumValue = 5,
-                        MaximumValue = 20,
-                        Department = "Finance",
-                        ResponsiblePerson = "John Smith",
-                        Status = KpiStatus.Active,
-                        MeasurementDirection = MeasurementDirection.HigherIsBetter,
-                        EffectiveDate = DateTime.Now.AddMonths(-6),
-                        Frequency = MeasurementFrequency.Monthly,
-                        CreatedAt = DateTime.Now.AddMonths(-6),
-                        CreatedBy = "system",
-                        UpdatedAt = DateTime.Now,
-                        UpdatedBy = "system"
-                    };
+                    _logger.LogWarning("KPI not found with ID {KpiId}", id);
+                    return NotFound();
                 }
 
                 // Check authorization
@@ -155,42 +135,6 @@ namespace KPISolution.Controllers
                     .Select(_mapper.Map<KpiValueViewModel>)
                     .ToList();
 
-                // Thêm dữ liệu lịch sử giá trị mẫu nếu không có
-                if (!viewModel.HistoricalValues.Any())
-                {
-                    var now = DateTime.Now;
-                    viewModel.HistoricalValues = new List<KpiValueViewModel>
-                    {
-                        new KpiValueViewModel
-                        {
-                            Id = Guid.NewGuid(),
-                            KpiId = kpi.Id,
-                            ActualValue = 12.5M,
-                            MeasurementDate = now.AddMonths(-3),
-                            CreatedBy = "System",
-                            Notes = "First quarter results"
-                        },
-                        new KpiValueViewModel
-                        {
-                            Id = Guid.NewGuid(),
-                            KpiId = kpi.Id,
-                            ActualValue = 13.8M,
-                            MeasurementDate = now.AddMonths(-2),
-                            CreatedBy = "System",
-                            Notes = "Second quarter showing improvement"
-                        },
-                        new KpiValueViewModel
-                        {
-                            Id = Guid.NewGuid(),
-                            KpiId = kpi.Id,
-                            ActualValue = 14.2M,
-                            MeasurementDate = now.AddMonths(-1),
-                            CreatedBy = "System",
-                            Notes = "Approaching target"
-                        }
-                    };
-                }
-
                 // Get linked CSFs
                 var csfKpis = await _unitOfWork.CSFKPIs.GetAllAsync();
                 var linkedCsfIds = csfKpis
@@ -198,42 +142,18 @@ namespace KPISolution.Controllers
                     .Select(ck => ck.CsfId)
                     .ToList();
 
-                // Thêm CSF liên kết mẫu nếu không có
-                if (!linkedCsfIds.Any())
-                {
-                    viewModel.LinkedCsfs = new List<LinkedCsfViewModel>
-                    {
-                        new LinkedCsfViewModel
-                        {
-                            CsfId = Guid.NewGuid(),
-                            Name = "Financial Stability",
-                            Code = "CSF-01",
-                            ProgressPercentage = 85,
-                            RelationshipStrength = RelationshipStrength.Critical,
-                            RelationshipStrengthDisplay = "Critical",
-                            ImpactLevel = ImpactLevel.High,
-                            ImpactLevelDisplay = "High"
-                        },
-                        new LinkedCsfViewModel
-                        {
-                            CsfId = Guid.NewGuid(),
-                            Name = "Market Competitiveness",
-                            Code = "CSF-02",
-                            ProgressPercentage = 72,
-                            RelationshipStrength = RelationshipStrength.Strong,
-                            RelationshipStrengthDisplay = "Strong",
-                            ImpactLevel = ImpactLevel.Medium,
-                            ImpactLevelDisplay = "Medium"
-                        }
-                    };
-                }
-                else
+                if (linkedCsfIds.Any())
                 {
                     var csfs = await _unitOfWork.CriticalSuccessFactors.GetAllAsync();
                     viewModel.LinkedCsfs = csfs
                         .Where(c => linkedCsfIds.Contains(c.Id))
                         .Select(_mapper.Map<LinkedCsfViewModel>)
                         .ToList();
+                }
+                else
+                {
+                    // Nếu không có CSF liên kết, tạo danh sách rỗng
+                    viewModel.LinkedCsfs = new List<LinkedCsfViewModel>();
                 }
 
                 return View(viewModel);
@@ -250,7 +170,7 @@ namespace KPISolution.Controllers
         /// </summary>
         /// <returns>Create KPI view</returns>
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(Guid? csfId = null)
         {
             try
             {
@@ -261,9 +181,9 @@ namespace KPISolution.Controllers
                 // Create a new view model
                 var viewModel = new KpiViewModel
                 {
-                    // Basic properties
-                    Type = KpiType.KeyResultIndicator,
-                    KpiType = KpiType.KeyResultIndicator,
+                    // Basic properties - Luôn sử dụng KPI độc lập
+                    Type = KpiType.StandaloneKPI,
+                    KpiType = KpiType.StandaloneKPI,
                     Name = string.Empty,
                     Code = string.Empty,
                     Description = string.Empty,
@@ -276,6 +196,27 @@ namespace KPISolution.Controllers
                     Frequency = MeasurementFrequency.Monthly,
                     EffectiveDate = DateTime.Now,
                 };
+
+                // Nếu có csfId, thêm vào danh sách SelectedCsfIds
+                if (csfId.HasValue && csfId != Guid.Empty)
+                {
+                    // Kiểm tra sự tồn tại của CSF
+                    var csf = await _unitOfWork.CriticalSuccessFactors.GetByIdAsync(csfId.Value);
+                    if (csf != null)
+                    {
+                        viewModel.SelectedCsfIds = new List<Guid> { csfId.Value };
+
+                        // Có thể lấy thêm thông tin từ CSF để điền trước cho KPI
+                        if (!string.IsNullOrEmpty(csf.Department?.Name))
+                        {
+                            viewModel.DepartmentName = csf.Department.Name;
+                            viewModel.DepartmentId = csf.DepartmentId ?? Guid.Empty;
+                        }
+
+                        // Sinh mã tự động dựa trên mã CSF cho KPI độc lập
+                        viewModel.Code = $"KPI-{csf.Code}-{DateTime.Now.ToString("yyyyMMdd")}";
+                    }
+                }
 
                 return View(viewModel);
             }
@@ -300,7 +241,7 @@ namespace KPISolution.Controllers
             // Convert KpiViewModel to CreateKpiViewModel for processing
             var createViewModel = new CreateKpiViewModel
             {
-                KpiType = viewModel.KpiType,
+                KpiType = KpiType.StandaloneKPI, // Luôn sử dụng KPI độc lập
                 Name = viewModel.Name,
                 Description = viewModel.Description,
                 Code = viewModel.Code,
@@ -323,89 +264,27 @@ namespace KPISolution.Controllers
 
             try
             {
-                // Create the appropriate KPI type based on the view model
-                switch (createViewModel.KpiType)
+                // Chỉ tạo KPI độc lập
+                var kpi = _mapper.Map<Models.Entities.KPI.KPI>(createViewModel);
+                await _unitOfWork.KPIs.AddAsync(kpi);
+
+                // Set audit fields
+                kpi.CreatedAt = DateTime.UtcNow;
+                kpi.CreatedBy = User.GetUserId();
+
+                // Link to CSFs if any are selected
+                if (createViewModel.SelectedCsfIds != null && createViewModel.SelectedCsfIds.Any())
                 {
-                    case KpiType.KeyResultIndicator:
+                    foreach (var csfId in createViewModel.SelectedCsfIds)
+                    {
+                        await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
                         {
-                            var kri = _mapper.Map<KRI>(createViewModel);
-                            await _unitOfWork.KRIs.AddAsync(kri);
-
-                            // Set audit fields
-                            kri.CreatedAt = DateTime.UtcNow;
-                            kri.CreatedBy = User.GetUserId();
-
-                            // Link to CSFs if any are selected
-                            if (createViewModel.SelectedCsfIds != null && createViewModel.SelectedCsfIds.Any())
-                            {
-                                foreach (var csfId in createViewModel.SelectedCsfIds)
-                                {
-                                    await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
-                                    {
-                                        CsfId = csfId,
-                                        KpiId = kri.Id,
-                                        CreatedAt = DateTime.UtcNow,
-                                        CreatedBy = User.GetUserId()
-                                    });
-                                }
-                            }
-                        }
-                        break;
-                    case KpiType.ResultIndicator:
-                        {
-                            var ri = _mapper.Map<RI>(createViewModel);
-                            await _unitOfWork.RIs.AddAsync(ri);
-
-                            // Set audit fields
-                            ri.CreatedAt = DateTime.UtcNow;
-                            ri.CreatedBy = User.GetUserId();
-
-                            // Link to CSFs if any are selected
-                            if (createViewModel.SelectedCsfIds != null && createViewModel.SelectedCsfIds.Any())
-                            {
-                                foreach (var csfId in createViewModel.SelectedCsfIds)
-                                {
-                                    await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
-                                    {
-                                        CsfId = csfId,
-                                        KpiId = ri.Id,
-                                        CreatedAt = DateTime.UtcNow,
-                                        CreatedBy = User.GetUserId()
-                                    });
-                                }
-                            }
-                        }
-                        break;
-                    case KpiType.PerformanceIndicator:
-                        {
-                            var pi = _mapper.Map<PI>(createViewModel);
-                            await _unitOfWork.PIs.AddAsync(pi);
-
-                            // Set audit fields
-                            pi.CreatedAt = DateTime.UtcNow;
-                            pi.CreatedBy = User.GetUserId();
-
-                            // Link to CSFs if any are selected
-                            if (createViewModel.SelectedCsfIds != null && createViewModel.SelectedCsfIds.Any())
-                            {
-                                foreach (var csfId in createViewModel.SelectedCsfIds)
-                                {
-                                    await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
-                                    {
-                                        CsfId = csfId,
-                                        KpiId = pi.Id,
-                                        CreatedAt = DateTime.UtcNow,
-                                        CreatedBy = User.GetUserId()
-                                    });
-                                }
-                            }
-                        }
-                        break;
-                    default:
-                        ModelState.AddModelError("", "Invalid KPI type specified");
-                        createViewModel.Departments = await GetDepartmentSelectList();
-                        createViewModel.CriticalSuccessFactors = await GetCsfSelectList();
-                        return View(createViewModel);
+                            CsfId = csfId,
+                            KpiId = kpi.Id,
+                            CreatedAt = DateTime.UtcNow,
+                            CreatedBy = User.GetUserId()
+                        });
+                    }
                 }
 
                 await _unitOfWork.SaveChangesAsync();
@@ -416,9 +295,9 @@ namespace KPISolution.Controllers
             {
                 _logger.LogError(ex, "Error occurred while creating KPI");
                 ModelState.AddModelError("", "An error occurred while saving the KPI. Please try again.");
-                createViewModel.Departments = await GetDepartmentSelectList();
-                createViewModel.CriticalSuccessFactors = await GetCsfSelectList();
-                return View(createViewModel);
+                ViewBag.Departments = await GetDepartmentSelectList();
+                ViewBag.CriticalSuccessFactors = await GetCsfSelectList();
+                return View(viewModel);
             }
         }
 
@@ -472,82 +351,73 @@ namespace KPISolution.Controllers
         }
 
         /// <summary>
-        /// Processes the form submission for editing an existing KPI
+        /// Processes the form submission for editing a KPI
         /// </summary>
         /// <param name="id">The ID of the KPI to edit</param>
         /// <param name="viewModel">The view model containing updated KPI data</param>
+        /// <param name="SelectedCsfIds">The selected CSF IDs</param>
         /// <returns>Redirect to Index on success, view with errors otherwise</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Edit(Guid id, EditKpiViewModel viewModel)
+        public async Task<IActionResult> Edit(Guid id, KpiViewModel viewModel, [FromForm] List<Guid> SelectedCsfIds)
         {
             if (id != viewModel.Id)
+            {
                 return NotFound();
+            }
+
+            // Ensure KPI exists and user is authorized
+            var kpi = await FindKpiByIdAsync(id) as Models.Entities.KPI.KPI;
+            if (kpi == null)
+            {
+                _logger.LogWarning("KPI not found: {KpiId}", id);
+                return NotFound();
+            }
+
+            // Check authorization
+            var authResult = await _authorizationService.AuthorizeAsync(
+                User, kpi, KpiAuthorizationHandler.Operations.Update);
+            if (!authResult.Succeeded)
+            {
+                _logger.LogWarning("User {UserId} not authorized to edit KPI {KpiId}", User.GetUserId(), id);
+                return Forbid();
+            }
 
             if (!ModelState.IsValid)
             {
-                viewModel.Departments = await GetDepartmentSelectList();
-                viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                ViewBag.Departments = await GetDepartmentSelectList();
+                ViewBag.CriticalSuccessFactors = await GetCsfSelectList();
+                await LoadLinkedCsfsForEditAsync(viewModel);
                 return View(viewModel);
             }
 
             try
             {
-                // Find the existing KPI
-                KpiBase? existingKpi = await FindKpiByIdAsync(id);
-
-                if (existingKpi == null)
-                    return NotFound();
-
-                // Check authorization
-                var authResult = await _authorizationService.AuthorizeAsync(
-                    User, existingKpi, KpiAuthorizationHandler.Operations.Update);
-
-                if (!authResult.Succeeded)
-                    return Forbid();
-
-                // Update the KPI properties based on its type
-                if (existingKpi is KRI kri)
-                {
-                    _mapper.Map(viewModel, kri);
-                    await _unitOfWork.KRIs.UpdateAsync(kri);
-                }
-                else if (existingKpi is RI ri)
-                {
-                    _mapper.Map(viewModel, ri);
-                    await _unitOfWork.RIs.UpdateAsync(ri);
-                }
-                else if (existingKpi is PI pi)
-                {
-                    _mapper.Map(viewModel, pi);
-                    await _unitOfWork.PIs.UpdateAsync(pi);
-                }
-
-                // Set audit fields
-                existingKpi.ModifiedAt = DateTime.UtcNow;
-                existingKpi.ModifiedBy = User.GetUserId();
+                // Update the KPI (only StandaloneKPI)
+                _mapper.Map(viewModel, kpi);
+                kpi.UpdatedAt = DateTime.UtcNow;
+                kpi.UpdatedBy = User.GetUserId();
+                _unitOfWork.KPIs.Update(kpi);
 
                 // Update CSF links
-                // First remove existing links
-                var existingLinks = (await _unitOfWork.CSFKPIs.GetAllAsync())
-                    .Where(ck => ck.KpiId == id)
-                    .ToList();
-
-                foreach (var link in existingLinks)
+                // First, remove all existing links
+                var existingLinks = await _unitOfWork.CSFKPIs.GetAllAsync();
+                var linksToRemove = existingLinks.Where(l => l.KpiId == id).ToList();
+                foreach (var link in linksToRemove)
                 {
-                    await _unitOfWork.CSFKPIs.DeleteAsync(link);
+                    _unitOfWork.CSFKPIs.Delete(link);
                 }
 
-                // Then add new links
-                if (viewModel.SelectedCsfIds != null && viewModel.SelectedCsfIds.Any())
+                // Then add new links based on selected CSF IDs
+                if (SelectedCsfIds != null && SelectedCsfIds.Any())
                 {
-                    foreach (var csfId in viewModel.SelectedCsfIds)
+                    foreach (var csfId in SelectedCsfIds)
                     {
                         await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
                         {
                             CsfId = csfId,
-                            KpiId = id,
+                            KpiId = kpi.Id,
                             CreatedAt = DateTime.UtcNow,
                             CreatedBy = User.GetUserId()
                         });
@@ -555,28 +425,31 @@ namespace KPISolution.Controllers
                 }
 
                 await _unitOfWork.SaveChangesAsync();
-
                 return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                if (!(await KpiExistsAsync(id)))
+                if (!await KpiExistsAsync(id))
                 {
+                    _logger.LogWarning(ex, "KPI not found during edit: {KpiId}", id);
                     return NotFound();
                 }
                 else
                 {
-                    throw;
+                    _logger.LogError(ex, "Concurrency error while editing KPI: {KpiId}", id);
+                    ModelState.AddModelError("", "Someone else may have modified this KPI while you were editing it. Please try again.");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while updating KPI with ID: {KpiId}", id);
+                _logger.LogError(ex, "Error occurred while editing KPI: {KpiId}", id);
                 ModelState.AddModelError("", "An error occurred while saving the KPI. Please try again.");
-                viewModel.Departments = await GetDepartmentSelectList();
-                viewModel.CriticalSuccessFactors = await GetCsfSelectList();
-                return View(viewModel);
             }
+
+            ViewBag.Departments = await GetDepartmentSelectList();
+            ViewBag.CriticalSuccessFactors = await GetCsfSelectList();
+            await LoadLinkedCsfsForEditAsync(viewModel);
+            return View(viewModel);
         }
 
         /// <summary>
@@ -684,6 +557,11 @@ namespace KPISolution.Controllers
                         var pi = (PI)kpi;
                         await _unitOfWork.PIs.DeleteAsync(pi);
                     }
+                    else if (kpiType == typeof(Models.Entities.KPI.KPI))
+                    {
+                        var standaloneKpi = (Models.Entities.KPI.KPI)kpi;
+                        await _unitOfWork.KPIs.DeleteAsync(standaloneKpi);
+                    }
 
                     await _unitOfWork.SaveChangesAsync();
                     await _unitOfWork.CommitTransactionAsync();
@@ -774,25 +652,221 @@ namespace KPISolution.Controllers
                 // Get measurements for KPIs
                 var kpis = await GetKpisByFilterAsync(filter);
 
-                // Get total count
-                viewModel.TotalCount = kpis.Count;
+                // Get the total count before pagination
+                viewModel.TotalCount = kpis.Count();
 
-                // Apply pagination - important to avoid duplicate entries
-                kpis = kpis.Skip((page - 1) * viewModel.PageSize)
-                          .Take(viewModel.PageSize)
-                          .ToList();
+                // Apply pagination
+                kpis = kpis
+                    .OrderBy(k => k.Id)
+                    .Skip((page - 1) * viewModel.PageSize)
+                    .Take(viewModel.PageSize)
+                    .ToList();
 
                 // Map to view models
                 viewModel.KpiItems = kpis.Select(k => _mapper.Map<KpiListItemViewModel>(k)).ToList();
 
-                // Set view title
-                ViewData["Title"] = "Đo lường";
+                // Set view title based on TempData if available
+                ViewData["Title"] = TempData["MeasurementTitle"] ?? "Đo lường";
+
+                if (TempData["MeasurementIcon"] != null)
+                    ViewData["Icon"] = TempData["MeasurementIcon"];
+
+                if (TempData["MeasurementSubtitle"] != null)
+                    ViewData["Subtitle"] = TempData["MeasurementSubtitle"];
 
                 return View("Index", viewModel);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while retrieving measurements");
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        /// <summary>
+        /// Displays form for adding a new measurement for a KPI
+        /// </summary>
+        /// <param name="kpiId">The ID of the KPI to add measurement for</param>
+        /// <returns>View for adding measurement</returns>
+        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
+        public async Task<IActionResult> AddMeasurement(Guid kpiId)
+        {
+            try
+            {
+                var kpi = await FindKpiByIdAsync(kpiId);
+                if (kpi == null)
+                {
+                    return NotFound();
+                }
+
+                // Check authorization
+                var authResult = await _authorizationService.AuthorizeAsync(
+                    User, kpi, KpiAuthorizationHandler.Operations.Update);
+
+                if (!authResult.Succeeded)
+                    return Forbid();
+
+                // Redirect to Measurement controller's Create action
+                return RedirectToAction("Create", "Measurement", new { kpiId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while preparing to add measurement for KPI {KpiId}", kpiId);
+                return RedirectToAction("Error", "Home");
+            }
+        }
+
+        /// <summary>
+        /// Displays a hierarchical tree view of KPIs, RIs, PIs, and KRIs
+        /// </summary>
+        /// <returns>TreeView with hierarchical representation of indicators</returns>
+        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanViewKpis)]
+        public async Task<IActionResult> TreeView()
+        {
+            try
+            {
+                _logger.LogInformation("Generating KPI Tree View");
+
+                // Create the view model to hold all indicator data
+                var viewModel = new KpiTreeViewModel
+                {
+                    KeyResultIndicators = new List<KpiTreeNodeViewModel>(),
+                    ResultIndicators = new List<KpiTreeNodeViewModel>(),
+                    PerformanceIndicators = new List<KpiTreeNodeViewModel>()
+                };
+
+                // Get all KPI entities
+                var kris = await _unitOfWork.KRIs.GetAllAsync();
+                var ris = await _unitOfWork.RIs.GetAllAsync();
+                var pis = await _unitOfWork.PIs.GetAllAsync();
+
+                // Get all departments for display
+                var departments = await _unitOfWork.Departments.GetAllAsync();
+                var departmentLookup = departments.ToDictionary(d => d.Name, d => d);
+
+                // Process KRIs (top level)
+                foreach (var kri in kris)
+                {
+                    var kriNode = new KpiTreeNodeViewModel
+                    {
+                        Id = kri.Id,
+                        Name = kri.Name,
+                        Code = kri.Code,
+                        Type = KpiType.KeyResultIndicator,
+                        Department = kri.Department,
+                        Description = kri.Description,
+                        Status = kri.Status.ToString(),
+                        Children = new List<KpiTreeNodeViewModel>()
+                    };
+
+                    // Find RIs that have this KRI as parent
+                    var childRIs = ris.Where(r => r.ParentKriId == kri.Id).ToList();
+                    foreach (var ri in childRIs)
+                    {
+                        var riNode = new KpiTreeNodeViewModel
+                        {
+                            Id = ri.Id,
+                            Name = ri.Name,
+                            Code = ri.Code,
+                            Type = KpiType.ResultIndicator,
+                            Department = ri.Department,
+                            Description = ri.Description,
+                            Status = ri.Status.ToString(),
+                            ParentId = kri.Id,
+                            Children = new List<KpiTreeNodeViewModel>()
+                        };
+
+                        // Find PIs that have this RI as parent
+                        var childPIs = pis.Where(p => p.RIId == ri.Id).ToList();
+                        foreach (var pi in childPIs)
+                        {
+                            var piNode = new KpiTreeNodeViewModel
+                            {
+                                Id = pi.Id,
+                                Name = pi.Name,
+                                Code = pi.Code,
+                                Type = KpiType.PerformanceIndicator,
+                                Department = pi.Department,
+                                Description = pi.Description,
+                                Status = pi.Status.ToString(),
+                                ParentId = ri.Id,
+                                Children = null // PIs are leaf nodes
+                            };
+
+                            riNode.Children.Add(piNode);
+                        }
+
+                        kriNode.Children.Add(riNode);
+                    }
+
+                    viewModel.KeyResultIndicators.Add(kriNode);
+                }
+
+                // Process standalone RIs (those without a parent KRI)
+                var standaloneRIs = ris.Where(r => r.ParentKriId == null || !kris.Any(k => k.Id == r.ParentKriId)).ToList();
+                foreach (var ri in standaloneRIs)
+                {
+                    var riNode = new KpiTreeNodeViewModel
+                    {
+                        Id = ri.Id,
+                        Name = ri.Name,
+                        Code = ri.Code,
+                        Type = KpiType.ResultIndicator,
+                        Department = ri.Department,
+                        Description = ri.Description,
+                        Status = ri.Status.ToString(),
+                        Children = new List<KpiTreeNodeViewModel>()
+                    };
+
+                    // Find PIs that have this RI as parent
+                    var childPIs = pis.Where(p => p.RIId == ri.Id).ToList();
+                    foreach (var pi in childPIs)
+                    {
+                        var piNode = new KpiTreeNodeViewModel
+                        {
+                            Id = pi.Id,
+                            Name = pi.Name,
+                            Code = pi.Code,
+                            Type = KpiType.PerformanceIndicator,
+                            Department = pi.Department,
+                            Description = pi.Description,
+                            Status = pi.Status.ToString(),
+                            ParentId = ri.Id,
+                            Children = null // PIs are leaf nodes
+                        };
+
+                        riNode.Children.Add(piNode);
+                    }
+
+                    viewModel.ResultIndicators.Add(riNode);
+                }
+
+                // Process standalone PIs (those without a parent RI)
+                var standalonePIs = pis.Where(p => p.RIId == null || !ris.Any(r => r.Id == p.RIId)).ToList();
+                foreach (var pi in standalonePIs)
+                {
+                    var piNode = new KpiTreeNodeViewModel
+                    {
+                        Id = pi.Id,
+                        Name = pi.Name,
+                        Code = pi.Code,
+                        Type = KpiType.PerformanceIndicator,
+                        Department = pi.Department,
+                        Description = pi.Description,
+                        Status = pi.Status.ToString(),
+                        Children = null // PIs are leaf nodes
+                    };
+
+                    viewModel.PerformanceIndicators.Add(piNode);
+                }
+
+                this.WithPageTemplate("Cây chỉ số", "Hiển thị cây chỉ số KPI", "bi-diagram-3");
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while generating KPI Tree View");
                 return RedirectToAction("Error", "Home");
             }
         }
@@ -806,17 +880,20 @@ namespace KPISolution.Controllers
         /// <returns>The KPI if found, null otherwise</returns>
         private async Task<KpiBase?> FindKpiByIdAsync(Guid id)
         {
-            // Try to find the KPI in each repository
-            var kri = await _unitOfWork.KRIs.GetByIdAsync(id);
-            if (kri != null)
-                return kri;
+            // Đầu tiên, tìm kiếm KPI độc lập
+            var kpi = await _unitOfWork.KPIs.GetByIdAsync(id);
 
-            var ri = await _unitOfWork.RIs.GetByIdAsync(id);
-            if (ri != null)
-                return ri;
+            // Nếu không tìm thấy, kiểm tra trong PI có IsKey = true
+            if (kpi == null)
+            {
+                var pi = await _unitOfWork.PIs.FirstOrDefaultAsync(p => p.Id == id && p.IsKey);
+                if (pi != null)
+                {
+                    return pi;
+                }
+            }
 
-            var pi = await _unitOfWork.PIs.GetByIdAsync(id);
-            return pi;
+            return kpi;
         }
 
         /// <summary>
@@ -826,9 +903,8 @@ namespace KPISolution.Controllers
         /// <returns>True if the KPI exists, false otherwise</returns>
         private async Task<bool> KpiExistsAsync(Guid id)
         {
-            return await _unitOfWork.KRIs.ExistsAsync(e => e.Id == id) ||
-                   await _unitOfWork.RIs.ExistsAsync(e => e.Id == id) ||
-                   await _unitOfWork.PIs.ExistsAsync(e => e.Id == id);
+            // Chỉ kiểm tra sự tồn tại của KPI độc lập
+            return await _unitOfWork.KPIs.ExistsAsync(e => e.Id == id);
         }
 
         /// <summary>
@@ -896,40 +972,15 @@ namespace KPISolution.Controllers
         {
             List<KpiBase> kpis = new List<KpiBase>();
 
-            // Get all KPIs from all repositories
-            var kris = await _unitOfWork.KRIs.GetAllAsync();
-            var ris = await _unitOfWork.RIs.GetAllAsync();
-            var pis = await _unitOfWork.PIs.GetAllAsync();
+            // Lấy KPI độc lập 
+            var standalone_kpis = await _unitOfWork.KPIs.GetAllAsync();
+            kpis.AddRange(standalone_kpis.Cast<KpiBase>());
 
-            // Apply filter based on KPI type
-            if (filter.KpiType.HasValue)
-            {
-                switch (filter.KpiType.Value)
-                {
-                    case KpiType.KeyResultIndicator:
-                        kpis.AddRange(kris.Cast<KpiBase>());
-                        break;
-                    case KpiType.ResultIndicator:
-                        kpis.AddRange(ris.Cast<KpiBase>());
-                        break;
-                    case KpiType.PerformanceIndicator:
-                        kpis.AddRange(pis.Cast<KpiBase>());
-                        break;
-                    default:
-                        kpis.AddRange(kris.Cast<KpiBase>());
-                        kpis.AddRange(ris.Cast<KpiBase>());
-                        kpis.AddRange(pis.Cast<KpiBase>());
-                        break;
-                }
-            }
-            else
-            {
-                kpis.AddRange(kris.Cast<KpiBase>());
-                kpis.AddRange(ris.Cast<KpiBase>());
-                kpis.AddRange(pis.Cast<KpiBase>());
-            }
+            // Lấy thêm PI đã được nâng cấp thành KPI (IsKey = true)
+            var upgradedPIs = await _unitOfWork.PIs.GetAllAsync(p => p.IsKey);
+            kpis.AddRange(upgradedPIs.Cast<KpiBase>());
 
-            // Apply other filters
+            // Apply filters
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
             {
                 kpis = kpis.Where(k =>
@@ -975,6 +1026,22 @@ namespace KPISolution.Controllers
                 "status" => isDescending ? kpis.OrderByDescending(k => k.Status) : kpis.OrderBy(k => k.Status),
                 _ => kpis.OrderBy(k => k.Name) // Default sort
             };
+        }
+
+        private async Task LoadLinkedCsfsForEditAsync(KpiViewModel viewModel)
+        {
+            try
+            {
+                // Get linked CSFs for this KPI
+                var allLinks = await _unitOfWork.CSFKPIs.GetAllAsync();
+                var linkedCsfs = allLinks.Where(l => l.KpiId == viewModel.Id).ToList();
+                viewModel.SelectedCsfIds = linkedCsfs.Select(l => l.CsfId).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading linked CSFs for KPI {KpiId}", viewModel.Id);
+                // Don't throw - let the edit form load anyway
+            }
         }
     }
 }

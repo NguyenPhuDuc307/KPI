@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using KPISolution.Models.Entities.Base;
+using KPISolution.Models.Entities.Objective;
 using KPISolution.Models.Enums;
 
 namespace KPISolution.Models.Entities.Organization
@@ -113,6 +114,11 @@ namespace KPISolution.Models.Entities.Organization
         /// Collection of child objectives
         /// </summary>
         public virtual ICollection<BusinessObjective>? ChildObjectives { get; set; }
+
+        /// <summary>
+        /// Collection of Success Factors related to this objective
+        /// </summary>
+        public virtual ICollection<SuccessFactor>? SuccessFactors { get; set; }
 
         /// <summary>
         /// Budget allocated for this objective

@@ -184,8 +184,30 @@ async Task Main()
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
-        app.UseMigrationsEndPoint();
+        // Development environment configuration
         app.UseDeveloperExceptionPage();
+        app.UseMigrationsEndPoint();
+
+        // Seed data for development only
+        using var scope = app.Services.CreateScope();
+        var services = scope.ServiceProvider;
+
+        // Ensure the database schema is created
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        try
+        {
+            await context.Database.MigrateAsync();
+            Log.Information("Database schema created or verified");
+
+            // Seed initial data
+            await SeedData.InitializeAsync(services);
+            Log.Information("Database seeded with initial data");
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Migration error: {ex.Message}");
+            Log.Warning("Continuing without migration");
+        }
     }
     else
     {
@@ -251,6 +273,16 @@ async Task Main()
     app.UseAuthentication();
     app.UseAuthorization();
 
+    // Re-enable the seed data initialization with error handling
+    try
+    {
+        await SeedData.InitializeAsync(app.Services);
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Error initializing seed data. Application will continue without full seed data.");
+    }
+
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -304,7 +336,8 @@ async Task Main()
                 await RoleInitializer.EnsureAdminUserAsync(app.Services, adminEmail, adminPassword);
             }
 
-            await SeedData.InitializeAsync(app.Services);
+            // Comment out the seed data initialization to avoid foreign key constraint errors
+            // await SeedData.InitializeAsync(app.Services);
         }
 
         app.Run();

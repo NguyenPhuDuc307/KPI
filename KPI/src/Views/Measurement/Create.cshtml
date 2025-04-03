@@ -1,0 +1,95 @@
+@model KPISolution.Models.ViewModels.KPI.KpiValueCreateViewModel
+
+@{
+    ViewData["Title"] = "Thêm đo lường mới";
+    ViewData["Icon"] = "bi-plus-circle";
+    ViewData["Subtitle"] = "Thêm kết quả đo lường mới cho chỉ số hiệu suất";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Thêm đo lường mới</h5>
+            <div>
+                <a asp-controller="Kpi" asp-action="Details" asp-route-id="@Model.KpiId" class="btn btn-sm btn-light">
+                    <i class="bi bi-arrow-left me-1"></i>Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="KpiId" />
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="KpiCode" class="form-label"></label>
+                    <input asp-for="KpiCode" class="form-control" readonly />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="KpiName" class="form-label"></label>
+                    <input asp-for="KpiName" class="form-control" readonly />
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="MeasurementDate" class="form-label"></label>
+                    <input asp-for="MeasurementDate" class="form-control" type="date" />
+                    <span asp-validation-for="MeasurementDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="ActualValue" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="ActualValue" class="form-control" />
+                        @if (!string.IsNullOrEmpty(Model.Unit))
+                        {
+                                <span class="input-group-text">@Model.Unit</span>
+                        }
+                    </div>
+                    <span asp-validation-for="ActualValue" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="TargetValue" class="form-label"></label>
+                    <div class="input-group">
+                        <input asp-for="TargetValue" class="form-control" readonly />
+                        @if (!string.IsNullOrEmpty(Model.Unit))
+                        {
+                                <span class="input-group-text">@Model.Unit</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="Notes" class="form-label"></label>
+                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>Lưu đo lường
+                    </button>
+                    <a asp-controller="Kpi" asp-action="Details" asp-route-id="@Model.KpiId" class="btn btn-outline-secondary ms-2">
+                        <i class="bi bi-x-circle me-1"></i>Hủy
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+        <script>
+            $(document).ready(function() {
+                // Tự động focus vào trường đầu tiên
+                $('form input:not([type=hidden]):first').focus();
+            });
+        </script>
+}

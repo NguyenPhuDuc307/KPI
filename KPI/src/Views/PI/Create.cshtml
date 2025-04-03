@@ -1,268 +1,365 @@
 @model KPISolution.Models.ViewModels.KPI.KpiViewModel
-@using KPISolution.Models.Enums
 
 @{
-    ViewData["Title"] = "Tạo mới PI";
+    ViewData["Title"] = "Create PI";
+    ViewData["Icon"] = "bi-speedometer";
+    ViewData["Subtitle"] = "Create Performance Indicator (PI)";
 }
 
-<div class="container-fluid px-4 py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1">
-                    <li class="breadcrumb-item"><a asp-action="Index">PI</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Tạo mới</li>
-                </ol>
-            </nav>
-            <h1 class="h2 mb-0">Tạo chỉ số hiệu suất mới</h1>
+<div class="container-fluid p-0 mb-3">
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle me-2 fs-5"></i>
+            <div>
+                <strong>Performance Indicator (PI)</strong> measures the efficiency or productivity of specific
+                activities or processes.
+                <br>PIs focus on "how" something is being done and are typically used to improve operational
+                performance.
+                <br>You can create a regular PI or mark it as a Key Performance Indicator (KPI) by selecting the "Is a
+                Key Performance Indicator" option.
+            </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-transparent">
-                    <h5 class="mb-0">Thông tin PI</h5>
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>There were errors in your submission:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach (var modelState in ViewData.ModelState.Values)
+                {
+                    foreach (var error in modelState.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="@ViewData["Icon"] me-1"></i>
+                Performance Indicator Information
+            </h6>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" id="createPiForm">
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Code" class="control-label">PI Code <span
+                                    class="text-danger">*</span></label>
+                            <input asp-for="Code" class="form-control"
+                                placeholder="Format: PI-[Department]-[Number], e.g., PI-HR-001" />
+                            <span asp-validation-for="Code" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Name" class="control-label">PI Name <span
+                                    class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control"
+                                placeholder="Enter a clear, descriptive name for this Performance Indicator" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="DepartmentId" class="control-label">Department</label>
+                            <select asp-for="DepartmentId" asp-items="ViewBag.Departments" class="form-control select2">
+                                <option value="">-- Select the department responsible for this PI --</option>
+                            </select>
+                            <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="ActivityType" class="control-label">Activity Type <span
+                                    class="text-danger">*</span></label>
+                            <select asp-for="ActivityType" asp-items="ViewBag.ActivityTypes"
+                                class="form-control select2">
+                                <option value="">-- Select the type of activity this PI measures --</option>
+                            </select>
+                            <span asp-validation-for="ActivityType" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="PerformanceLevel" class="control-label">Performance Level <span
+                                    class="text-danger">*</span></label>
+                            <select asp-for="PerformanceLevel" class="form-control select2">
+                                <option value="">-- Select performance level --</option>
+                                <option value="1">1 - Low</option>
+                                <option value="2">2 - Below Average</option>
+                                <option value="3">3 - Average</option>
+                                <option value="4">4 - Above Average</option>
+                                <option value="5">5 - High</option>
+                            </select>
+                            <span asp-validation-for="PerformanceLevel" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="Unit" class="control-label">Measurement Unit <span
+                                    class="text-danger">*</span></label>
+                            <input asp-for="Unit" id="unitInput" class="form-control"
+                                placeholder="E.g., %, hours, units, VND, count, ratio" />
+                            <span asp-validation-for="Unit" class="text-danger"></span>
+                            <input type="hidden" id="measurementUnitHidden" name="MeasurementUnit" />
+                            <span id="measurementUnitError" class="text-danger" data-valmsg-for="MeasurementUnit"
+                                data-valmsg-replace="true"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Frequency" class="control-label">Measurement Frequency <span
+                                    class="text-danger">*</span></label>
+                            <select asp-for="Frequency" class="form-control select2"
+                                asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.MeasurementFrequency>()">
+                                <option value="">-- How often this PI will be measured --</option>
+                            </select>
+                            <span asp-validation-for="Frequency" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="TargetValue" class="control-label">Target Value <span
+                                    class="text-danger">*</span></label>
+                            <input asp-for="TargetValue" class="form-control" type="number" step="0.01"
+                                placeholder="The desired goal value to achieve" />
+                            <span asp-validation-for="TargetValue" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="MeasurementDirection" class="control-label">Measurement Direction <span
+                                    class="text-danger">*</span></label>
+                            <select asp-for="MeasurementDirection" class="form-control select2"
+                                asp-items="Html.GetEnumSelectList<KPISolution.Models.Enums.MeasurementDirection>()">
+                                <option value="">-- How to interpret values --</option>
+                            </select>
+                            <span asp-validation-for="MeasurementDirection" class="text-danger"></span>
+                            <small class="form-text text-muted">Indicates whether higher values are better or lower
+                                values are better.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Weight" class="control-label">Weight (%)</label>
+                            <input asp-for="Weight" class="form-control" type="number" min="0" max="100" step="1"
+                                placeholder="Importance weight (0-100)" />
+                            <span asp-validation-for="Weight" class="text-danger"></span>
+                            <small class="form-text text-muted">Indicates the relative importance of this PI compared to
+                                others.</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form asp-action="Create" method="post">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <h6 class="fw-bold mb-3">Thông tin cơ bản</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="DepartmentId" class="form-label">Phòng ban</label>
-                                            <select asp-for="DepartmentId" asp-items="ViewBag.Departments"
-                                                class="form-select select2">
-                                                <option value="">-- Chọn phòng ban --</option>
-                                            </select>
-                                            <span asp-validation-for="DepartmentId" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Code" class="form-label">Mã PI</label>
-                                            <input asp-for="Code" class="form-control" placeholder="VD: PI001" />
-                                            <span asp-validation-for="Code" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Name" class="form-label">Tên chỉ số</label>
-                                            <input asp-for="Name" class="form-control"
-                                                placeholder="Nhập tên chỉ số hiệu suất" />
-                                            <span asp-validation-for="Name" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Category" class="form-label">Danh mục</label>
-                                            <select asp-for="Category" class="form-select">
-                                                <option value="">-- Chọn danh mục --</option>
-                                                <option value="Tài chính">Tài chính</option>
-                                                <option value="Khách hàng">Khách hàng</option>
-                                                <option value="Quy trình nội bộ">Quy trình nội bộ</option>
-                                                <option value="Học hỏi và phát triển">Học hỏi và phát triển</option>
-                                                <option value="Khác">Khác</option>
-                                            </select>
-                                            <span asp-validation-for="Category" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="ResponsiblePerson" class="form-label">Người chịu trách
-                                                nhiệm</label>
-                                            <select asp-for="ResponsiblePerson" asp-items="ViewBag.Users"
-                                                class="form-select select2">
-                                                <option value="">-- Chọn người chịu trách nhiệm --</option>
-                                            </select>
-                                            <span asp-validation-for="ResponsiblePerson" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="ActivityType" class="form-label">Loại hoạt động</label>
-                                            <select asp-for="ActivityType" class="form-select">
-                                                <option value="">-- Chọn loại hoạt động --</option>
-                                                @foreach (var type in Enum.GetValues(typeof(ActivityType)))
-                                                {
-                                                    <option value="@((int)type)">@type.ToString()</option>
-                                                }
-                                            </select>
-                                            <span asp-validation-for="ActivityType" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="PerformanceLevel" class="form-label">Mức hiệu suất</label>
-                                            <select asp-for="PerformanceLevel" class="form-select">
-                                                <option value="">-- Chọn mức hiệu suất --</option>
-                                                <option value="Cá nhân">Cá nhân</option>
-                                                <option value="Nhóm">Nhóm</option>
-                                                <option value="Bộ phận">Bộ phận</option>
-                                                <option value="Công ty">Công ty</option>
-                                            </select>
-                                            <span asp-validation-for="PerformanceLevel" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Description" class="form-label">Mô tả</label>
-                                            <textarea asp-for="Description" class="form-control" rows="3"
-                                                placeholder="Mô tả chi tiết về chỉ số hiệu suất"></textarea>
-                                            <span asp-validation-for="Description" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <h6 class="fw-bold mb-3">Đo lường và mục tiêu</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="MeasurementDirection" class="form-label">Chiều hướng đo
-                                                lường</label>
-                                            <select asp-for="MeasurementDirection" class="form-select">
-                                                @foreach (MeasurementDirection direction in Enum.GetValues(typeof(MeasurementDirection)))
-                                                {
-                                                    <option value="@direction">@(direction == MeasurementDirection.HigherIsBetter ? "Cao hơn là tốt hơn" : 
-                                                                               direction == MeasurementDirection.LowerIsBetter ? "Thấp hơn là tốt hơn" : 
-                                                                               direction == MeasurementDirection.TargetIsBest ? "Đạt đúng mục tiêu" : 
-                                                                               "Nằm trong phạm vi")</option>
-                                                }
-                                            </select>
-                                            <span asp-validation-for="MeasurementDirection" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Frequency" class="form-label">Tần suất đo lường</label>
-                                            <select asp-for="Frequency" class="form-select">
-                                                <option value="">-- Chọn tần suất --</option>
-                                                @foreach (MeasurementFrequency frequency in Enum.GetValues(typeof(MeasurementFrequency)))
-                                                {
-                                                    <option value="@frequency">@(frequency == MeasurementFrequency.Daily ? "Hàng ngày" :
-                                                                              frequency == MeasurementFrequency.Weekly ? "Hàng tuần" :
-                                                                              frequency == MeasurementFrequency.Biweekly ? "Hai tuần một lần" :
-                                                                              frequency == MeasurementFrequency.Monthly ? "Hàng tháng" :
-                                                                              frequency == MeasurementFrequency.Quarterly ? "Hàng quý" :
-                                                                              frequency == MeasurementFrequency.Semiannually ? "Nửa năm" :
-                                                                              frequency == MeasurementFrequency.Annually ? "Hàng năm" : "Tùy chỉnh")</option>
-                                                }
-                                            </select>
-                                            <span asp-validation-for="Frequency" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="TargetValue" class="form-label">Giá trị mục tiêu</label>
-                                            <input asp-for="TargetValue" class="form-control" placeholder="VD: 95" />
-                                            <span asp-validation-for="TargetValue" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Unit" class="form-label">Đơn vị</label>
-                                            <input asp-for="Unit" class="form-control" placeholder="VD: %" />
-                                            <span asp-validation-for="Unit" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Weight" class="form-label">Trọng số (%)</label>
-                                            <input asp-for="Weight" class="form-control" placeholder="VD: 10" />
-                                            <span asp-validation-for="Weight" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Status" class="form-label">Trạng thái</label>
-                                            <select asp-for="Status" class="form-select">
-                                                <option value="@(KpiStatus.Draft)">Chưa bắt đầu</option>
-                                                <option value="@(KpiStatus.Active)">Hoạt động</option>
-                                            </select>
-                                            <span asp-validation-for="Status" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="EffectiveDate" class="form-label">Ngày hiệu lực</label>
-                                            <input asp-for="EffectiveDate" type="date" class="form-control" />
-                                            <span asp-validation-for="EffectiveDate" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="KpiType" class="form-label">Loại chỉ số</label>
-                                            <select asp-for="KpiType" class="form-select">
-                                                <option value="PI">Chỉ số hiệu suất (PI)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="Formula" class="form-label">Công thức tính toán</label>
-                                            <input asp-for="Formula" class="form-control"
-                                                placeholder="VD: (Số đơn hàng hoàn thành / Tổng số đơn hàng) * 100%" />
-                                            <span asp-validation-for="Formula" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-group mb-3">
-                                            <label asp-for="ActionPlan" class="form-label">Kế hoạch hành động</label>
-                                            <textarea asp-for="ActionPlan" class="form-control" rows="3"
-                                                placeholder="Nhập kế hoạch hành động để đạt mục tiêu"></textarea>
-                                            <span asp-validation-for="ActionPlan" class="text-danger"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="fw-bold mb-3">Liên kết CSF</h6>
-                                <div class="form-group">
-                                    <label class="form-label">Yếu tố thành công quan trọng liên quan</label>
-                                    <select name="SelectedCsfs" multiple class="form-select select2"
-                                        data-placeholder="Chọn các CSF liên quan">
-                                        @foreach (var csf in ViewBag.CSFs)
-                                        {
-                                            <option value="@csf.Value">@csf.Text</option>
-                                        }
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between mt-4">
-                            <a asp-action="Index" class="btn btn-outline-secondary">
-                                <i class="bi bi-arrow-left me-1"></i>Quay lại
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save me-1"></i>Lưu chỉ số hiệu suất
-                            </button>
-                        </div>
-                    </form>
+                <div class="form-group">
+                    <label asp-for="Description" class="control-label">Description <span
+                            class="text-danger">*</span></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"
+                        placeholder="Provide a detailed description of what this Performance Indicator measures, why it's important, and how it connects to organizational goals"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
-            </div>
+
+                <div class="form-group">
+                    <label asp-for="Formula" class="control-label">Calculation Formula</label>
+                    <textarea asp-for="Formula" class="form-control" rows="2"
+                        placeholder="E.g., (Completed Tasks / Total Tasks) * 100, or describe the data source and calculation method"></textarea>
+                    <span asp-validation-for="Formula" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="ActionPlan" class="control-label">Action Plan</label>
+                    <textarea asp-for="ActionPlan" class="form-control" rows="2"
+                        placeholder="Describe actions to be taken to achieve targets or respond to performance issues"></textarea>
+                    <span asp-validation-for="ActionPlan" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Owner" class="control-label">Responsible Person <span
+                            class="text-danger">*</span></label>
+                    <input asp-for="Owner" class="form-control"
+                        placeholder="Full name of person responsible for this PI" />
+                    <span asp-validation-for="Owner" class="text-danger"></span>
+                </div>
+
+                <!-- Parent Indicators Section - Improved UI -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light py-3">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="bi bi-diagram-3 me-1"></i>Parent Indicators
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <span>Performance Indicators can be linked to either a Result Indicator (RI) or directly to
+                                a Key Result Indicator (KRI). Select the appropriate parent indicator below.</span>
+                        </div>
+
+                        @if (ViewBag.KRIs != null)
+                        {
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">Parent Key Result Indicator (KRI)</label>
+                                <div class="card bg-primary bg-opacity-10 border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <span class="badge bg-primary p-2">
+                                                    <i class="bi bi-graph-up fs-5"></i>
+                                                </span>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-1">@(((SelectList)ViewBag.KRIs).FirstOrDefault()?.Text)</h6>
+                                                <small class="text-muted">This PI will be directly linked to this
+                                                    KRI</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" asp-for="KRIId" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-group mb-4">
+                                <label asp-for="RIId" class="form-label fw-medium">Parent Result Indicator (RI)</label>
+                                <select asp-for="RIId" asp-items="ViewBag.RIs" class="form-control select2">
+                                    <option value="">-- Select a parent Result Indicator (optional) --</option>
+                                </select>
+                                <span asp-validation-for="RIId" class="text-danger"></span>
+                                <small class="form-text text-muted">Select the Result Indicator (RI) that this PI
+                                    contributes to or
+                                    supports. This establishes a hierarchical relationship between indicators.</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check">
+                        <input asp-for="IsPIKey" class="form-check-input" />
+                        <label asp-for="IsPIKey" class="form-check-label">Is a Key Performance Indicator (KPI)</label>
+                        <span asp-validation-for="IsPIKey" class="text-danger"></span>
+                    </div>
+                    <small class="form-text text-muted">Check this box if this Performance Indicator should be
+                        considered a
+                        Key Performance Indicator (KPI). KPIs are the most important performance measures that track
+                        critical
+                        process efficiency.</small>
+                </div>
+
+                <hr />
+
+                <div class="form-group">
+                    <label>Related Critical Success Factors</label>
+                    <select name="SelectedCsfs" asp-items="ViewBag.CSFs" class="form-control select2" multiple>
+                    </select>
+                    <small class="form-text text-muted">Select the CSFs that this Performance Indicator helps to achieve
+                        or
+                        is aligned with. You can select multiple CSFs.</small>
+                </div>
+
+                <div class="form-group text-right">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submit-button">
+                        <i class="bi bi-save me-1"></i> Save
+                    </button>
+                </div>
+
+                <!-- Store the KpiType field to ensure the controller knows this is a PI -->
+                <input type="hidden" asp-for="KpiType" value="PerformanceIndicator" />
+                <input type="hidden" asp-for="Type" value="PerformanceIndicator" />
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
     <script>
         $(document).ready(function () {
             $('.select2').select2({
-                theme: 'bootstrap-5'
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('body'),
+                placeholder: "Select a value",
+                allowClear: true
             });
+
+            // Synchronize Unit and MeasurementUnit fields
+            $('#unitInput').on('input', function () {
+                $('#measurementUnitHidden').val($(this).val());
+                // Clear measurement unit error when user types
+                $('#measurementUnitError').text('');
+            });
+
+            // Initialize synchronization on page load
+            $('#measurementUnitHidden').val($('#unitInput').val());
+
+            // Enhanced validation display
+            $('#createPiForm').submit(function (e) {
+                // Make sure MeasurementUnit is synced before submission
+                $('#measurementUnitHidden').val($('#unitInput').val());
+
+                if (!$(this).valid()) {
+                    e.preventDefault();
+
+                    // Check for MeasurementUnit validation errors and show them
+                    if ($('[data-valmsg-for="MeasurementUnit"]').length) {
+                        var measurementUnitError = $('[data-valmsg-for="MeasurementUnit"]').text();
+                        if (measurementUnitError) {
+                            $('#measurementUnitError').text(measurementUnitError);
+                        }
+                    }
+
+                    // Create summary of validation errors at the top
+                    var errorSummary = "<div class='alert alert-danger'><ul>";
+                    $('.field-validation-error, #measurementUnitError').each(function () {
+                        if ($(this).text()) {
+                            errorSummary += "<li>" + $(this).text() + "</li>";
+                        }
+                    });
+                    errorSummary += "</ul></div>";
+
+                    // Display summary at the top if there are errors
+                    if ($('.field-validation-error').length > 0 || $('#measurementUnitError').text()) {
+                        $('.validation-summary-errors').html(errorSummary);
+
+                        // Scroll to the top of the form
+                        $('html, body').animate({
+                            scrollTop: $('.validation-summary-errors').offset().top - 100
+                        }, 500);
+
+                        // Highlight fields with errors
+                        $('.input-validation-error').parents('.form-group').addClass('has-error');
+
+                        // If MeasurementUnit has error, highlight Unit field too
+                        if ($('#measurementUnitError').text()) {
+                            $('#unitInput').addClass('input-validation-error');
+                            $('#unitInput').parents('.form-group').addClass('has-error');
+                        }
+                    }
+
+                    // Show popover for each error
+                    $('.field-validation-error, #measurementUnitError').each(function () {
+                        if ($(this).text()) {
+                            $(this).addClass('d-block mt-1');
+                        }
+                    });
+                }
+            });
+
+            // Initialize validation explicitly
+            $.validator.unobtrusive.parse('#createPiForm');
+
+            // Set validation for Select2 fields
+            $('.select2.input-validation-error').next('.select2-container').addClass('border-danger');
         });
     </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

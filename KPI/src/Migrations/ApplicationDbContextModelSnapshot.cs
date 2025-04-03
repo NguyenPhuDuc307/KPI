@@ -17,7 +17,7 @@ namespace KPISolution.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -38,8 +38,8 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
@@ -50,18 +50,20 @@ namespace KPISolution.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<int>("KpiType")
                         .HasColumnType("int");
 
                     b.Property<int>("RelationshipStrength")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Weight")
                         .HasColumnType("int");
@@ -94,13 +96,16 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ExpectedCompletionDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("NeedsAttention")
@@ -131,7 +136,7 @@ namespace KPISolution.Migrations
                     b.Property<DateTime>("UpdateDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
@@ -166,8 +171,8 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("DepartmentId")
                         .HasColumnType("uniqueidentifier");
@@ -178,6 +183,9 @@ namespace KPISolution.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastReviewDate")
@@ -218,21 +226,25 @@ namespace KPISolution.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<Guid>("SuccessFactorId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("TargetDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessObjectiveId");
 
                     b.HasIndex("DepartmentId");
+
+                    b.HasIndex("SuccessFactorId");
 
                     b.ToTable("CriticalSuccessFactors");
                 });
@@ -247,13 +259,16 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsShared")
@@ -277,12 +292,11 @@ namespace KPISolution.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -310,8 +324,8 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("CsfId")
                         .HasColumnType("uniqueidentifier");
@@ -327,6 +341,9 @@ namespace KPISolution.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<int>("ItemType")
@@ -349,12 +366,11 @@ namespace KPISolution.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Width")
                         .HasColumnType("int");
@@ -574,8 +590,11 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("CurrentValue")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Department")
                         .HasMaxLength(100)
@@ -596,6 +615,9 @@ namespace KPISolution.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<decimal>("MaximumValue")
@@ -628,7 +650,7 @@ namespace KPISolution.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("TargetValue")
+                    b.Property<decimal?>("TargetValue")
                         .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("Unit")
@@ -636,12 +658,11 @@ namespace KPISolution.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Weight")
                         .HasColumnType("int");
@@ -663,10 +684,13 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<Guid>("KpiId")
@@ -682,12 +706,11 @@ namespace KPISolution.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Value")
                         .HasColumnType("decimal(18,4)");
@@ -699,14 +722,11 @@ namespace KPISolution.Migrations
                     b.ToTable("KpiMeasurements");
                 });
 
-            modelBuilder.Entity("KPISolution.Models.Entities.Measurement.KpiValue", b =>
+            modelBuilder.Entity("KPISolution.Models.Entities.KPI.KpiValue", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal?>("AchievementPercentage")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("ActualValue")
                         .HasColumnType("decimal(18,4)");
@@ -715,23 +735,17 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("DataSource")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("KpiId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("KpiType")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<DateTime>("MeasurementDate")
                         .HasColumnType("datetime2");
@@ -740,31 +754,11 @@ namespace KPISolution.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("Period")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Status")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<decimal?>("TargetValue")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("Trend")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<decimal?>("Variance")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -790,10 +784,13 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsRead")
@@ -845,12 +842,11 @@ namespace KPISolution.Migrations
                     b.Property<decimal?>("TriggerValue")
                         .HasColumnType("decimal(18,4)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -876,8 +872,8 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(200)
@@ -887,6 +883,9 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<Guid?>("KRIId")
@@ -931,12 +930,11 @@ namespace KPISolution.Migrations
                     b.Property<decimal>("TargetValue")
                         .HasColumnType("decimal(18,4)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -961,8 +959,8 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("EffectiveDate")
                         .HasColumnType("datetime2");
@@ -981,6 +979,9 @@ namespace KPISolution.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<Guid?>("KRIId")
@@ -1007,12 +1008,11 @@ namespace KPISolution.Migrations
                     b.Property<decimal>("RedThreshold")
                         .HasColumnType("decimal(18,4)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("YellowDescription")
                         .HasMaxLength(200)
@@ -1044,8 +1044,8 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Data")
                         .HasColumnType("nvarchar(max)");
@@ -1054,6 +1054,9 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsKpiNotification")
@@ -1097,12 +1100,11 @@ namespace KPISolution.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .HasMaxLength(450)
@@ -1113,6 +1115,87 @@ namespace KPISolution.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("KPISolution.Models.Entities.Objective.SuccessFactor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BusinessObjectiveId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsCSF")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Owner")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProgressPercentage")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("TargetDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessObjectiveId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("SuccessFactors");
                 });
 
             modelBuilder.Entity("KPISolution.Models.Entities.Organization.BusinessObjective", b =>
@@ -1134,8 +1217,8 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("DepartmentId")
                         .HasColumnType("uniqueidentifier");
@@ -1150,6 +1233,9 @@ namespace KPISolution.Migrations
                         .HasColumnType("nvarchar(9)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
@@ -1186,12 +1272,11 @@ namespace KPISolution.Migrations
                     b.Property<int>("Timeframe")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -1220,8 +1305,8 @@ namespace KPISolution.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DepartmentHeadId")
                         .HasMaxLength(450)
@@ -1244,6 +1329,9 @@ namespace KPISolution.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Location")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -1263,12 +1351,11 @@ namespace KPISolution.Migrations
                     b.Property<int?>("Priority")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UpdatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -1385,6 +1472,35 @@ namespace KPISolution.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("KPISolution.Models.Entities.KPI.KPI", b =>
+                {
+                    b.HasBaseType("KPISolution.Models.Entities.KPI.KpiBase");
+
+                    b.Property<decimal?>("BenchmarkValue")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("CategoryLevel")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FocusArea")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ImprovementTarget")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("OwnerDepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("PerformanceDomain")
+                        .HasColumnType("int");
+
+                    b.HasIndex("OwnerDepartmentId");
+
+                    b.ToTable("KPIs", (string)null);
+                });
+
             modelBuilder.Entity("KPISolution.Models.Entities.KPI.KRI", b =>
                 {
                     b.HasBaseType("KPISolution.Models.Entities.KPI.KpiBase");
@@ -1431,12 +1547,21 @@ namespace KPISolution.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<Guid?>("CriticalSuccessFactorId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("DataCollectionMethod")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("IndicatorType")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsKey")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("KRIId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("PerformanceLevel")
                         .HasColumnType("int");
@@ -1452,6 +1577,10 @@ namespace KPISolution.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.HasIndex("CriticalSuccessFactorId");
+
+                    b.HasIndex("KRIId");
+
                     b.HasIndex("RIId");
 
                     b.ToTable("PIs", (string)null);
@@ -1464,9 +1593,15 @@ namespace KPISolution.Migrations
                     b.Property<int?>("ContributionPercentage")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("CriticalSuccessFactorId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("DataSource")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsKey")
+                        .HasColumnType("bit");
 
                     b.Property<string>("MeasurementScope")
                         .HasMaxLength(200)
@@ -1489,6 +1624,8 @@ namespace KPISolution.Migrations
                     b.Property<string>("TimeFrame")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.HasIndex("CriticalSuccessFactorId");
 
                     b.HasIndex("ParentKriId");
 
@@ -1535,9 +1672,17 @@ namespace KPISolution.Migrations
                         .WithMany()
                         .HasForeignKey("DepartmentId");
 
+                    b.HasOne("KPISolution.Models.Entities.Objective.SuccessFactor", "SuccessFactor")
+                        .WithMany("CriticalSuccessFactors")
+                        .HasForeignKey("SuccessFactorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("BusinessObjective");
 
                     b.Navigation("Department");
+
+                    b.Navigation("SuccessFactor");
                 });
 
             modelBuilder.Entity("KPISolution.Models.Entities.Dashboard.DashboardItem", b =>
@@ -1589,31 +1734,15 @@ namespace KPISolution.Migrations
                     b.Navigation("Kpi");
                 });
 
-            modelBuilder.Entity("KPISolution.Models.Entities.Measurement.KpiValue", b =>
+            modelBuilder.Entity("KPISolution.Models.Entities.KPI.KpiValue", b =>
                 {
-                    b.HasOne("KPISolution.Models.Entities.KPI.KRI", "KRI")
-                        .WithMany()
+                    b.HasOne("KPISolution.Models.Entities.KPI.KpiBase", "Kpi")
+                        .WithMany("Values")
                         .HasForeignKey("KpiId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("KPISolution.Models.Entities.KPI.PI", "PI")
-                        .WithMany()
-                        .HasForeignKey("KpiId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("KPISolution.Models.Entities.KPI.RI", "RI")
-                        .WithMany()
-                        .HasForeignKey("KpiId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("KRI");
-
-                    b.Navigation("PI");
-
-                    b.Navigation("RI");
+                    b.Navigation("Kpi");
                 });
 
             modelBuilder.Entity("KPISolution.Models.Entities.Measurement.Notification", b =>
@@ -1724,6 +1853,23 @@ namespace KPISolution.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("KPISolution.Models.Entities.Objective.SuccessFactor", b =>
+                {
+                    b.HasOne("KPISolution.Models.Entities.Organization.BusinessObjective", "BusinessObjective")
+                        .WithMany("SuccessFactors")
+                        .HasForeignKey("BusinessObjectiveId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KPISolution.Models.Entities.Organization.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId");
+
+                    b.Navigation("BusinessObjective");
+
+                    b.Navigation("Department");
+                });
+
             modelBuilder.Entity("KPISolution.Models.Entities.Organization.BusinessObjective", b =>
                 {
                     b.HasOne("KPISolution.Models.Entities.Organization.Department", "Department")
@@ -1807,6 +1953,21 @@ namespace KPISolution.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("KPISolution.Models.Entities.KPI.KPI", b =>
+                {
+                    b.HasOne("KPISolution.Models.Entities.KPI.KpiBase", null)
+                        .WithOne()
+                        .HasForeignKey("KPISolution.Models.Entities.KPI.KPI", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KPISolution.Models.Entities.Organization.Department", "OwnerDepartment")
+                        .WithMany()
+                        .HasForeignKey("OwnerDepartmentId");
+
+                    b.Navigation("OwnerDepartment");
+                });
+
             modelBuilder.Entity("KPISolution.Models.Entities.KPI.KRI", b =>
                 {
                     b.HasOne("KPISolution.Models.Entities.KPI.KpiBase", null)
@@ -1818,21 +1979,39 @@ namespace KPISolution.Migrations
 
             modelBuilder.Entity("KPISolution.Models.Entities.KPI.PI", b =>
                 {
+                    b.HasOne("KPISolution.Models.Entities.CSF.CriticalSuccessFactor", "CriticalSuccessFactor")
+                        .WithMany("PerformanceIndicators")
+                        .HasForeignKey("CriticalSuccessFactorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("KPISolution.Models.Entities.KPI.KpiBase", null)
                         .WithOne()
                         .HasForeignKey("KPISolution.Models.Entities.KPI.PI", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("KPISolution.Models.Entities.KPI.KRI", "ParentKRI")
+                        .WithMany("DirectPIs")
+                        .HasForeignKey("KRIId");
+
                     b.HasOne("KPISolution.Models.Entities.KPI.RI", "ParentRI")
                         .WithMany("RelatedPIs")
                         .HasForeignKey("RIId");
+
+                    b.Navigation("CriticalSuccessFactor");
+
+                    b.Navigation("ParentKRI");
 
                     b.Navigation("ParentRI");
                 });
 
             modelBuilder.Entity("KPISolution.Models.Entities.KPI.RI", b =>
                 {
+                    b.HasOne("KPISolution.Models.Entities.CSF.CriticalSuccessFactor", "CriticalSuccessFactor")
+                        .WithMany("ResultIndicators")
+                        .HasForeignKey("CriticalSuccessFactorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("KPISolution.Models.Entities.KPI.KpiBase", null)
                         .WithOne()
                         .HasForeignKey("KPISolution.Models.Entities.KPI.RI", "Id")
@@ -1843,6 +2022,8 @@ namespace KPISolution.Migrations
                         .WithMany("RelatedRIs")
                         .HasForeignKey("ParentKriId");
 
+                    b.Navigation("CriticalSuccessFactor");
+
                     b.Navigation("ParentKRI");
                 });
 
@@ -1850,7 +2031,11 @@ namespace KPISolution.Migrations
                 {
                     b.Navigation("CSFKPIs");
 
+                    b.Navigation("PerformanceIndicators");
+
                     b.Navigation("ProgressUpdates");
+
+                    b.Navigation("ResultIndicators");
                 });
 
             modelBuilder.Entity("KPISolution.Models.Entities.Dashboard.CustomDashboard", b =>
@@ -1863,9 +2048,21 @@ namespace KPISolution.Migrations
                     b.Navigation("DirectReports");
                 });
 
+            modelBuilder.Entity("KPISolution.Models.Entities.KPI.KpiBase", b =>
+                {
+                    b.Navigation("Values");
+                });
+
+            modelBuilder.Entity("KPISolution.Models.Entities.Objective.SuccessFactor", b =>
+                {
+                    b.Navigation("CriticalSuccessFactors");
+                });
+
             modelBuilder.Entity("KPISolution.Models.Entities.Organization.BusinessObjective", b =>
                 {
                     b.Navigation("ChildObjectives");
+
+                    b.Navigation("SuccessFactors");
                 });
 
             modelBuilder.Entity("KPISolution.Models.Entities.Organization.Department", b =>
@@ -1877,6 +2074,8 @@ namespace KPISolution.Migrations
 
             modelBuilder.Entity("KPISolution.Models.Entities.KPI.KRI", b =>
                 {
+                    b.Navigation("DirectPIs");
+
                     b.Navigation("RelatedRIs");
                 });
 

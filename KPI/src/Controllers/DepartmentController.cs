@@ -79,8 +79,8 @@ namespace KPISolution.Controllers
                         Code = dept.Code,
                         Description = dept.Description ?? string.Empty,
                         ParentDepartmentId = dept.ParentDepartmentId,
-                        Status = dept.IsActive ? "Active" : "Inactive",
-                        StatusCssClass = dept.IsActive ? "badge-success" : "badge-danger",
+                        Status = dept.IsActive ? "Hoạt động" : "Không hoạt động",
+                        StatusCssClass = dept.IsActive ? "bg-success" : "bg-danger",
                         CreatedAt = dept.CreatedAt,
                         LastUpdated = dept.UpdatedAt
                     };
@@ -265,8 +265,8 @@ namespace KPISolution.Controllers
                     Code = department.Code,
                     Description = department.Description ?? string.Empty,
                     ParentDepartmentId = department.ParentDepartmentId,
-                    Status = department.IsActive ? "Active" : "Inactive",
-                    StatusCssClass = department.IsActive ? "badge-success" : "badge-danger",
+                    Status = department.IsActive ? "Hoạt động" : "Không hoạt động",
+                    StatusCssClass = department.IsActive ? "bg-success" : "bg-danger",
                     CreatedAt = department.CreatedAt,
                     LastUpdated = department.UpdatedAt
                 };
@@ -481,7 +481,7 @@ namespace KPISolution.Controllers
                     Name = department.Name,
                     Code = department.Code,
                     Description = department.Description ?? string.Empty,
-                    Status = department.IsActive ? "Active" : "Inactive",
+                    Status = department.IsActive ? "Hoạt động" : "Không hoạt động",
                     CreatedAt = department.CreatedAt,
                     LastUpdated = department.UpdatedAt
                 };

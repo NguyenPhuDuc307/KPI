@@ -2,22 +2,11 @@
 
 @{
     ViewData["Title"] = "Xóa mục tiêu";
+    ViewData["Icon"] = "bi-trash text-danger";
+    ViewData["Subtitle"] = "Xác nhận xóa mục tiêu " + Model.Name;
 }
 
 <div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mt-4 mb-0"><i class="bi bi-trash me-2 text-danger"></i>Xóa mục tiêu</h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-                    <li class="breadcrumb-item"><a asp-controller="BusinessObjective" asp-action="Index">Mục tiêu kinh doanh</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Xóa</li>
-                </ol>
-            </nav>
-        </div>
-    </div>
-
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card mb-4 shadow-sm border-danger">
@@ -27,15 +16,16 @@
                 <div class="card-body">
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-circle me-2"></i>
-                        <strong>Cảnh báo:</strong> Bạn có chắc chắn muốn xóa mục tiêu này? Hành động này không thể hoàn tác!
+                        <strong>Cảnh báo:</strong> Bạn có chắc chắn muốn xóa mục tiêu này? Hành động này không thể hoàn
+                        tác!
                     </div>
 
                     <h4 class="mb-3">@Model.Name</h4>
-                    
+
                     <div class="mb-4">
                         <p class="text-muted">@Model.Description</p>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -67,9 +57,9 @@
                             <div class="mb-3">
                                 <strong>Tiến độ:</strong>
                                 <div class="progress" style="height: 10px;">
-                                    <div class="progress-bar @(Model.ProgressPercentage == 100 ? "bg-success" : Model.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")" 
-                                         role="progressbar" style="width: @(Model.ProgressPercentage)%;" 
-                                         aria-valuenow="@Model.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar @(Model.ProgressPercentage == 100 ? "bg-success" : Model.ProgressPercentage >= 50 ? "bg-primary" : "bg-warning")"
+                                        role="progressbar" style="width: @(Model.ProgressPercentage)%;"
+                                        aria-valuenow="@Model.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
                                     </div>
                                 </div>
                                 <small>@Model.ProgressPercentage%</small>
@@ -100,15 +90,15 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Add confirmation dialog
-            $('form').on('submit', function(e) {
+            $('form').on('submit', function (e) {
                 e.preventDefault();
-                
+
                 if (confirm('Bạn có chắc chắn muốn xóa mục tiêu này? Hành động này không thể hoàn tác!')) {
                     this.submit();
                 }
             });
         });
     </script>
-} 
+}

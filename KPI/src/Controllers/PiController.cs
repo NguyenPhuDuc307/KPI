@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace KPISolution.Controllers
 {
@@ -27,6 +29,7 @@ namespace KPISolution.Controllers
         private readonly ILogger<PIController> _logger;
         private readonly IMapper _mapper;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IMemoryCache _memoryCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PIController"/> class.
@@ -35,16 +38,19 @@ namespace KPISolution.Controllers
         /// <param name="logger">The logger for logging information and errors</param>
         /// <param name="mapper">The mapper for mapping between entities and view models</param>
         /// <param name="authorizationService">The authorization service for checking permissions</param>
+        /// <param name="memoryCache">The memory cache for caching data</param>
         public PIController(
             IUnitOfWork unitOfWork,
             ILogger<PIController> logger,
             IMapper mapper,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _mapper = mapper;
             _authorizationService = authorizationService;
+            _memoryCache = memoryCache;
         }
 
         /// <summary>
@@ -96,24 +102,18 @@ namespace KPISolution.Controllers
                 // Apply sorting
                 query = ApplySorting(query, filter.SortBy, filter.SortDirection);
 
-                // Get total count before pagination
+                // Get total count for pagination
                 viewModel.TotalCount = query.Count();
 
                 // Apply pagination
-                var pis = query.Skip((page - 1) * viewModel.PageSize)
-                              .Take(viewModel.PageSize)
-                              .ToList();
+                var pis = query
+                            .OrderBy(p => p.Id)
+                            .Skip((page - 1) * viewModel.PageSize)
+                            .Take(viewModel.PageSize)
+                            .ToList();
 
-                // Map to view models and add PI-specific information
-                viewModel.KpiItems = pis.Select(k =>
-                {
-                    var item = _mapper.Map<KpiListItemViewModel>(k);
-                    // Add PI-specific properties
-                    item.KpiType = KpiType.PerformanceIndicator;
-                    item.ActivityTypeName = k.ActivityType.ToString();
-                    item.StatusString = k.Status.ToString();
-                    return item;
-                }).ToList();
+                // Sử dụng AutoMapper để map toàn bộ properties từ PI sang KpiListItemViewModel
+                viewModel.KpiItems = pis.Select(pi => _mapper.Map<KpiListItemViewModel>(pi)).ToList();
 
                 return View("Index", viewModel);
             }
@@ -193,6 +193,10 @@ namespace KPISolution.Controllers
                     }
                 }
 
+                viewModel.ActivityType = pi.ActivityType;
+                viewModel.PerformanceLevel = pi.PerformanceLevel.ToString();
+                viewModel.IsPIKey = pi.IsKey;
+
                 return View("Details", viewModel);
             }
             catch (Exception ex)
@@ -207,7 +211,7 @@ namespace KPISolution.Controllers
         /// </summary>
         /// <returns>Create PI view</returns>
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(Guid? riId = null, Guid? kriId = null)
         {
             try
             {
@@ -220,6 +224,75 @@ namespace KPISolution.Controllers
                     MeasurementDirection = MeasurementDirection.HigherIsBetter,
                     EffectiveDate = DateTime.Now
                 };
+
+                if (riId.HasValue)
+                {
+                    // Get the parent RI information
+                    var parentRi = await _unitOfWork.RIs.GetByIdAsync(riId.Value);
+                    if (parentRi != null)
+                    {
+                        // Inherit some properties from the parent RI
+                        viewModel.DepartmentId = !string.IsNullOrEmpty(parentRi.Department)
+                            ? await GetDepartmentIdFromName(parentRi.Department) ?? Guid.Empty
+                            : Guid.Empty;
+                        viewModel.Unit = parentRi.Unit;
+                        viewModel.Frequency = parentRi.Frequency;
+                        viewModel.MeasurementDirection = parentRi.MeasurementDirection;
+
+                        // Set the parent RI reference
+                        viewModel.RIId = riId;
+
+                        // Create dropdown for parent RIs with the current RI pre-selected
+                        var riItems = new List<SelectListItem>
+                        {
+                            new SelectListItem
+                            {
+                                Value = parentRi.Id.ToString(),
+                                Text = $"{parentRi.Code} - {parentRi.Name}",
+                                Selected = true
+                            }
+                        };
+                        ViewBag.RIs = new SelectList(riItems, "Value", "Text");
+                    }
+                    else
+                    {
+                        ViewBag.RIs = await GetRiSelectList();
+                    }
+                }
+                else if (kriId.HasValue)
+                {
+                    // Get the parent KRI information
+                    var parentKri = await _unitOfWork.KRIs.GetByIdAsync(kriId.Value);
+                    if (parentKri != null)
+                    {
+                        // Inherit some properties from the parent KRI
+                        viewModel.DepartmentId = !string.IsNullOrEmpty(parentKri.Department)
+                            ? await GetDepartmentIdFromName(parentKri.Department) ?? Guid.Empty
+                            : Guid.Empty;
+                        viewModel.Unit = parentKri.Unit;
+                        viewModel.Frequency = parentKri.Frequency;
+                        viewModel.MeasurementDirection = parentKri.MeasurementDirection;
+
+                        // Set the parent KRI reference
+                        viewModel.KRIId = kriId;
+
+                        // Create dropdown for parent KRIs with the current KRI pre-selected
+                        var kriItems = new List<SelectListItem>
+                        {
+                            new SelectListItem
+                            {
+                                Value = parentKri.Id.ToString(),
+                                Text = $"{parentKri.Code} - {parentKri.Name}",
+                                Selected = true
+                            }
+                        };
+                        ViewBag.KRIs = new SelectList(kriItems, "Value", "Text");
+                    }
+                }
+                else
+                {
+                    ViewBag.RIs = await GetRiSelectList();
+                }
 
                 ViewBag.Departments = await GetDepartmentSelectList();
                 ViewBag.CSFs = await GetCsfSelectList();
@@ -249,6 +322,7 @@ namespace KPISolution.Controllers
             {
                 ViewBag.Departments = await GetDepartmentSelectList();
                 ViewBag.CSFs = await GetCsfSelectList();
+                ViewBag.RIs = await GetRiSelectList();
                 ViewBag.Users = new SelectList(new List<SelectListItem>());
                 ViewBag.ActivityTypes = GetEnumSelectList<ActivityType>();
                 return View("Create", viewModel);
@@ -256,6 +330,19 @@ namespace KPISolution.Controllers
 
             try
             {
+                // Đảm bảo Unit không rỗng
+                if (string.IsNullOrEmpty(viewModel.Unit))
+                {
+                    // Nếu Unit trống, báo lỗi validation
+                    ModelState.AddModelError("Unit", "Đơn vị đo là bắt buộc");
+                    ViewBag.Departments = await GetDepartmentSelectList();
+                    ViewBag.CSFs = await GetCsfSelectList();
+                    ViewBag.RIs = await GetRiSelectList();
+                    ViewBag.Users = new SelectList(new List<SelectListItem>());
+                    ViewBag.ActivityTypes = GetEnumSelectList<ActivityType>();
+                    return View("Create", viewModel);
+                }
+
                 // Convert to CreateKpiViewModel for mapping
                 var createViewModel = new CreateKpiViewModel
                 {
@@ -273,8 +360,11 @@ namespace KPISolution.Controllers
                     Formula = viewModel.Formula,
                     ActionPlan = viewModel.ActionPlan,
                     ActivityType = viewModel.ActivityType,
+                    IsPIKey = viewModel.IsPIKey,
                     EffectiveDate = viewModel.EffectiveDate ?? DateTime.Now,
-                    SelectedCsfIds = SelectedCsfs
+                    SelectedCsfIds = SelectedCsfs,
+                    RIId = viewModel.RIId,
+                    KRIId = viewModel.KRIId
                 };
 
                 // Create PI from view model
@@ -286,7 +376,7 @@ namespace KPISolution.Controllers
                     pi.ActivityType = viewModel.ActivityType.Value;
                 }
 
-                // PerformanceLevel is a non-nullable int - assign directly
+                // PerformanceLevel is a non-nullable int in the PI entity, but a string in the view model
                 if (int.TryParse(viewModel.PerformanceLevel, out int performanceLevel))
                 {
                     pi.PerformanceLevel = performanceLevel;
@@ -294,6 +384,37 @@ namespace KPISolution.Controllers
                 else
                 {
                     pi.PerformanceLevel = 3; // Default value if parsing fails
+                }
+
+                // Set IsKey property based on the view model
+                pi.IsKey = createViewModel.IsPIKey;
+
+                // Set Department name from DepartmentId
+                if (viewModel.DepartmentId != Guid.Empty)
+                {
+                    var department = await _unitOfWork.Departments.GetByIdAsync(viewModel.DepartmentId);
+                    if (department != null)
+                    {
+                        pi.Department = department.Name;
+                    }
+                    else
+                    {
+                        // Nếu không tìm thấy department, sử dụng giá trị mặc định
+                        pi.Department = !string.IsNullOrEmpty(viewModel.DepartmentName) ? viewModel.DepartmentName : "Unknown Department";
+                        _logger.LogWarning("Department with ID {DepartmentId} not found. Using default value.", viewModel.DepartmentId);
+                    }
+                }
+
+                // Set RIId if provided
+                if (viewModel.RIId.HasValue)
+                {
+                    pi.RIId = viewModel.RIId.Value;
+                }
+
+                // Set KRIId if provided
+                if (viewModel.KRIId.HasValue)
+                {
+                    pi.KRIId = viewModel.KRIId.Value;
                 }
 
                 // Set audit fields
@@ -311,6 +432,7 @@ namespace KPISolution.Controllers
                         {
                             CsfId = csfId,
                             KpiId = pi.Id,
+                            KpiType = KpiType.PerformanceIndicator,
                             CreatedAt = DateTime.UtcNow,
                             CreatedBy = User.GetUserId()
                         });
@@ -318,6 +440,17 @@ namespace KPISolution.Controllers
                 }
 
                 await _unitOfWork.SaveChangesAsync();
+
+                // If this was created from an RI, redirect back to the RI details
+                if (viewModel.RIId.HasValue)
+                {
+                    return RedirectToAction("Details", "Ri", new { id = viewModel.RIId.Value });
+                }
+                // If this was created from a KRI, redirect back to the KRI details
+                else if (viewModel.KRIId.HasValue)
+                {
+                    return RedirectToAction("Details", "Kri", new { id = viewModel.KRIId.Value });
+                }
 
                 return RedirectToAction(nameof(Index));
             }
@@ -327,6 +460,7 @@ namespace KPISolution.Controllers
                 ModelState.AddModelError("", "An error occurred while saving the PI. Please try again.");
                 ViewBag.Departments = await GetDepartmentSelectList();
                 ViewBag.CSFs = await GetCsfSelectList();
+                ViewBag.RIs = await GetRiSelectList();
                 ViewBag.Users = new SelectList(new List<SelectListItem>());
                 ViewBag.ActivityTypes = GetEnumSelectList<ActivityType>();
                 return View("Create", viewModel);
@@ -364,8 +498,22 @@ namespace KPISolution.Controllers
 
                 // Set PI-specific properties
                 viewModel.ActivityType = pi.ActivityType;
+                viewModel.PerformanceLevel = pi.PerformanceLevel.ToString();
+                viewModel.IsPIKey = pi.IsKey;
 
-                viewModel.PerformanceLevel = pi.PerformanceLevel;
+                // Đảm bảo Department và Owner được map đúng
+                if (!string.IsNullOrEmpty(pi.Department))
+                {
+                    var departments = await _unitOfWork.Departments.GetAllAsync();
+                    var department = departments.FirstOrDefault(d => d.Name == pi.Department);
+                    if (department != null)
+                    {
+                        viewModel.DepartmentId = department.Id;
+                        viewModel.Department = department.Name;
+                    }
+                }
+
+                viewModel.Owner = pi.ResponsiblePerson;
 
                 // Get selected CSF IDs
                 var csfKpis = await _unitOfWork.CSFKPIs.GetAllAsync();
@@ -375,9 +523,29 @@ namespace KPISolution.Controllers
                     .ToList();
 
                 // Populate dropdown items
-                viewModel.Departments = await GetDepartmentSelectList();
-                viewModel.CriticalSuccessFactors = await GetCsfSelectList();
-                viewModel.ActivityTypes = GetEnumSelectList<ActivityType>();
+                await PopulateDropdownsWithSelection(viewModel);
+
+                // Ensure MeasurementUnit is set
+                if (string.IsNullOrEmpty(viewModel.MeasurementUnit) && !string.IsNullOrEmpty(pi.Unit))
+                {
+                    viewModel.MeasurementUnit = pi.Unit;
+                }
+
+                // Ensure MinimumValue and MaximumValue have defaults if not set
+                if (viewModel.MinimumValue == 0 && pi.MinimumValue != 0)
+                {
+                    viewModel.MinimumValue = pi.MinimumValue;
+                }
+
+                if (viewModel.MaximumValue == 0 && pi.MaximumValue != 0)
+                {
+                    viewModel.MaximumValue = pi.MaximumValue;
+                }
+                else if (viewModel.MaximumValue == 0)
+                {
+                    // Default maximum value if none exists
+                    viewModel.MaximumValue = 100;
+                }
 
                 return View("Edit", viewModel);
             }
@@ -402,11 +570,51 @@ namespace KPISolution.Controllers
             if (id != viewModel.Id)
                 return NotFound();
 
+            // Đồng bộ Unit và MeasurementUnit trước khi validate
+            if (!string.IsNullOrEmpty(viewModel.MeasurementUnit) && string.IsNullOrEmpty(viewModel.Unit))
+            {
+                viewModel.Unit = viewModel.MeasurementUnit;
+                ModelState.SetModelValue("Unit", new Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult(viewModel.Unit, CultureInfo.CurrentCulture));
+            }
+            else if (string.IsNullOrEmpty(viewModel.MeasurementUnit) && !string.IsNullOrEmpty(viewModel.Unit))
+            {
+                viewModel.MeasurementUnit = viewModel.Unit;
+                ModelState.SetModelValue("MeasurementUnit", new Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult(viewModel.MeasurementUnit, CultureInfo.CurrentCulture));
+            }
+
+            // Set default values for MinimumValue and MaximumValue if they're empty
+            if (viewModel.MinimumValue == 0)
+            {
+                // Default minimum is 0, already set
+            }
+
+            if (viewModel.MaximumValue == 0)
+            {
+                viewModel.MaximumValue = 100; // Default maximum
+                ModelState.SetModelValue("MaximumValue", new Microsoft.AspNetCore.Mvc.ModelBinding.ValueProviderResult("100", CultureInfo.CurrentCulture));
+            }
+
+            // Ensure Category is set to a valid value
+            if ((int)viewModel.Category == 0)
+            {
+                ModelState.AddModelError("Category", "Danh mục là bắt buộc");
+            }
+
+            // Log validation errors for debugging
             if (!ModelState.IsValid)
             {
-                viewModel.Departments = await GetDepartmentSelectList();
-                viewModel.CriticalSuccessFactors = await GetCsfSelectList();
-                viewModel.ActivityTypes = GetEnumSelectList<ActivityType>();
+                _logger.LogWarning("Model validation failed for Edit PI with ID: {PiId}", id);
+                foreach (var state in ModelState)
+                {
+                    if (state.Value.Errors.Count > 0)
+                    {
+                        _logger.LogWarning("Validation error for {Property}: {Errors}",
+                            state.Key,
+                            string.Join(", ", state.Value.Errors.Select(e => e.ErrorMessage)));
+                    }
+                }
+
+                await PopulateDropdownsWithSelection(viewModel);
                 return View("Edit", viewModel);
             }
 
@@ -425,51 +633,172 @@ namespace KPISolution.Controllers
                 if (!authResult.Succeeded)
                     return Forbid();
 
-                // Update PI properties
-                _mapper.Map(viewModel, pi);
-
-                // Set PI-specific properties if not mapped by AutoMapper
-                if (viewModel.ActivityType.HasValue)
+                try
                 {
-                    pi.ActivityType = viewModel.ActivityType.Value;
-                }
+                    // Thay đổi cách thức mapping để tránh lỗi AutoMapper
+                    // Map các thuộc tính cơ bản thủ công thay vì sử dụng AutoMapper
+                    pi.Name = viewModel.Name;
+                    pi.Code = viewModel.Code;
+                    pi.Description = viewModel.Description;
 
-                // PerformanceLevel is a non-nullable int - assign with default value if null
-                pi.PerformanceLevel = viewModel.PerformanceLevel.GetValueOrDefault(3);
+                    // Gán giá trị đơn vị đo từ các trường đã đồng bộ
+                    pi.Unit = !string.IsNullOrEmpty(viewModel.MeasurementUnit) ? viewModel.MeasurementUnit : viewModel.Unit;
 
-                // Set audit fields
-                pi.ModifiedAt = DateTime.UtcNow;
-                pi.ModifiedBy = User.GetUserId();
+                    pi.TargetValue = viewModel.TargetValue;
+                    pi.MinimumValue = viewModel.MinimumValue;
+                    pi.MaximumValue = viewModel.MaximumValue;
+                    pi.Weight = viewModel.Weight;
+                    pi.Frequency = viewModel.MeasurementFrequency;
 
-                await _unitOfWork.PIs.UpdateAsync(pi);
-
-                // Update CSF links
-                // First remove existing links
-                var existingLinks = (await _unitOfWork.CSFKPIs.GetAllAsync())
-                    .Where(ck => ck.KpiId == id)
-                    .ToList();
-
-                foreach (var link in existingLinks)
-                {
-                    await _unitOfWork.CSFKPIs.DeleteAsync(link);
-                }
-
-                // Then add new links
-                if (viewModel.SelectedCsfIds != null && viewModel.SelectedCsfIds.Any())
-                {
-                    foreach (var csfId in viewModel.SelectedCsfIds)
+                    // Lấy Department từ DepartmentId
+                    if (viewModel.DepartmentId.HasValue && viewModel.DepartmentId.Value != Guid.Empty)
                     {
-                        await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
+                        var department = await _unitOfWork.Departments.GetByIdAsync(viewModel.DepartmentId.Value);
+                        if (department != null)
                         {
-                            CsfId = csfId,
-                            KpiId = pi.Id,
-                            CreatedAt = DateTime.UtcNow,
-                            CreatedBy = User.GetUserId()
-                        });
+                            pi.Department = department.Name;
+                        }
+                        else
+                        {
+                            // Nếu không tìm thấy department, sử dụng giá trị từ viewModel hoặc giá trị mặc định
+                            pi.Department = !string.IsNullOrEmpty(viewModel.Department) ? viewModel.Department : "Unknown Department";
+                            _logger.LogWarning("Department with ID {DepartmentId} not found. Using value from viewModel or default.", viewModel.DepartmentId);
+                        }
+                    }
+                    else
+                    {
+                        pi.Department = viewModel.Department ?? "Unknown Department";
+                    }
+
+                    pi.ResponsiblePerson = viewModel.Owner;
+                    pi.MeasurementDirection = viewModel.MeasurementDirection;
+                    pi.EffectiveDate = viewModel.EffectiveDate;
+                    pi.Status = viewModel.Status;
+                }
+                catch (Exception mapEx)
+                {
+                    _logger.LogError(mapEx, "Error occurred during manual mapping of PI properties with ID: {PiId}", id);
+                    ModelState.AddModelError("", "Error during property mapping: " + mapEx.Message);
+
+                    await PopulateDropdownsWithSelection(viewModel);
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    // Set PI-specific properties if not mapped by AutoMapper
+                    if (viewModel.ActivityType.HasValue)
+                    {
+                        pi.ActivityType = viewModel.ActivityType.Value;
+                    }
+
+                    // PerformanceLevel is a non-nullable int in the entity but a string in the view model
+                    if (int.TryParse(viewModel.PerformanceLevel, out int performanceLevel))
+                    {
+                        pi.PerformanceLevel = performanceLevel;
+                    }
+                    else
+                    {
+                        pi.PerformanceLevel = 3; // Default value if parsing fails
+                    }
+
+                    // Set IndicatorType if provided
+                    if (viewModel.IndicatorType.HasValue)
+                    {
+                        pi.IndicatorType = viewModel.IndicatorType.Value;
+                    }
+
+                    // Set IsKey property for PI 
+                    pi.IsKey = viewModel.IsPIKey;
+
+                    // Set RIId if provided
+                    if (viewModel.RIId.HasValue)
+                    {
+                        pi.RIId = viewModel.RIId.Value;
+                    }
+
+                    // Set action plan if provided
+                    if (!string.IsNullOrEmpty(viewModel.ActionPlan))
+                    {
+                        pi.ActionPlan = viewModel.ActionPlan;
+                    }
+
+                    // Set audit fields
+                    pi.ModifiedAt = DateTime.UtcNow;
+                    pi.ModifiedBy = User.GetUserId();
+                }
+                catch (Exception specialPropsEx)
+                {
+                    _logger.LogError(specialPropsEx, "Error occurred during mapping special properties of PI with ID: {PiId}", id);
+                    ModelState.AddModelError("", "Error during special properties mapping: " + specialPropsEx.Message);
+
+                    await PopulateDropdownsWithSelection(viewModel);
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    await _unitOfWork.PIs.UpdateAsync(pi);
+                }
+                catch (Exception updateEx)
+                {
+                    _logger.LogError(updateEx, "Error occurred during UpdateAsync for PI with ID: {PiId}", id);
+                    ModelState.AddModelError("", "Error during UpdateAsync: " + updateEx.Message);
+
+                    await PopulateDropdownsWithSelection(viewModel);
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    // Update CSF links
+                    // First remove existing links
+                    var existingLinks = (await _unitOfWork.CSFKPIs.GetAllAsync())
+                        .Where(ck => ck.KpiId == id)
+                        .ToList();
+
+                    foreach (var link in existingLinks)
+                    {
+                        await _unitOfWork.CSFKPIs.DeleteAsync(link);
+                    }
+
+                    // Then add new links
+                    if (viewModel.SelectedCsfIds != null && viewModel.SelectedCsfIds.Any())
+                    {
+                        foreach (var csfId in viewModel.SelectedCsfIds)
+                        {
+                            await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
+                            {
+                                CsfId = csfId,
+                                KpiId = pi.Id,
+                                KpiType = KpiType.PerformanceIndicator,
+                                CreatedAt = DateTime.UtcNow,
+                                CreatedBy = User.GetUserId()
+                            });
+                        }
                     }
                 }
+                catch (Exception csfEx)
+                {
+                    _logger.LogError(csfEx, "Error occurred during CSF links update for PI with ID: {PiId}", id);
+                    ModelState.AddModelError("", "Error during CSF links update: " + csfEx.Message);
 
-                await _unitOfWork.SaveChangesAsync();
+                    await PopulateDropdownsWithSelection(viewModel);
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                }
+                catch (Exception saveEx)
+                {
+                    _logger.LogError(saveEx, "Error occurred during SaveChangesAsync for PI with ID: {PiId}", id);
+                    ModelState.AddModelError("", "Error during SaveChangesAsync: " + saveEx.Message);
+
+                    await PopulateDropdownsWithSelection(viewModel);
+                    return View("Edit", viewModel);
+                }
 
                 return RedirectToAction(nameof(Index));
             }
@@ -488,9 +817,8 @@ namespace KPISolution.Controllers
             {
                 _logger.LogError(ex, "Error occurred while updating PI with ID: {PiId}", id);
                 ModelState.AddModelError("", "An error occurred while saving the PI. Please try again.");
-                viewModel.Departments = await GetDepartmentSelectList();
-                viewModel.CriticalSuccessFactors = await GetCsfSelectList();
-                viewModel.ActivityTypes = GetEnumSelectList<ActivityType>();
+
+                await PopulateDropdownsWithSelection(viewModel);
                 return View("Edit", viewModel);
             }
         }
@@ -606,6 +934,83 @@ namespace KPISolution.Controllers
             }
         }
 
+        // GET: PI/PromoteToKpi/5
+        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
+        public async Task<IActionResult> PromoteToKpi(Guid id)
+        {
+            var pi = await _unitOfWork.PIs.GetByIdAsync(id);
+            if (pi == null || !pi.IsActive)
+            {
+                return NotFound();
+            }
+
+            var viewModel = _mapper.Map<KpiDetailsViewModel>(pi);
+            viewModel.KpiType = KpiType.PerformanceIndicator;
+
+            // Get department name if available
+            if (!string.IsNullOrEmpty(pi.Department))
+            {
+                var departments = await _unitOfWork.Departments.GetAllAsync();
+                var department = departments.FirstOrDefault(d => d.Name == pi.Department);
+                if (department != null)
+                {
+                    viewModel.DepartmentName = department.Name;
+                }
+            }
+
+            return View(viewModel);
+        }
+
+        // POST: PI/PromoteToKpi/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
+        public async Task<IActionResult> PromoteToKpi(Guid id, KpiDetailsViewModel viewModel)
+        {
+            if (id != viewModel.Id)
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                var pi = await _unitOfWork.PIs.GetByIdAsync(id);
+                if (pi == null || !pi.IsActive)
+                {
+                    return NotFound();
+                }
+
+                // Đánh dấu Performance Indicator là Key Performance Indicator
+                pi.IsKey = true;
+                pi.UpdatedAt = DateTime.UtcNow;
+                pi.UpdatedBy = User.GetUserId();
+
+                // Cập nhật PI
+                _unitOfWork.PIs.Update(pi);
+                await _unitOfWork.SaveChangesAsync();
+
+                // Xóa bỏ cache để đảm bảo dữ liệu mới được hiển thị
+                if (_memoryCache != null)
+                {
+                    string cacheKey = $"PI_{id}";
+                    _memoryCache.Remove(cacheKey);
+                    _memoryCache.Remove("AllKpis");
+                    _memoryCache.Remove("AllPIs");
+                }
+
+                TempData["Success"] = "Chỉ số hoạt động đã được chuyển đổi thành KPI thành công!";
+
+                // Redirect về trang KPI/Details để xem dưới dạng KPI
+                return RedirectToAction("Details", "Kpi", new { id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error promoting PI to KPI");
+                TempData["Error"] = "Đã xảy ra lỗi khi chuyển đổi PI thành KPI.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+        }
+
         // Helper methods
 
         /// <summary>
@@ -657,6 +1062,22 @@ namespace KPISolution.Controllers
         }
 
         /// <summary>
+        /// Gets a select list for RIs
+        /// </summary>
+        /// <returns>SelectList of RIs</returns>
+        private async Task<SelectList> GetRiSelectList()
+        {
+            var ris = await _unitOfWork.RIs.GetAllAsync();
+            var items = ris.Select(r => new SelectListItem
+            {
+                Value = r.Id.ToString(),
+                Text = $"{r.Code} - {r.Name}"
+            }).OrderBy(r => r.Text).ToList();
+
+            return new SelectList(items, "Value", "Text");
+        }
+
+        /// <summary>
         /// Creates a select list from an enum type
         /// </summary>
         /// <typeparam name="TEnum">The enum type</typeparam>
@@ -697,6 +1118,96 @@ namespace KPISolution.Controllers
                 "activitytype" => isDescending ? query.OrderByDescending(k => k.ActivityType) : query.OrderBy(k => k.ActivityType),
                 "performancelevel" => isDescending ? query.OrderByDescending(k => k.PerformanceLevel) : query.OrderBy(k => k.PerformanceLevel),
                 _ => query.OrderBy(k => k.Name) // Default sort
+            };
+        }
+
+        /// <summary>
+        /// Gets Department ID from Department name
+        /// </summary>
+        /// <param name="departmentName">Name of the department</param>
+        /// <returns>Department ID or null if not found</returns>
+        private async Task<Guid?> GetDepartmentIdFromName(string departmentName)
+        {
+            if (string.IsNullOrEmpty(departmentName))
+                return null;
+
+            var departments = await _unitOfWork.Departments.GetAllAsync();
+            return departments.FirstOrDefault(d => d.Name == departmentName)?.Id;
+        }
+
+        /// <summary>
+        /// Helper method to create a SelectList for departments with the currently selected department
+        /// </summary>
+        /// <param name="viewModel">The view model containing department information</param>
+        /// <returns>Task completing with populated select lists</returns>
+        private async Task PopulateDropdownsWithSelection(EditKpiViewModel viewModel)
+        {
+            // Create department list with selected item
+            var departmentList = await GetDepartmentSelectList();
+            if (viewModel.DepartmentId.HasValue)
+            {
+                var departmentItems = departmentList.Items.Cast<SelectListItem>().ToList();
+                var selectedItem = departmentItems.FirstOrDefault(d => d.Value == viewModel.DepartmentId.Value.ToString());
+                if (selectedItem != null)
+                {
+                    selectedItem.Selected = true;
+                }
+                viewModel.Departments = new SelectList(departmentItems, "Value", "Text");
+            }
+            else
+            {
+                viewModel.Departments = departmentList;
+            }
+
+            // Create categories list with explicit enumeration
+            var categories = Enum.GetValues(typeof(KpiCategory))
+                .Cast<KpiCategory>()
+                .Select(c => new SelectListItem
+                {
+                    Value = ((int)c).ToString(),
+                    Text = GetCategoryDisplayName(c),
+                    Selected = c == viewModel.Category
+                })
+                .ToList();
+
+            // Ensure there's always a category selected
+            if (viewModel.Category == 0)
+            {
+                viewModel.Category = KpiCategory.Financial; // Default to Financial if not set
+            }
+
+            viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+            viewModel.ActivityTypes = GetEnumSelectList<ActivityType>();
+            viewModel.ParentRis = await GetRiSelectList();
+            viewModel.IndicatorTypes = GetEnumSelectList<IndicatorType>();
+        }
+
+        /// <summary>
+        /// Gets a friendly display name for KPI categories
+        /// </summary>
+        /// <param name="category">The KPI category</param>
+        /// <returns>A user-friendly display name</returns>
+        private string GetCategoryDisplayName(KpiCategory category)
+        {
+            return category switch
+            {
+                KpiCategory.Financial => "Tài chính",
+                KpiCategory.Customer => "Khách hàng",
+                KpiCategory.Operational => "Quy trình nội bộ",
+                KpiCategory.LearningAndGrowth => "Học tập và phát triển",
+                KpiCategory.Environmental => "Môi trường",
+                KpiCategory.Social => "Xã hội",
+                KpiCategory.Governance => "Quản trị",
+                KpiCategory.Quality => "Chất lượng",
+                KpiCategory.Innovation => "Đổi mới",
+                KpiCategory.Productivity => "Năng suất",
+                KpiCategory.HumanResources => "Nhân sự",
+                KpiCategory.IT => "CNTT",
+                KpiCategory.Safety => "An toàn",
+                KpiCategory.Project => "Dự án",
+                KpiCategory.Risk => "Rủi ro",
+                KpiCategory.Other => "Khác",
+                _ => category.ToString()
             };
         }
     }

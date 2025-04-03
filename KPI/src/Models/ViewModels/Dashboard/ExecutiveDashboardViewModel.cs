@@ -120,6 +120,36 @@ namespace KPISolution.Models.ViewModels.Dashboard
         [Display(Name = "Period End")]
         [DataType(DataType.Date)]
         public DateTime? PeriodEnd { get; set; }
+
+        /// <summary>
+        /// Total count of business objectives
+        /// </summary>
+        [Display(Name = "Objectives")]
+        public int ObjectiveCount { get; set; }
+
+        /// <summary>
+        /// Total count of success factors
+        /// </summary>
+        [Display(Name = "Success Factors")]
+        public int SfCount { get; set; }
+
+        /// <summary>
+        /// Total count of critical success factors
+        /// </summary>
+        [Display(Name = "Critical Success Factors")]
+        public int CsfCount { get; set; }
+
+        /// <summary>
+        /// Total count of result and performance indicators
+        /// </summary>
+        [Display(Name = "Indicators")]
+        public int IndicatorCount { get; set; }
+
+        /// <summary>
+        /// Total count of key result and performance indicators
+        /// </summary>
+        [Display(Name = "Key Indicators")]
+        public int KeyIndicatorCount { get; set; }
     }
 
     /// <summary>

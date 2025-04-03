@@ -94,9 +94,14 @@ namespace KPISolution.Models.ViewModels.CSF.Mappings
                 .ForMember(dest => dest.TargetValue, opt => opt.MapFrom(src => src.KPI != null ? src.KPI.TargetValue : 0))
                 .ForMember(dest => dest.CurrentValue, opt => opt.Ignore()) // Set this separately if needed
                 .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => src.KPI != null ? src.KPI.Unit : null))
+                .ForMember(dest => dest.RelationshipStrength, opt => opt.MapFrom(src => src.RelationshipStrength))
                 .ForMember(dest => dest.RelationshipStrengthDisplay, opt => opt.MapFrom(src => src.RelationshipStrength.ToString()))
+                .ForMember(dest => dest.ImpactLevel, opt => opt.MapFrom(src => src.ImpactLevel))
                 .ForMember(dest => dest.ImpactLevelDisplay, opt => opt.MapFrom(src => src.ImpactLevel.ToString()))
-                .ForMember(dest => dest.PerformanceCssClass, opt => opt.Ignore()); // Set this separately
+                .ForMember(dest => dest.Weight, opt => opt.MapFrom(src => src.Weight))
+                .ForMember(dest => dest.KpiType, opt => opt.MapFrom(src => src.KpiType))
+                .ForMember(dest => dest.KpiTypeDisplay, opt => opt.MapFrom(src => src.KpiType.ToString()))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.KPI != null ? src.KPI.Status : Models.Enums.KpiStatus.Draft));
 
             // CSFKPI -> CsfKpiRelationshipViewModel
             CreateMap<CSFKPI, CsfKpiRelationshipViewModel>()

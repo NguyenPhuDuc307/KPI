@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using KPISolution.Models.Entities.CSF;
 using KPISolution.Models.Enums;
 
 namespace KPISolution.Models.Entities.KPI
@@ -20,6 +21,37 @@ namespace KPISolution.Models.Entities.KPI
         /// </summary>
         [ForeignKey("RIId")]
         public virtual RI? ParentRI { get; set; }
+
+        /// <summary>
+        /// Reference to the parent KRI (direct relationship without going through RI)
+        /// </summary>
+        [Display(Name = "Parent KRI")]
+        public Guid? KRIId { get; set; }
+
+        /// <summary>
+        /// Navigation property to the parent KRI
+        /// </summary>
+        [ForeignKey("KRIId")]
+        public virtual KRI? ParentKRI { get; set; }
+
+        /// <summary>
+        /// Reference to the CSF this PI is associated with
+        /// </summary>
+        [Display(Name = "Critical Success Factor")]
+        public Guid? CriticalSuccessFactorId { get; set; }
+
+        /// <summary>
+        /// Navigation property to the associated CSF
+        /// </summary>
+        [ForeignKey("CriticalSuccessFactorId")]
+        public virtual CriticalSuccessFactor? CriticalSuccessFactor { get; set; }
+
+        /// <summary>
+        /// Indicates whether this is a Key Performance Indicator (KPI). If true, this Performance Indicator
+        /// is considered a KPI for the organization.
+        /// </summary>
+        [Display(Name = "Is Key Performance Indicator (KPI)")]
+        public bool IsKey { get; set; } = false;
 
         /// <summary>
         /// Activity type categorization for this Performance Indicator

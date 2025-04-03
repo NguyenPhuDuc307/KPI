@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using KPISolution.Models.Entities.Base;
 using KPISolution.Models.Entities.CSF;
 using KPISolution.Models.Entities.Identity;
 using KPISolution.Models.Entities.KPI;
 using KPISolution.Models.Entities.Measurement;
+using KPISolution.Models.Entities.Objective;
 using KPISolution.Models.Entities.Organization;
-using KPISolution.Models.Entities.Notification;
 using KPISolution.Models.Entities.Dashboard;
 
 namespace KPISolution.Data
@@ -28,6 +27,9 @@ namespace KPISolution.Data
         public new DbSet<ApplicationUser> Users => Set<ApplicationUser>();
         public new DbSet<KpiRole> Roles => Set<KpiRole>();
 
+        // Objective and Success Factor DbSets
+        public DbSet<SuccessFactor> SuccessFactors => Set<SuccessFactor>();
+
         // CSF DbSets
         public DbSet<CriticalSuccessFactor> CriticalSuccessFactors => Set<CriticalSuccessFactor>();
         public DbSet<CSFProgress> CSFProgresses => Set<CSFProgress>();
@@ -38,10 +40,11 @@ namespace KPISolution.Data
         public DbSet<KRI> KRIs => Set<KRI>();
         public DbSet<PI> PIs => Set<PI>();
         public DbSet<RI> RIs => Set<RI>();
+        public DbSet<Models.Entities.KPI.KPI> KPIs => Set<Models.Entities.KPI.KPI>();
         public DbSet<KpiMeasurement> KpiMeasurements => Set<KpiMeasurement>();
 
         // Measurement DbSets
-        public DbSet<KpiValue> KpiValues => Set<KpiValue>();
+        public DbSet<Models.Entities.KPI.KpiValue> KpiValues => Set<Models.Entities.KPI.KpiValue>();
         public DbSet<Target> Targets => Set<Target>();
         public DbSet<Threshold> Thresholds => Set<Threshold>();
         public DbSet<Models.Entities.Measurement.Notification> MeasurementNotifications => Set<Models.Entities.Measurement.Notification>();
@@ -78,29 +81,46 @@ namespace KPISolution.Data
                 .HasForeignKey(b => b.ParentObjectiveId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Configure BusinessObjective-SuccessFactor relationship
+            modelBuilder.Entity<BusinessObjective>()
+                .HasMany(b => b.SuccessFactors)
+                .WithOne(sf => sf.BusinessObjective)
+                .HasForeignKey(sf => sf.BusinessObjectiveId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure SuccessFactor-CriticalSuccessFactor relationship
+            modelBuilder.Entity<SuccessFactor>()
+                .HasMany(sf => sf.CriticalSuccessFactors)
+                .WithOne(csf => csf.SuccessFactor)
+                .HasForeignKey(csf => csf.SuccessFactorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure CriticalSuccessFactor-RI relationship
+            modelBuilder.Entity<CriticalSuccessFactor>()
+                .HasMany(csf => csf.ResultIndicators)
+                .WithOne(ri => ri.CriticalSuccessFactor)
+                .HasForeignKey(ri => ri.CriticalSuccessFactorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure CriticalSuccessFactor-PI relationship
+            modelBuilder.Entity<CriticalSuccessFactor>()
+                .HasMany(csf => csf.PerformanceIndicators)
+                .WithOne(pi => pi.CriticalSuccessFactor)
+                .HasForeignKey(pi => pi.CriticalSuccessFactorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Configure KPI hierarchy relationships
             modelBuilder.Entity<KRI>().ToTable("KRIs");
             modelBuilder.Entity<RI>().ToTable("RIs");
             modelBuilder.Entity<PI>().ToTable("PIs");
+            modelBuilder.Entity<Models.Entities.KPI.KPI>().ToTable("KPIs");
 
             // Configure KpiValue relationships to avoid multiple cascade paths
-            modelBuilder.Entity<KpiValue>()
-                .HasOne(kv => kv.KRI)
-                .WithMany()
+            modelBuilder.Entity<Models.Entities.KPI.KpiValue>()
+                .HasOne(kv => kv.Kpi)
+                .WithMany(k => k.Values)
                 .HasForeignKey(kv => kv.KpiId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<KpiValue>()
-                .HasOne(kv => kv.RI)
-                .WithMany()
-                .HasForeignKey(kv => kv.KpiId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<KpiValue>()
-                .HasOne(kv => kv.PI)
-                .WithMany()
-                .HasForeignKey(kv => kv.KpiId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure Target relationships to avoid multiple cascade paths
             modelBuilder.Entity<Target>()

@@ -1,0 +1,6 @@
+Mỗi 1 Objectives sẽ có nhiều SF (Success Factor)
+Trong các SF đó sẽ có các CSF (Critical Success Factor)
+Mỗi 1 CSF sẽ các RIs (Result Indicators) và các PIs (Performance Indicators)
+Trong số các RIs sẽ có các KRI (Key Result Indicators)
+Trong số các PIs sẽ có các KPI (Key Performance Indicators)
+

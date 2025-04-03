@@ -1,0 +1,224 @@
+@model KPISolution.Models.ViewModels.KPI.MeasurementListViewModel
+@using KPISolution.Models.Enums
+@{
+    ViewData["Title"] = "Quản lý đo lường";
+    ViewData["Icon"] = "bi-rulers";
+    ViewData["Subtitle"] = "Theo dõi và cập nhật giá trị đo lường KPI";
+    ViewData["ShowFilterPanel"] = true;
+}
+
+@section FilterContent {
+    <form asp-controller="Measurement" asp-action="Index" method="get" id="filterForm">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Loại KPI</label>
+                    <select asp-for="Filter.KpiType" asp-items="Model.KpiTypes" class="form-select" id="kpiTypeFilter">
+                        <option value="">Tất cả</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Phòng ban</label>
+                    <select asp-for="Filter.DepartmentId" asp-items="Model.Departments" class="form-select"
+                        id="departmentFilter">
+                        <option value="">Tất cả phòng ban</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Tần suất đo lường</label>
+                    <select asp-for="Filter.Frequency" asp-items="Model.MeasurementFrequencies" class="form-select"
+                        id="frequencyFilter">
+                        <option value="">Tất cả tần suất</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label class="form-label">Từ khoá</label>
+                    <input asp-for="Filter.SearchTerm" class="form-control" placeholder="Nhập từ khoá tìm kiếm" />
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary" id="applyFilter">
+                    <i class="bi bi-funnel me-1"></i>Lọc
+                </button>
+                <a asp-controller="Measurement" asp-action="Index" class="btn btn-outline-secondary" id="resetFilter">
+                    <i class="bi bi-x-circle me-1"></i>Đặt lại
+                </a>
+            </div>
+        </div>
+    </form>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Danh sách đo lường KPI</h5>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-download me-1"></i>Xuất dữ liệu
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                <li><a class="dropdown-item d-flex align-items-center" href="#" id="exportExcel"><i
+                            class="bi bi-file-excel me-2"></i>Excel</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="#" id="exportPdf"><i
+                            class="bi bi-file-pdf me-2"></i>PDF</a></li>
+                <li><a class="dropdown-item d-flex align-items-center" href="#" id="printTable"><i
+                            class="bi bi-printer me-2"></i>In báo cáo</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-hover w-100" id="measurementsTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã KPI</th>
+                    <th>Ngày đo</th>
+                    <th>Giá trị</th>
+                    <th>Mục tiêu</th>
+                    <th>% Đạt</th>
+                    <th>Trạng thái</th>
+                    <th>Ghi chú</th>
+                    <th>Người tạo</th>
+                    <th class="text-center no-sort">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Items != null && Model.Items.Any())
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td title="@item.KpiName">@item.KpiCode</td>
+                            <td data-order="@item.MeasurementDate.ToString("yyyy-MM-dd")">
+                                @item.MeasurementDate.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">@item.ActualValue</td>
+                            <td class="text-end">@(item.TargetValue.HasValue ? item.TargetValue.Value.ToString() : "-")</td>
+                            <td class="text-end" data-order="@item.AchievementPercentage">@(item.AchievementPercentage.HasValue
+                                                        ? $"{item.AchievementPercentage.Value:N1}%" : "-")</td>
+                    <td class="text-center">
+                        <span class="@item.StatusCssClass">@item.Status</span>
+                    </td>
+                    <td>@(string.IsNullOrEmpty(item.Notes) ? "-" : item.Notes)</td>
+                    <td>@item.CreatedBy</td>
+                    <td class="text-center">
+                        <div class="btn-group">
+                            <a asp-controller="Kpi" asp-action="Details" asp-route-id="@item.KpiId"
+                                class="btn btn-sm btn-outline-primary" title="Xem chi tiết KPI: @item.KpiName">
+                                <i class="bi bi-graph-up"></i>
+                            </a>
+                            <a asp-controller="Measurement" asp-action="AddMeasurement" asp-route-kpiId="@item.KpiId"
+                                class="btn btn-sm btn-outline-success" title="Thêm đo lường cho KPI: @item.KpiName">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                                }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable with advanced features
+            var table = $('#measurementsTable').DataTable({
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Tất cả"]],
+                order: [[1, 'desc']], // Sort by measurement date desc
+                columnDefs: [
+                    { targets: 'no-sort', orderable: false },
+                    { targets: [2, 3, 4], className: 'text-end' },
+                    { targets: [5, 8], className: 'text-center' }
+                ],
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                    '<"row"<"col-sm-12"tr>>' +
+                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                language: {
+                    lengthMenu: "Hiển thị _MENU_ bản ghi",
+                    zeroRecords: "Không tìm thấy bản ghi phù hợp",
+                    info: "Hiển thị _START_ đến _END_ của _TOTAL_ bản ghi",
+                    infoEmpty: "Hiển thị 0 đến 0 của 0 bản ghi",
+                    infoFiltered: "(lọc từ _MAX_ bản ghi)",
+                    search: "Tìm kiếm:",
+                    paginate: {
+                        first: "Đầu",
+                        last: "Cuối",
+                        next: "Sau",
+                        previous: "Trước"
+                    }
+                },
+                buttons: [
+                    {
+                        extend: 'excel',
+                        text: '<i class="bi bi-file-excel me-2"></i>Excel',
+                        className: 'btn btn-success',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
+                    },
+                    {
+                        extend: 'pdf',
+                        text: '<i class="bi bi-file-pdf me-2"></i>PDF',
+                        className: 'btn btn-danger',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
+                    },
+                    {
+                        extend: 'print',
+                        text: '<i class="bi bi-printer me-2"></i>In',
+                        className: 'btn btn-info',
+                        exportOptions: {
+                            columns: ':not(.no-export)'
+                        }
+                    }
+                ]
+            });
+
+            // Handle export buttons
+            $('#exportExcel').click(function (e) {
+                e.preventDefault();
+                table.button('.buttons-excel').trigger();
+            });
+
+            $('#exportPdf').click(function (e) {
+                e.preventDefault();
+                table.button('.buttons-pdf').trigger();
+            });
+
+            $('#printTable').click(function (e) {
+                e.preventDefault();
+                table.button('.buttons-print').trigger();
+            });
+
+            // Initialize select2 for better dropdown UX
+            $('.form-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            // Apply filter on form submit
+            $('#filterForm').on('submit', function (e) {
+                e.preventDefault();
+                table.draw();
+            });
+
+            // Reset filter
+            $('#resetFilter').click(function () {
+                $('.form-select').val('').trigger('change');
+                $('.form-control').val('');
+                table.search('').columns().search('').draw();
+            });
+        });
+    </script>
+}

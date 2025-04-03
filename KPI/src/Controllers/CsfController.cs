@@ -95,7 +95,9 @@ namespace KPISolution.Controllers
                 viewModel.TotalCount = query.Count();
 
                 // Materialize the query before transforming
-                var pagedCsfs = query.Skip((page - 1) * viewModel.PageSize)
+                var pagedCsfs = query
+                                    .OrderBy(c => c.Id)
+                                    .Skip((page - 1) * viewModel.PageSize)
                                     .Take(viewModel.PageSize)
                                     .ToList();
 
@@ -183,49 +185,18 @@ namespace KPISolution.Controllers
             var csfKpis = await _unitOfWork.CSFKPIs.GetAllAsync();
             var links = csfKpis.Where(ck => ck.CsfId == id).ToList();
 
-            // Thêm dữ liệu mẫu KPIs liên quan nếu không có
-            if (!links.Any())
+            // Chỉ sử dụng dữ liệu thực từ database, không tạo dữ liệu mẫu
+            viewModel.LinkedKpis = new List<LinkedKpiViewModel>();
+
+            // Map các KPI đã liên kết nếu có
+            if (links.Any())
             {
-                // Mẫu dữ liệu cho KRIs liên quan
-                viewModel.LinkedKpis = new List<LinkedKpiViewModel>
-                {
-                    new LinkedKpiViewModel
-                    {
-                        KpiId = Guid.NewGuid(),
-                        Name = "Cash Flow Ratio",
-                        Code = "KRI-FIN-004",
-                        KpiType = KpiType.KeyResultIndicator,
-                        KpiTypeDisplay = "Key Result Indicator",
-                        CurrentValue = 1.2M,
-                        TargetValue = 1.5M,
-                        Unit = "Ratio",
-                        RelationshipStrength = RelationshipStrength.Critical,
-                        RelationshipStrengthDisplay = "Critical",
-                        ImpactLevel = ImpactLevel.High,
-                        ImpactLevelDisplay = "High",
-                        Status = KpiStatus.AtRisk
-                    },
-                    new LinkedKpiViewModel
-                    {
-                        KpiId = Guid.NewGuid(),
-                        Name = "Average Collection Period",
-                        Code = "KRI-FIN-008",
-                        KpiType = KpiType.KeyResultIndicator,
-                        KpiTypeDisplay = "Key Result Indicator",
-                        CurrentValue = 38.5M,
-                        TargetValue = 30.0M,
-                        Unit = "Days",
-                        RelationshipStrength = RelationshipStrength.Strong,
-                        RelationshipStrengthDisplay = "Strong",
-                        ImpactLevel = ImpactLevel.Medium,
-                        ImpactLevelDisplay = "Medium",
-                        Status = KpiStatus.Active
-                    }
-                };
-            }
-            else
-            {
-                // Map actual linked KPIs if they exist
+                var kpis = await _unitOfWork.KPIs.GetAllAsync();
+                var kris = await _unitOfWork.KRIs.GetAllAsync();
+                var ris = await _unitOfWork.RIs.GetAllAsync();
+                var pis = await _unitOfWork.PIs.GetAllAsync();
+                var measurements = await _unitOfWork.KpiMeasurements.GetAllAsync();
+
                 foreach (var link in links)
                 {
                     var kpiViewModel = new LinkedKpiViewModel
@@ -243,7 +214,7 @@ namespace KPISolution.Controllers
                     switch (link.KpiType)
                     {
                         case KpiType.KeyResultIndicator:
-                            var kri = await _unitOfWork.KRIs.GetByIdAsync(link.KpiId);
+                            var kri = kris.FirstOrDefault(k => k.Id == link.KpiId);
                             if (kri != null)
                             {
                                 kpiViewModel.Name = kri.Name;
@@ -253,70 +224,119 @@ namespace KPISolution.Controllers
                                 kpiViewModel.Status = kri.Status;
 
                                 // Get latest measurement if available
-                                var measurements = await _unitOfWork.KpiMeasurements.GetAllAsync();
-                                var latestMeasurement = measurements
+                                var latestKriMeasurement = measurements
                                     .Where(m => m.KpiId == kri.Id)
                                     .OrderByDescending(m => m.MeasurementDate)
                                     .FirstOrDefault();
 
-                                if (latestMeasurement != null)
+                                if (latestKriMeasurement != null)
                                 {
-                                    kpiViewModel.CurrentValue = latestMeasurement.Value;
+                                    kpiViewModel.CurrentValue = latestKriMeasurement.Value;
                                 }
                             }
                             break;
-                            // Handle other KPI types similarly
+
+                        case KpiType.ResultIndicator:
+                            var ri = ris.FirstOrDefault(r => r.Id == link.KpiId);
+                            if (ri != null)
+                            {
+                                kpiViewModel.Name = ri.Name;
+                                kpiViewModel.Code = ri.Code;
+                                kpiViewModel.TargetValue = ri.TargetValue;
+                                kpiViewModel.Unit = ri.Unit;
+                                kpiViewModel.Status = ri.Status;
+
+                                // Get latest measurement if available
+                                var latestRiMeasurement = measurements
+                                    .Where(m => m.KpiId == ri.Id)
+                                    .OrderByDescending(m => m.MeasurementDate)
+                                    .FirstOrDefault();
+
+                                if (latestRiMeasurement != null)
+                                {
+                                    kpiViewModel.CurrentValue = latestRiMeasurement.Value;
+                                }
+                            }
+                            break;
+
+                        case KpiType.PerformanceIndicator:
+                            var pi = pis.FirstOrDefault(p => p.Id == link.KpiId);
+                            if (pi != null)
+                            {
+                                kpiViewModel.Name = pi.Name;
+                                kpiViewModel.Code = pi.Code;
+                                kpiViewModel.TargetValue = pi.TargetValue;
+                                kpiViewModel.Unit = pi.Unit;
+                                kpiViewModel.Status = pi.Status;
+
+                                // Get latest measurement if available
+                                var latestPiMeasurement = measurements
+                                    .Where(m => m.KpiId == pi.Id)
+                                    .OrderByDescending(m => m.MeasurementDate)
+                                    .FirstOrDefault();
+
+                                if (latestPiMeasurement != null)
+                                {
+                                    kpiViewModel.CurrentValue = latestPiMeasurement.Value;
+                                }
+                            }
+                            break;
+
+                        case KpiType.StandaloneKPI:
+                            var kpi = kpis.FirstOrDefault(k => k.Id == link.KpiId);
+                            if (kpi != null)
+                            {
+                                kpiViewModel.Name = kpi.Name;
+                                kpiViewModel.Code = kpi.Code;
+                                kpiViewModel.TargetValue = kpi.TargetValue;
+                                kpiViewModel.Unit = kpi.Unit;
+                                kpiViewModel.Status = kpi.Status;
+
+                                // Get latest measurement if available
+                                var latestKpiMeasurement = measurements
+                                    .Where(m => m.KpiId == kpi.Id)
+                                    .OrderByDescending(m => m.MeasurementDate)
+                                    .FirstOrDefault();
+
+                                if (latestKpiMeasurement != null)
+                                {
+                                    kpiViewModel.CurrentValue = latestKpiMeasurement.Value;
+                                }
+                            }
+                            break;
+
+                        default:
+                            // Handle undefined KPI type
+                            kpiViewModel.Name = "Unknown KPI";
+                            kpiViewModel.Code = "UNKNOWN";
+                            break;
                     }
 
                     viewModel.LinkedKpis.Add(kpiViewModel);
                 }
             }
 
-            // Thêm dữ liệu mẫu lịch sử cập nhật nếu không có
-            if (!viewModel.ProgressUpdates.Any())
-            {
-                // Mẫu dữ liệu cho lịch sử cập nhật
-                viewModel.UpdateHistory = new List<CsfUpdateHistoryViewModel>
-                {
-                    new CsfUpdateHistoryViewModel
-                    {
-                        Id = Guid.NewGuid(),
-                        UpdatedAt = DateTime.Now.AddDays(-30),
-                        UpdatedBy = "Sarah Johnson",
-                        Notes = "Đã bắt đầu quá trình xem xét quy trình thanh toán và thu tiền.",
-                        ProgressChange = 10
-                    },
-                    new CsfUpdateHistoryViewModel
-                    {
-                        Id = Guid.NewGuid(),
-                        UpdatedAt = DateTime.Now.AddDays(-15),
-                        UpdatedBy = "Michael Chen",
-                        Notes = "Đang gặp khó khăn với một số khách hàng lớn trong việc thực hiện các điều khoản thanh toán mới.",
-                        ProgressChange = 5
-                    },
-                    new CsfUpdateHistoryViewModel
-                    {
-                        Id = Guid.NewGuid(),
-                        UpdatedAt = DateTime.Now.AddDays(-5),
-                        UpdatedBy = "Robert Lee",
-                        Notes = "Đã triển khai hệ thống nhắc nhở thanh toán tự động cho tất cả các tài khoản quá hạn.",
-                        ProgressChange = 15
-                    }
-                };
-            }
+            // Get progress updates
+            viewModel.ProgressUpdates = new List<CsfProgressHistoryViewModel>();
+
+            // Khởi tạo danh sách trống thay vì thêm dữ liệu mẫu
+            viewModel.UpdateHistory = new List<CsfUpdateHistoryViewModel>();
+
+            // TODO: Lấy lịch sử cập nhật thực từ cơ sở dữ liệu khi có sẵn
 
             return View(viewModel);
         }
 
         // GET: CSF/Create
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageCsfs)]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(Guid? businessObjectiveId = null)
         {
             try
             {
                 var viewModel = new CreateCsfViewModel
                 {
-                    BusinessObjectives = await GetBusinessObjectiveSelectList(),
+                    BusinessObjectiveId = businessObjectiveId ?? Guid.Empty,
+                    BusinessObjectives = await GetBusinessObjectiveSelectList(businessObjectiveId),
                     Departments = await GetDepartmentSelectList(),
                     AvailableKpis = await GetKpiSelectList(),
                 };
@@ -338,7 +358,7 @@ namespace KPISolution.Controllers
         {
             if (!ModelState.IsValid)
             {
-                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList();
+                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList(viewModel.BusinessObjectiveId);
                 viewModel.Departments = await GetDepartmentSelectList();
                 viewModel.AvailableKpis = await GetKpiSelectList();
                 return View(viewModel);
@@ -346,6 +366,21 @@ namespace KPISolution.Controllers
 
             try
             {
+                // Kiểm tra CSF trùng lặp
+                var existingCsfs = await _unitOfWork.CriticalSuccessFactors.GetAllAsync(
+                    c => c.Name == viewModel.Name &&
+                         c.DepartmentId == viewModel.DepartmentId &&
+                         c.IsActive);
+
+                if (existingCsfs.Any())
+                {
+                    TempData["Warning"] = "Đã tồn tại CSF có cùng tên và phòng ban. Không thể tạo CSF trùng lặp.";
+                    viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList(viewModel.BusinessObjectiveId);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.AvailableKpis = await GetKpiSelectList();
+                    return View(viewModel);
+                }
+
                 // Use AutoMapper to map the view model to entity
                 var csf = _mapper.Map<CriticalSuccessFactor>(viewModel);
                 csf.CreatedBy = User.Identity?.Name;
@@ -381,7 +416,7 @@ namespace KPISolution.Controllers
             {
                 _logger.LogError(ex, "Error occurred while creating CSF");
                 ModelState.AddModelError(string.Empty, "An error occurred while creating the CSF. Please try again.");
-                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList();
+                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList(viewModel.BusinessObjectiveId);
                 viewModel.Departments = await GetDepartmentSelectList();
                 viewModel.AvailableKpis = await GetKpiSelectList();
                 return View(viewModel);
@@ -414,9 +449,22 @@ namespace KPISolution.Controllers
                 var viewModel = _mapper.Map<EditCsfViewModel>(csf);
 
                 // Add select lists and other related data
-                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList();
+                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList(viewModel.BusinessObjectiveId);
                 viewModel.Departments = await GetDepartmentSelectList();
                 viewModel.AvailableKpis = await GetKpiSelectList();
+
+                // Set selected values in dropdowns
+                if (viewModel.BusinessObjectiveId != Guid.Empty)
+                {
+                    viewModel.BusinessObjectives = new SelectList(viewModel.BusinessObjectives.Items,
+                        "Value", "Text", viewModel.BusinessObjectiveId.ToString());
+                }
+
+                if (viewModel.DepartmentId.HasValue)
+                {
+                    viewModel.Departments = new SelectList(viewModel.Departments.Items,
+                        "Value", "Text", viewModel.DepartmentId.Value.ToString());
+                }
 
                 // Handle collections
                 if (csf.CSFKPIs != null)
@@ -461,14 +509,71 @@ namespace KPISolution.Controllers
 
             if (!ModelState.IsValid)
             {
-                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList();
+                // Khởi tạo lại các danh sách dropdown
+                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList(viewModel.BusinessObjectiveId);
                 viewModel.Departments = await GetDepartmentSelectList();
                 viewModel.AvailableKpis = await GetKpiSelectList();
+
+                // Đặt lại các giá trị đã chọn
+                if (viewModel.BusinessObjectiveId != Guid.Empty)
+                {
+                    viewModel.BusinessObjectives = new SelectList(viewModel.BusinessObjectives.Items,
+                        "Value", "Text", viewModel.BusinessObjectiveId.ToString());
+                }
+
+                if (viewModel.DepartmentId.HasValue)
+                {
+                    viewModel.Departments = new SelectList(viewModel.Departments.Items,
+                        "Value", "Text", viewModel.DepartmentId.Value.ToString());
+                }
+
+                if (viewModel.SelectedKpiIds != null && viewModel.SelectedKpiIds.Any())
+                {
+                    // Các selected items sẽ được handled bởi view
+                }
+
                 return View(viewModel);
             }
 
             try
             {
+                // Kiểm tra CSF trùng lặp (loại trừ chính nó)
+                var existingCsfs = await _unitOfWork.CriticalSuccessFactors.GetAllAsync(
+                    c => c.Id != id &&
+                         c.Name == viewModel.Name &&
+                         c.DepartmentId == viewModel.DepartmentId &&
+                         c.IsActive);
+
+                if (existingCsfs.Any())
+                {
+                    TempData["Warning"] = "Đã tồn tại CSF khác có cùng tên và phòng ban. Không thể cập nhật thành CSF trùng lặp.";
+
+                    // Khởi tạo lại các danh sách dropdown
+                    viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList(viewModel.BusinessObjectiveId);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.AvailableKpis = await GetKpiSelectList();
+
+                    // Đặt lại các giá trị đã chọn
+                    if (viewModel.BusinessObjectiveId != Guid.Empty)
+                    {
+                        viewModel.BusinessObjectives = new SelectList(viewModel.BusinessObjectives.Items,
+                            "Value", "Text", viewModel.BusinessObjectiveId.ToString());
+                    }
+
+                    if (viewModel.DepartmentId.HasValue)
+                    {
+                        viewModel.Departments = new SelectList(viewModel.Departments.Items,
+                            "Value", "Text", viewModel.DepartmentId.Value.ToString());
+                    }
+
+                    if (viewModel.SelectedKpiIds != null && viewModel.SelectedKpiIds.Any())
+                    {
+                        // Các selected items sẽ được handled bởi view
+                    }
+
+                    return View(viewModel);
+                }
+
                 // Update entity with view model data using AutoMapper
                 _mapper.Map(viewModel, csf);
                 csf.UpdatedBy = User.Identity?.Name;
@@ -509,29 +614,62 @@ namespace KPISolution.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                // Use ExistsAsync with a predicate to check if the entity exists
-                var exists = await _unitOfWork.CriticalSuccessFactors.ExistsAsync(e => e.Id == id);
-                if (!exists)
+                // Since there's no RowVersion in entity, handle concurrency differently
+                ModelState.AddModelError(string.Empty, "The record has been modified by another user. Please refresh and try again.");
+
+                // Khởi tạo lại các danh sách dropdown
+                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList(viewModel.BusinessObjectiveId);
+                viewModel.Departments = await GetDepartmentSelectList();
+                viewModel.AvailableKpis = await GetKpiSelectList();
+
+                // Đặt lại các giá trị đã chọn
+                if (viewModel.BusinessObjectiveId != Guid.Empty)
                 {
-                    return NotFound();
+                    viewModel.BusinessObjectives = new SelectList(viewModel.BusinessObjectives.Items,
+                        "Value", "Text", viewModel.BusinessObjectiveId.ToString());
                 }
-                else
+
+                if (viewModel.DepartmentId.HasValue)
                 {
-                    // Since there's no RowVersion in entity, handle concurrency differently
-                    ModelState.AddModelError(string.Empty, "The record has been modified by another user. Please refresh and try again.");
-                    viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList();
-                    viewModel.Departments = await GetDepartmentSelectList();
-                    viewModel.AvailableKpis = await GetKpiSelectList();
-                    return View(viewModel);
+                    viewModel.Departments = new SelectList(viewModel.Departments.Items,
+                        "Value", "Text", viewModel.DepartmentId.Value.ToString());
                 }
+
+                if (viewModel.SelectedKpiIds != null && viewModel.SelectedKpiIds.Any())
+                {
+                    // Các selected items sẽ được handled bởi view
+                }
+
+                return View(viewModel);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while updating CSF");
                 ModelState.AddModelError(string.Empty, "An error occurred while updating the CSF. Please try again.");
-                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList();
+
+                // Khởi tạo lại các danh sách dropdown
+                viewModel.BusinessObjectives = await GetBusinessObjectiveSelectList(viewModel.BusinessObjectiveId);
                 viewModel.Departments = await GetDepartmentSelectList();
                 viewModel.AvailableKpis = await GetKpiSelectList();
+
+                // Đặt lại các giá trị đã chọn
+                if (viewModel.BusinessObjectiveId != Guid.Empty)
+                {
+                    viewModel.BusinessObjectives = new SelectList(viewModel.BusinessObjectives.Items,
+                        "Value", "Text", viewModel.BusinessObjectiveId.ToString());
+                }
+
+                if (viewModel.DepartmentId.HasValue)
+                {
+                    viewModel.Departments = new SelectList(viewModel.Departments.Items,
+                        "Value", "Text", viewModel.DepartmentId.Value.ToString());
+                }
+
+                if (viewModel.SelectedKpiIds != null && viewModel.SelectedKpiIds.Any())
+                {
+                    // Các selected items sẽ được handled bởi view
+                }
+
                 return View(viewModel);
             }
         }
@@ -554,7 +692,10 @@ namespace KPISolution.Controllers
             if (!authorizationResult.Succeeded)
                 return Forbid();
 
-            return View(csf);
+            // Convert entity to view model
+            var viewModel = await CreateCsfDetailsViewModel(csf);
+
+            return View(viewModel);
         }
 
         // POST: CSF/Delete/5
@@ -786,15 +927,17 @@ namespace KPISolution.Controllers
             return new SelectList(items, "Value", "Text");
         }
 
-        private async Task<SelectList> GetBusinessObjectiveSelectList()
+        private async Task<SelectList> GetBusinessObjectiveSelectList(Guid? selectedId = null)
         {
             var objectives = await _unitOfWork.BusinessObjectives.GetAllAsync();
-            var items = objectives
+            var activeObjectives = objectives.Where(o => o.IsActive).ToList();
+            var items = activeObjectives
                 .OrderBy(o => o.Name)
                 .Select(o => new SelectListItem
                 {
                     Value = o.Id.ToString(),
-                    Text = o.Name
+                    Text = o.Name,
+                    Selected = selectedId.HasValue && o.Id == selectedId.Value
                 })
                 .ToList();
 
@@ -928,6 +1071,210 @@ namespace KPISolution.Controllers
                 < 75 => "bg-info",
                 _ => "bg-success"
             };
+        }
+
+        // Helper method to create CsfDetailsViewModel from CriticalSuccessFactor
+        private async Task<CsfDetailsViewModel> CreateCsfDetailsViewModel(CriticalSuccessFactor csf)
+        {
+            var viewModel = new CsfDetailsViewModel
+            {
+                Id = csf.Id,
+                Name = csf.Name,
+                Code = csf.Code,
+                Description = csf.Description,
+                Status = csf.Status,
+                StatusDisplay = csf.Status.ToString(),
+                StatusCssClass = GetStatusCssClass(csf.Status),
+                Category = csf.Category,
+                CategoryDisplay = csf.Category.ToString().SplitCamelCase(),
+                Priority = csf.Priority,
+                PriorityDisplay = csf.Priority.ToString().SplitCamelCase(),
+                RiskLevel = csf.RiskLevel,
+                RiskLevelDisplay = csf.RiskLevel.ToString().SplitCamelCase(),
+                RiskLevelCssClass = GetRiskLevelCssClass(csf.RiskLevel),
+                ProgressPercentage = csf.ProgressPercentage,
+                ProgressCssClass = GetProgressCssClass(csf.ProgressPercentage),
+                StartDate = csf.StartDate,
+                TargetDate = csf.TargetDate,
+                Notes = csf.Notes,
+                Owner = csf.Owner,
+                BusinessObjectiveId = csf.BusinessObjectiveId,
+                DepartmentId = csf.DepartmentId
+            };
+
+            // Get DepartmentName
+            if (csf.DepartmentId.HasValue)
+            {
+                var department = await _unitOfWork.Departments.GetByIdAsync(csf.DepartmentId.Value);
+                if (department != null)
+                {
+                    viewModel.DepartmentName = department.Name;
+                }
+            }
+
+            // Get BusinessObjectiveName
+            if (csf.BusinessObjectiveId.HasValue && csf.BusinessObjectiveId.Value != Guid.Empty)
+            {
+                var objective = await _unitOfWork.BusinessObjectives.GetByIdAsync(csf.BusinessObjectiveId.Value);
+                if (objective != null)
+                {
+                    viewModel.BusinessObjectiveName = objective.Name;
+                }
+            }
+
+            // Calculate time-related properties
+            var now = DateTime.Now;
+            viewModel.DaysRemaining = (int)(csf.TargetDate - now).TotalDays;
+
+            var totalDays = (csf.TargetDate - csf.StartDate).TotalDays;
+            var elapsedDays = (now - csf.StartDate).TotalDays;
+            viewModel.TimeElapsedPercentage = totalDays > 0 ? (int)Math.Min(100, Math.Max(0, (elapsedDays / totalDays) * 100)) : 0;
+            viewModel.IsOnTrack = viewModel.ProgressPercentage >= viewModel.TimeElapsedPercentage;
+
+            // Get linked KPIs
+            var csfKpis = await _unitOfWork.CSFKPIs.GetAllAsync();
+            var links = csfKpis.Where(ck => ck.CsfId == csf.Id).ToList();
+
+            // Add KPIs only from database, don't generate sample data
+            viewModel.LinkedKpis = new List<LinkedKpiViewModel>();
+
+            // Map actual linked KPIs if they exist
+            if (links.Any())
+            {
+                var kpis = await _unitOfWork.KPIs.GetAllAsync();
+                var kris = await _unitOfWork.KRIs.GetAllAsync();
+                var ris = await _unitOfWork.RIs.GetAllAsync();
+                var pis = await _unitOfWork.PIs.GetAllAsync();
+                var measurements = await _unitOfWork.KpiMeasurements.GetAllAsync();
+
+                foreach (var link in links)
+                {
+                    var kpiViewModel = new LinkedKpiViewModel
+                    {
+                        KpiId = link.KpiId,
+                        RelationshipStrength = link.RelationshipStrength,
+                        RelationshipStrengthDisplay = link.RelationshipStrength.ToString(),
+                        ImpactLevel = link.ImpactLevel,
+                        ImpactLevelDisplay = link.ImpactLevel.ToString(),
+                        KpiType = link.KpiType,
+                        KpiTypeDisplay = link.KpiType.ToString()
+                    };
+
+                    // Get the actual KPI details based on type
+                    switch (link.KpiType)
+                    {
+                        case KpiType.KeyResultIndicator:
+                            var kri = kris.FirstOrDefault(k => k.Id == link.KpiId);
+                            if (kri != null)
+                            {
+                                kpiViewModel.Name = kri.Name;
+                                kpiViewModel.Code = kri.Code;
+                                kpiViewModel.TargetValue = kri.TargetValue;
+                                kpiViewModel.Unit = kri.Unit;
+                                kpiViewModel.Status = kri.Status;
+
+                                // Get latest measurement if available
+                                var latestKriMeasurement = measurements
+                                    .Where(m => m.KpiId == kri.Id)
+                                    .OrderByDescending(m => m.MeasurementDate)
+                                    .FirstOrDefault();
+
+                                if (latestKriMeasurement != null)
+                                {
+                                    kpiViewModel.CurrentValue = latestKriMeasurement.Value;
+                                }
+                            }
+                            break;
+
+                        case KpiType.ResultIndicator:
+                            var ri = ris.FirstOrDefault(r => r.Id == link.KpiId);
+                            if (ri != null)
+                            {
+                                kpiViewModel.Name = ri.Name;
+                                kpiViewModel.Code = ri.Code;
+                                kpiViewModel.TargetValue = ri.TargetValue;
+                                kpiViewModel.Unit = ri.Unit;
+                                kpiViewModel.Status = ri.Status;
+
+                                // Get latest measurement if available
+                                var latestRiMeasurement = measurements
+                                    .Where(m => m.KpiId == ri.Id)
+                                    .OrderByDescending(m => m.MeasurementDate)
+                                    .FirstOrDefault();
+
+                                if (latestRiMeasurement != null)
+                                {
+                                    kpiViewModel.CurrentValue = latestRiMeasurement.Value;
+                                }
+                            }
+                            break;
+
+                        case KpiType.PerformanceIndicator:
+                            var pi = pis.FirstOrDefault(p => p.Id == link.KpiId);
+                            if (pi != null)
+                            {
+                                kpiViewModel.Name = pi.Name;
+                                kpiViewModel.Code = pi.Code;
+                                kpiViewModel.TargetValue = pi.TargetValue;
+                                kpiViewModel.Unit = pi.Unit;
+                                kpiViewModel.Status = pi.Status;
+
+                                // Get latest measurement if available
+                                var latestPiMeasurement = measurements
+                                    .Where(m => m.KpiId == pi.Id)
+                                    .OrderByDescending(m => m.MeasurementDate)
+                                    .FirstOrDefault();
+
+                                if (latestPiMeasurement != null)
+                                {
+                                    kpiViewModel.CurrentValue = latestPiMeasurement.Value;
+                                }
+                            }
+                            break;
+
+                        case KpiType.StandaloneKPI:
+                            var kpi = kpis.FirstOrDefault(k => k.Id == link.KpiId);
+                            if (kpi != null)
+                            {
+                                kpiViewModel.Name = kpi.Name;
+                                kpiViewModel.Code = kpi.Code;
+                                kpiViewModel.TargetValue = kpi.TargetValue;
+                                kpiViewModel.Unit = kpi.Unit;
+                                kpiViewModel.Status = kpi.Status;
+
+                                // Get latest measurement if available
+                                var latestKpiMeasurement = measurements
+                                    .Where(m => m.KpiId == kpi.Id)
+                                    .OrderByDescending(m => m.MeasurementDate)
+                                    .FirstOrDefault();
+
+                                if (latestKpiMeasurement != null)
+                                {
+                                    kpiViewModel.CurrentValue = latestKpiMeasurement.Value;
+                                }
+                            }
+                            break;
+
+                        default:
+                            // Handle undefined KPI type
+                            kpiViewModel.Name = "Unknown KPI";
+                            kpiViewModel.Code = "UNKNOWN";
+                            break;
+                    }
+
+                    viewModel.LinkedKpis.Add(kpiViewModel);
+                }
+            }
+
+            // Get progress updates
+            viewModel.ProgressUpdates = new List<CsfProgressHistoryViewModel>();
+
+            // Khởi tạo danh sách trống thay vì thêm dữ liệu mẫu
+            viewModel.UpdateHistory = new List<CsfUpdateHistoryViewModel>();
+
+            // TODO: Lấy lịch sử cập nhật thực từ cơ sở dữ liệu khi có sẵn
+
+            return viewModel;
         }
     }
 }

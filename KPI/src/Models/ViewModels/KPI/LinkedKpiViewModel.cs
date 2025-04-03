@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using KPISolution.Models.Enums;
+using System.Collections.Generic;
 
 namespace KPISolution.Models.ViewModels.KPI
 {
@@ -13,6 +14,11 @@ namespace KPISolution.Models.ViewModels.KPI
         /// KPI unique identifier
         /// </summary>
         public Guid Id { get; set; }
+
+        /// <summary>
+        /// KPI unique identifier (alias for Id for compatibility)
+        /// </summary>
+        public Guid KpiId { get => Id; set => Id = value; }
 
         /// <summary>
         /// KPI code 
@@ -45,9 +51,27 @@ namespace KPISolution.Models.ViewModels.KPI
         public decimal? CurrentValue { get; set; }
 
         /// <summary>
+        /// Measurement unit
+        /// </summary>
+        [Display(Name = "Unit")]
+        public string? Unit { get; set; }
+
+        /// <summary>
         /// Department name
         /// </summary>
         [Display(Name = "Department")]
         public string Department { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Type of KPI
+        /// </summary>
+        [Display(Name = "KPI Type")]
+        public KpiType KpiType { get; set; }
+
+        /// <summary>
+        /// Linked Performance Indicators (for RI)
+        /// </summary>
+        [Display(Name = "Linked Performance Indicators")]
+        public List<LinkedKpiViewModel> LinkedPIs { get; set; } = new List<LinkedKpiViewModel>();
     }
 }

@@ -112,7 +112,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <form asp-controller="Kri" asp-action="DeleteConfirmed" method="post">
+                    <form asp-controller="Kri" asp-action="Delete" method="post">
                         <input type="hidden" name="id" value="@Model.Id" />
                         <div class="d-flex justify-content-between">
                             <a asp-controller="Kri" asp-action="Details" asp-route-id="@Model.Id"

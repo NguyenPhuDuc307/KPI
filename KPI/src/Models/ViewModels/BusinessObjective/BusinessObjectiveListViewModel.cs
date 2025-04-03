@@ -13,6 +13,26 @@ namespace KPISolution.Models.ViewModels.BusinessObjective
         public PriorityLevel? FilterPriority { get; set; }
         public Guid? FilterDepartmentId { get; set; }
         public TimeframeType? FilterTimeframe { get; set; }
+
+        // Sorting properties
+        public string SortBy { get; set; } = "Name";
+        public string SortDirection { get; set; } = "asc";
+
+        // Helper method to get the opposite sort direction for toggling
+        public string GetOppositeSortDirection() => SortDirection.Equals("asc", StringComparison.OrdinalIgnoreCase) ? "desc" : "asc";
+
+        // Helper method to get the sort icon based on the current sort direction
+        public string GetSortIcon(string columnName)
+        {
+            if (SortBy.Equals(columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                return SortDirection.Equals("asc", StringComparison.OrdinalIgnoreCase)
+                    ? "bi-sort-up"
+                    : "bi-sort-down";
+            }
+
+            return "bi-sort";
+        }
     }
 
     public class BusinessObjectiveListItemViewModel

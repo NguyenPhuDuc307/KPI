@@ -77,6 +77,10 @@ namespace KPISolution.Controllers
                 var allKris = await _unitOfWork.KRIs.GetAllAsync();
                 var query = allKris.AsQueryable();
 
+                // Get all departments for lookup by ID or name
+                var departments = await _unitOfWork.Departments.GetAllAsync();
+                var departmentLookup = departments.ToDictionary(d => d.Id.ToString(), d => d.Name);
+
                 // Apply additional filters specific to KRIs
                 if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
                 {
@@ -87,7 +91,15 @@ namespace KPISolution.Controllers
 
                 if (!string.IsNullOrWhiteSpace(filter.Department))
                 {
-                    query = query.Where(k => k.Department == filter.Department);
+                    // Get the department name from the ID
+                    if (departmentLookup.TryGetValue(filter.Department, out string departmentName))
+                    {
+                        query = query.Where(k => k.Department == departmentName);
+                    }
+                    else
+                    {
+                        query = query.Where(k => k.Department == filter.Department);
+                    }
                 }
 
                 if (filter.Status.HasValue)
@@ -112,7 +124,9 @@ namespace KPISolution.Controllers
                 viewModel.TotalCount = query.Count();
 
                 // Apply pagination
-                var kris = query.Skip((page - 1) * viewModel.PageSize)
+                var kris = query
+                              .OrderBy(k => k.Id)
+                              .Skip((page - 1) * viewModel.PageSize)
                               .Take(viewModel.PageSize)
                               .ToList();
 
@@ -120,6 +134,14 @@ namespace KPISolution.Controllers
                 viewModel.KpiItems = kris.Select(k =>
                 {
                     var item = _mapper.Map<KpiListItemViewModel>(k);
+
+                    // Fix department display - if department field contains a GUID, try to map it to a department name
+                    if (Guid.TryParse(k.Department, out Guid departmentId) &&
+                        departmentLookup.TryGetValue(departmentId.ToString(), out string deptName))
+                    {
+                        item.Department = deptName;
+                    }
+
                     // Add KRI-specific properties
                     item.KpiType = KpiType.KeyResultIndicator;
                     item.StrategicObjective = k.StrategicObjective;
@@ -163,7 +185,7 @@ namespace KPISolution.Controllers
                 if (!authResult.Succeeded)
                     return Forbid();
 
-                // Map to view model for display
+                // Map the KRI to a view model
                 var viewModel = _mapper.Map<KpiDetailsViewModel>(kri);
                 viewModel.KpiType = KpiType.KeyResultIndicator;
 
@@ -178,32 +200,76 @@ namespace KPISolution.Controllers
                     viewModel.BusinessAreaDisplay = viewModel.BusinessArea.Value.ToString();
                 }
 
-                // Load linked CSFs
-                var linkedCsfs = new List<LinkedCsfViewModel>();
-                var csfKpis = await _unitOfWork.CSFKPIs.GetAllAsync();
-                var csfLinks = csfKpis.Where(ck => ck.KpiId == id).ToList();
+                // Get CSF links
+                var csfLinks = await _unitOfWork.CSFKPIs.GetAllAsync();
+                var links = csfLinks.Where(l => l.KpiId == id.Value).ToList();
 
-                foreach (var link in csfLinks)
+                // Get CSFs based on links
+                if (links.Any())
                 {
-                    var csf = await _unitOfWork.CriticalSuccessFactors.GetByIdAsync(link.CsfId);
-                    if (csf != null)
+                    var linkedCsfIds = links.Select(l => l.CsfId).ToList();
+                    var csfs = await _unitOfWork.CriticalSuccessFactors.GetAllAsync();
+                    var linkedCsfs = csfs
+                        .Where(c => linkedCsfIds.Contains(c.Id))
+                        .ToList();
+
+                    viewModel.LinkedCsfs = linkedCsfs
+                        .Select(c => _mapper.Map<LinkedCsfViewModel>(c))
+                        .ToList();
+                }
+
+                // Get all RIs that have this KRI as their parent
+                var allRIs = await _unitOfWork.RIs.GetAllAsync();
+                var relatedRIs = allRIs
+                    .Where(ri => ri.ParentKriId == id.Value)
+                    .ToList();
+
+                // Get all PIs for later use
+                var allPIs = await _unitOfWork.PIs.GetAllAsync();
+
+                if (relatedRIs.Any())
+                {
+                    viewModel.RelatedRIs = relatedRIs
+                        .Select(ri => _mapper.Map<LinkedKpiViewModel>(ri))
+                        .ToList();
+
+                    // For each related RI, find its associated PIs
+                    foreach (var riViewModel in viewModel.RelatedRIs)
                     {
-                        var csfViewModel = _mapper.Map<LinkedCsfViewModel>(csf);
-                        linkedCsfs.Add(csfViewModel);
+                        var relatedPIs = allPIs
+                            .Where(pi => pi.RIId == riViewModel.Id)
+                            .ToList();
+
+                        if (relatedPIs.Any())
+                        {
+                            riViewModel.LinkedPIs = relatedPIs
+                                .Select(pi => _mapper.Map<LinkedKpiViewModel>(pi))
+                                .ToList();
+                        }
                     }
                 }
 
-                viewModel.LinkedCsfs = linkedCsfs;
+                // Get direct PIs that are linked to this KRI (not through RIs)
+                var directPIs = allPIs
+                    .Where(pi => pi.KRIId == id.Value && pi.RIId == null)
+                    .ToList();
 
-                // Load measurements for displaying history and current value
-                var measurements = await _unitOfWork.KpiMeasurements.GetAllAsync();
-                var kriMeasurements = measurements
-                    .Where(m => m.KpiId == id)
+                if (directPIs.Any())
+                {
+                    viewModel.DirectPIs = directPIs
+                        .Select(pi => _mapper.Map<LinkedKpiViewModel>(pi))
+                        .ToList();
+                }
+
+                // Get historical values
+                var kriMeasurements = await _unitOfWork.KpiMeasurements.GetAllAsync();
+                kriMeasurements = kriMeasurements
+                    .Where(m => m.KpiId == id.Value)
                     .OrderByDescending(m => m.MeasurementDate)
                     .ToList();
 
-                // Map measurements to view models
                 var historicalValues = new List<KpiValueViewModel>();
+
                 foreach (var measurement in kriMeasurements)
                 {
                     var valueViewModel = new KpiValueViewModel
@@ -211,16 +277,16 @@ namespace KPISolution.Controllers
                         Id = measurement.Id,
                         KpiId = measurement.KpiId,
                         KpiType = KpiType.KeyResultIndicator.ToString(),
+                        MeasurementDate = measurement.MeasurementDate,
                         ActualValue = measurement.Value,
                         TargetValue = kri.TargetValue,
-                        MeasurementDate = measurement.MeasurementDate,
                         Notes = measurement.Notes,
                         CreatedAt = measurement.CreatedAt,
                         CreatedBy = measurement.CreatedBy
                     };
 
-                    // Calculate status and achievement percentage
-                    if (kri.TargetValue != 0)
+                    // Calculate achievement percentage if target is available
+                    if (kri.TargetValue.HasValue && kri.TargetValue.Value != 0)
                     {
                         valueViewModel.AchievementPercentage = (measurement.Value / kri.TargetValue) * 100;
 
@@ -287,7 +353,8 @@ namespace KPISolution.Controllers
                     Departments = await GetDepartmentSelectList(),
                     CriticalSuccessFactors = await GetCsfSelectList(),
                     BusinessAreas = GetEnumSelectList<BusinessArea>(),
-                    ImpactLevels = GetEnumSelectList<ImpactLevel>()
+                    ImpactLevels = GetEnumSelectList<ImpactLevel>(),
+                    RelatedRis = await GetRiSelectList()
                 };
 
                 return View("Create", viewModel);
@@ -307,41 +374,75 @@ namespace KPISolution.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Create(CreateKpiViewModel viewModel)
+        public async Task<IActionResult> Create(CreateKpiViewModel viewModel, [FromForm] List<Guid> SelectedRis)
         {
             // Force KPI type to be KRI
             viewModel.KpiType = KpiType.KeyResultIndicator;
 
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("Invalid model state during KRI creation");
                 viewModel.Departments = await GetDepartmentSelectList();
                 viewModel.CriticalSuccessFactors = await GetCsfSelectList();
                 viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
                 viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
-                return View("Create", viewModel);
+                viewModel.RelatedRis = await GetRiSelectList();
+                return View(viewModel);
             }
 
             try
             {
-                // Create KRI from view model
-                var kri = _mapper.Map<KRI>(viewModel);
-
-                // Set additional KRI-specific properties if not mapped by AutoMapper
-                if (viewModel.ImpactLevel.HasValue)
+                // Check if KRI with the same code exists
+                var existingKri = await _unitOfWork.KRIs.FirstOrDefaultAsync(k => k.Code == viewModel.Code);
+                if (existingKri != null)
                 {
-                    kri.ImpactLevel = viewModel.ImpactLevel.Value;
+                    _logger.LogWarning("Attempted to create KRI with duplicate code: {Code}", viewModel.Code);
+                    ModelState.AddModelError("Code", "A KRI with this code already exists");
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
+                    viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
+                    viewModel.RelatedRis = await GetRiSelectList();
+                    return View(viewModel);
                 }
 
-                if (viewModel.BusinessArea.HasValue)
+                // Get department name from ID if viewModel.Department is a GUID
+                string departmentName = viewModel.Department;
+                if (Guid.TryParse(viewModel.Department, out Guid departmentId))
                 {
-                    kri.BusinessArea = viewModel.BusinessArea.Value;
+                    var department = await _unitOfWork.Departments.GetByIdAsync(departmentId);
+                    if (department != null)
+                    {
+                        departmentName = department.Name;
+                    }
                 }
 
-                // Set audit fields
-                kri.CreatedAt = DateTime.UtcNow;
-                kri.CreatedBy = User.GetUserId();
-
-                await _unitOfWork.KRIs.AddAsync(kri);
+                // Create new KRI
+                var kri = new KRI
+                {
+                    Name = viewModel.Name,
+                    Description = viewModel.Description,
+                    Code = viewModel.Code,
+                    Unit = viewModel.Unit,
+                    TargetValue = viewModel.TargetValue,
+                    MinimumValue = viewModel.MinimumValue,
+                    MaximumValue = viewModel.MaximumValue,
+                    Weight = viewModel.Weight,
+                    Frequency = viewModel.MeasurementFrequency,
+                    Department = departmentName, // Use resolved department name
+                    ResponsiblePerson = viewModel.Owner,
+                    MeasurementDirection = viewModel.MeasurementDirection,
+                    EffectiveDate = viewModel.EffectiveDate,
+                    Status = KpiStatus.Active,
+                    StrategicObjective = viewModel.StrategicObjective,
+                    ImpactLevel = viewModel.ImpactLevel ?? ImpactLevel.Medium,
+                    BusinessArea = viewModel.BusinessArea ?? BusinessArea.Financial,
+                    ExecutiveOwner = viewModel.ExecutiveOwner,
+                    ConfidenceLevel = viewModel.ConfidenceLevel,
+                    Formula = viewModel.Formula,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = User.GetUserId()
+                };
 
                 // Link to CSFs if any are selected
                 if (viewModel.SelectedCsfIds != null && viewModel.SelectedCsfIds.Any())
@@ -352,9 +453,26 @@ namespace KPISolution.Controllers
                         {
                             CsfId = csfId,
                             KpiId = kri.Id,
+                            KpiType = KpiType.KeyResultIndicator,
                             CreatedAt = DateTime.UtcNow,
                             CreatedBy = User.GetUserId()
                         });
+                    }
+                }
+
+                await _unitOfWork.KRIs.AddAsync(kri);
+
+                // Link selected RIs to this KRI
+                if (SelectedRis != null && SelectedRis.Any())
+                {
+                    var ris = await _unitOfWork.RIs.GetAllAsync();
+                    var selectedRis = ris.Where(ri => SelectedRis.Contains(ri.Id)).ToList();
+
+                    foreach (var ri in selectedRis)
+                    {
+                        ri.ParentKriId = kri.Id;
+                        ri.UpdatedAt = DateTime.UtcNow;
+                        ri.UpdatedBy = User.GetUserId();
                     }
                 }
 
@@ -370,6 +488,7 @@ namespace KPISolution.Controllers
                 viewModel.CriticalSuccessFactors = await GetCsfSelectList();
                 viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
                 viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
+                viewModel.RelatedRis = await GetRiSelectList();
                 return View("Create", viewModel);
             }
         }
@@ -431,34 +550,34 @@ namespace KPISolution.Controllers
         }
 
         /// <summary>
-        /// Processes the form submission for editing an existing KRI
+        /// Processes the form submission for editing a KRI
         /// </summary>
         /// <param name="id">The ID of the KRI to edit</param>
-        /// <param name="viewModel">The view model containing updated KRI data</param>
-        /// <returns>Redirect to Index on success, view with errors otherwise</returns>
+        /// <param name="viewModel">The view model containing KRI data</param>
+        /// <returns>View with edited KRI on success, view with errors otherwise</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
         public async Task<IActionResult> Edit(Guid id, EditKpiViewModel viewModel)
         {
+            // Validate ID
             if (id != viewModel.Id)
                 return NotFound();
 
-            // Force KPI type to be KRI
-            viewModel.KpiType = KpiType.KeyResultIndicator;
-
+            // Check model state
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("Invalid model state during KRI edit for ID: {KriId}", id);
                 viewModel.Departments = await GetDepartmentSelectList();
                 viewModel.CriticalSuccessFactors = await GetCsfSelectList();
                 viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
                 viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
-                return View("Edit", viewModel);
+                return View(viewModel);
             }
 
             try
             {
-                // Get the existing KRI
+                // Get KRI from database
                 var kri = await _unitOfWork.KRIs.GetByIdAsync(id);
 
                 if (kri == null)
@@ -471,53 +590,143 @@ namespace KPISolution.Controllers
                 if (!authResult.Succeeded)
                     return Forbid();
 
-                // Update KRI properties
-                _mapper.Map(viewModel, kri);
-
-                // Set KRI-specific properties if not mapped by AutoMapper
-                if (viewModel.ImpactLevel.HasValue)
+                try
                 {
-                    kri.ImpactLevel = viewModel.ImpactLevel.Value;
-                }
+                    // Map common properties that don't need special handling
+                    kri.Name = viewModel.Name;
+                    kri.Description = viewModel.Description;
+                    kri.Code = viewModel.Code;
 
-                if (viewModel.BusinessArea.HasValue)
-                {
-                    kri.BusinessArea = viewModel.BusinessArea.Value;
-                }
-
-                // Set audit fields
-                kri.ModifiedAt = DateTime.UtcNow;
-                kri.ModifiedBy = User.GetUserId();
-
-                await _unitOfWork.KRIs.UpdateAsync(kri);
-
-                // Update CSF links
-                // First remove existing links
-                var existingLinks = (await _unitOfWork.CSFKPIs.GetAllAsync())
-                    .Where(ck => ck.KpiId == id)
-                    .ToList();
-
-                foreach (var link in existingLinks)
-                {
-                    await _unitOfWork.CSFKPIs.DeleteAsync(link);
-                }
-
-                // Then add new links
-                if (viewModel.SelectedCsfIds != null && viewModel.SelectedCsfIds.Any())
-                {
-                    foreach (var csfId in viewModel.SelectedCsfIds)
+                    // Get department name from ID if viewModel.Department is a GUID
+                    if (Guid.TryParse(viewModel.Department, out Guid departmentId))
                     {
-                        await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
+                        var department = await _unitOfWork.Departments.GetByIdAsync(departmentId);
+                        if (department != null)
                         {
-                            CsfId = csfId,
-                            KpiId = kri.Id,
-                            CreatedAt = DateTime.UtcNow,
-                            CreatedBy = User.GetUserId()
-                        });
+                            kri.Department = department.Name;
+                        }
+                        else
+                        {
+                            kri.Department = viewModel.Department;
+                        }
+                    }
+                    else
+                    {
+                        kri.Department = viewModel.Department;
+                    }
+
+                    kri.Unit = viewModel.Unit ?? viewModel.MeasurementUnit;
+                    kri.TargetValue = viewModel.TargetValue;
+                    kri.Frequency = viewModel.MeasurementFrequency;
+                    kri.ResponsiblePerson = viewModel.Owner;
+                    kri.MeasurementDirection = viewModel.MeasurementDirection;
+                    kri.EffectiveDate = viewModel.EffectiveDate;
+                    kri.Status = viewModel.Status;
+                }
+                catch (Exception mapEx)
+                {
+                    _logger.LogError(mapEx, "Error occurred during manual mapping of KRI properties with ID: {KriId}", id);
+                    ModelState.AddModelError("", "Error during property mapping: " + mapEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
+                    viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    // Cập nhật các thuộc tính đặc thù của KRI
+                    kri.StrategicObjective = viewModel.StrategicObjective;
+                    kri.ImpactLevel = viewModel.ImpactLevel ?? Models.Enums.ImpactLevel.Medium;
+                    kri.BusinessArea = viewModel.BusinessArea ?? Models.Enums.BusinessArea.Financial;
+                    kri.ExecutiveOwner = viewModel.ExecutiveOwner;
+                    kri.ConfidenceLevel = viewModel.ConfidenceLevel;
+
+                    // Set audit fields
+                    kri.ModifiedAt = DateTime.UtcNow;
+                    kri.ModifiedBy = User.GetUserId();
+                }
+                catch (Exception specialPropsEx)
+                {
+                    _logger.LogError(specialPropsEx, "Error occurred during mapping special properties of KRI with ID: {KriId}", id);
+                    ModelState.AddModelError("", "Error during special properties mapping: " + specialPropsEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
+                    viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    await _unitOfWork.KRIs.UpdateAsync(kri);
+                }
+                catch (Exception updateEx)
+                {
+                    _logger.LogError(updateEx, "Error occurred during UpdateAsync for KRI with ID: {KriId}", id);
+                    ModelState.AddModelError("", "Error during UpdateAsync: " + updateEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
+                    viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
+                    return View("Edit", viewModel);
+                }
+
+                try
+                {
+                    // Update CSF links
+                    // First remove existing links
+                    var existingLinks = (await _unitOfWork.CSFKPIs.GetAllAsync())
+                        .Where(ck => ck.KpiId == id)
+                        .ToList();
+
+                    foreach (var link in existingLinks)
+                    {
+                        await _unitOfWork.CSFKPIs.DeleteAsync(link);
+                    }
+
+                    // Then add new links
+                    if (viewModel.SelectedCsfIds != null && viewModel.SelectedCsfIds.Any())
+                    {
+                        foreach (var csfId in viewModel.SelectedCsfIds)
+                        {
+                            await _unitOfWork.CSFKPIs.AddAsync(new Models.Entities.CSF.CSFKPI
+                            {
+                                CsfId = csfId,
+                                KpiId = kri.Id,
+                                KpiType = KpiType.KeyResultIndicator,
+                                CreatedAt = DateTime.UtcNow,
+                                CreatedBy = User.GetUserId()
+                            });
+                        }
                     }
                 }
+                catch (Exception csfEx)
+                {
+                    _logger.LogError(csfEx, "Error occurred during CSF links update for KRI with ID: {KriId}", id);
+                    ModelState.AddModelError("", "Error during CSF links update: " + csfEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
+                    viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
+                    return View("Edit", viewModel);
+                }
 
-                await _unitOfWork.SaveChangesAsync();
+                try
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                }
+                catch (Exception saveEx)
+                {
+                    _logger.LogError(saveEx, "Error occurred during SaveChangesAsync for KRI with ID: {KriId}", id);
+                    ModelState.AddModelError("", "Error during SaveChangesAsync: " + saveEx.Message);
+                    viewModel.Departments = await GetDepartmentSelectList();
+                    viewModel.CriticalSuccessFactors = await GetCsfSelectList();
+                    viewModel.BusinessAreas = GetEnumSelectList<BusinessArea>();
+                    viewModel.ImpactLevels = GetEnumSelectList<ImpactLevel>();
+                    return View("Edit", viewModel);
+                }
 
                 return RedirectToAction(nameof(Index));
             }
@@ -658,8 +867,8 @@ namespace KPISolution.Controllers
         /// <summary>
         /// Displays the form for adding a measurement to a KRI
         /// </summary>
-        /// <param name="id">The ID of the KRI to add a measurement for</param>
-        /// <returns>Add measurement form view</returns>
+        /// <param name="id">The ID of the KRI to add measurement for</param>
+        /// <returns>View for adding measurement</returns>
         [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
         public async Task<IActionResult> AddMeasurement(Guid? id)
         {
@@ -668,7 +877,7 @@ namespace KPISolution.Controllers
 
             try
             {
-                // Get the KRI from the repository
+                // Get the KRI to ensure it exists
                 var kri = await _unitOfWork.KRIs.GetByIdAsync(id.Value);
 
                 if (kri == null)
@@ -872,6 +1081,26 @@ namespace KPISolution.Controllers
                 "impactlevel" => isDescending ? query.OrderByDescending(k => k.ImpactLevel) : query.OrderBy(k => k.ImpactLevel),
                 _ => query.OrderBy(k => k.Name) // Default sort
             };
+        }
+
+        /// <summary>
+        /// Gets a select list of RIs for dropdowns
+        /// </summary>
+        /// <returns>List of SelectListItem for RIs</returns>
+        private async Task<SelectList> GetRiSelectList()
+        {
+            var ris = await _unitOfWork.RIs.GetAllAsync();
+            var items = ris
+                .OrderBy(r => r.Name)
+                .Where(r => !r.ParentKriId.HasValue) // Only include RIs not already linked to a KRI
+                .Select(r => new SelectListItem
+                {
+                    Value = r.Id.ToString(),
+                    Text = $"{r.Code} - {r.Name}"
+                })
+                .ToList();
+
+            return new SelectList(items, "Value", "Text");
         }
     }
 }

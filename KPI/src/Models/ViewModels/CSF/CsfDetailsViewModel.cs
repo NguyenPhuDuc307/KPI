@@ -329,6 +329,12 @@ namespace KPISolution.Models.ViewModels.CSF
         /// CSS class for styling based on KPI performance
         /// </summary>
         public string PerformanceCssClass { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Flag indicating if this is sample data
+        /// </summary>
+        [Display(Name = "Is Sample Data")]
+        public bool IsSampleData { get; set; } = false;
     }
 
     /// <summary>

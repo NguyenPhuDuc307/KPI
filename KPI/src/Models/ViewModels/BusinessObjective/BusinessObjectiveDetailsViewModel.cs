@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using KPISolution.Models.Enums;
+using KPISolution.Models.ViewModels.CSF;
+using System.ComponentModel.DataAnnotations;
 
 namespace KPISolution.Models.ViewModels.BusinessObjective
 {
@@ -10,123 +12,79 @@ namespace KPISolution.Models.ViewModels.BusinessObjective
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public BusinessPerspective BusinessPerspective { get; set; }
+        public string BusinessPerspectiveDisplayText { get; set; } = string.Empty;
         public PriorityLevel Priority { get; set; }
+        public string PriorityBadgeClass { get; set; } = string.Empty;
         public ObjectiveStatus Status { get; set; }
+        public string StatusBadgeClass { get; set; } = string.Empty;
         public int ProgressPercentage { get; set; }
+        public string ProgressBarClass { get; set; } = string.Empty;
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}")]
         public DateTime StartDate { get; set; }
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}")]
         public DateTime TargetDate { get; set; }
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}")]
         public DateTime? CompletionDate { get; set; }
-        public string? Department { get; set; }
+        [DisplayFormat(DataFormatString = "{0:N0}")]
         public decimal? Budget { get; set; }
-        public string? Notes { get; set; }
+        public string Notes { get; set; } = string.Empty;
+        public string? Department { get; set; }
         public string? FiscalYear { get; set; }
-        public TimeframeType Timeframe { get; set; }
+        public TimeframeType TimeframeType { get; set; }
+        public string TimeframeDisplayText { get; set; } = string.Empty;
 
         // Related entities
-        public BusinessObjectiveListItemViewModel? ParentObjective { get; set; }
-        public List<BusinessObjectiveListItemViewModel> ChildObjectives { get; set; } = new List<BusinessObjectiveListItemViewModel>();
-        public List<CsfListItemViewModel> RelatedCSFs { get; set; } = new List<CsfListItemViewModel>();
-
-        // Helper properties
-        public string StatusBadgeClass
-        {
-            get
-            {
-                return Status switch
-                {
-                    ObjectiveStatus.NotStarted => "badge bg-secondary",
-                    ObjectiveStatus.InProgress => "badge bg-primary",
-                    ObjectiveStatus.OnHold => "badge bg-warning text-dark",
-                    ObjectiveStatus.Completed => "badge bg-success",
-                    ObjectiveStatus.Canceled => "badge bg-danger",
-                    ObjectiveStatus.Delayed => "badge bg-info text-dark",
-                    _ => "badge bg-secondary"
-                };
-            }
-        }
-
-        public string PriorityBadgeClass
-        {
-            get
-            {
-                return Priority switch
-                {
-                    PriorityLevel.Low => "badge bg-success",
-                    PriorityLevel.Medium => "badge bg-warning text-dark",
-                    PriorityLevel.High => "badge bg-danger",
-                    PriorityLevel.Critical => "badge bg-dark",
-                    _ => "badge bg-secondary"
-                };
-            }
-        }
-
-        public string ProgressBarClass
-        {
-            get
-            {
-                return ProgressPercentage switch
-                {
-                    100 => "progress-bar bg-success",
-                    >= 75 => "progress-bar bg-info",
-                    >= 50 => "progress-bar bg-primary",
-                    >= 25 => "progress-bar bg-warning",
-                    _ => "progress-bar bg-danger"
-                };
-            }
-        }
-
-        public string TimeframeDisplayText
-        {
-            get
-            {
-                return Timeframe switch
-                {
-                    TimeframeType.ShortTerm => "Ngắn hạn",
-                    TimeframeType.MediumTerm => "Trung hạn",
-                    TimeframeType.LongTerm => "Dài hạn",
-                    _ => "Không xác định"
-                };
-            }
-        }
-
-        public string BusinessPerspectiveDisplayText
-        {
-            get
-            {
-                return BusinessPerspective switch
-                {
-                    BusinessPerspective.Financial => "Tài chính",
-                    BusinessPerspective.Customer => "Khách hàng",
-                    BusinessPerspective.InternalProcess => "Quy trình nội bộ",
-                    BusinessPerspective.LearningGrowth => "Học hỏi và phát triển",
-                    _ => "Không xác định"
-                };
-            }
-        }
+        public BusinessObjectiveSimpleViewModel? ParentObjective { get; set; }
+        public List<BusinessObjectiveSimpleViewModel> ChildObjectives { get; set; } = new();
+        public List<CSFSimpleViewModel> RelatedCSFs { get; set; } = new();
+        public List<SFSimpleViewModel> RelatedSFs { get; set; } = new();
+        public List<KPISimpleViewModel> RelatedKPIs { get; set; } = new();
+        public List<KPISimpleViewModel> RelatedKRIs { get; set; } = new();
+        public List<KPISimpleViewModel> RelatedRIs { get; set; } = new();
+        public List<KPISimpleViewModel> RelatedPIs { get; set; } = new();
     }
 
-    public class CsfListItemViewModel
+    public class BusinessObjectiveSimpleViewModel
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string Code { get; set; } = string.Empty;
-        public CSFStatus Status { get; set; }
+        public ObjectiveStatus Status { get; set; }
+        public string StatusBadgeClass { get; set; } = string.Empty;
         public int ProgressPercentage { get; set; }
+        public DateTime TargetDate { get; set; }
+    }
 
-        public string StatusBadgeClass
-        {
-            get
-            {
-                return Status switch
-                {
-                    CSFStatus.NotStarted => "badge bg-secondary",
-                    CSFStatus.InProgress => "badge bg-primary",
-                    CSFStatus.Delayed => "badge bg-warning text-dark",
-                    CSFStatus.Completed => "badge bg-success",
-                    CSFStatus.AtRisk => "badge bg-danger",
-                    _ => "badge bg-secondary"
-                };
-            }
-        }
+    public class SFSimpleViewModel
+    {
+        public Guid Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public ObjectiveStatus Status { get; set; }
+        public string StatusBadgeClass { get; set; } = string.Empty;
+        public int ProgressPercentage { get; set; }
+    }
+
+    public class CSFSimpleViewModel
+    {
+        public Guid Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public CSFStatus Status { get; set; }
+        public string StatusBadgeClass { get; set; } = string.Empty;
+        public int ProgressPercentage { get; set; }
+    }
+
+    public class KPISimpleViewModel
+    {
+        public Guid Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public KpiType KpiType { get; set; }
+        public KpiStatus Status { get; set; }
+        public string StatusBadgeClass { get; set; } = string.Empty;
+        public decimal CurrentValue { get; set; }
+        public decimal TargetValue { get; set; }
+        public string Unit { get; set; } = string.Empty;
+        public int ProgressPercentage { get; set; }
     }
 }

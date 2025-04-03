@@ -176,6 +176,16 @@ namespace KPISolution.Models.ViewModels.KPI
         public bool HasPreviousPage => CurrentPage > 1;
 
         /// <summary>
+        /// Sort by field name
+        /// </summary>
+        public string SortBy { get; set; } = "Name";
+
+        /// <summary>
+        /// Sort direction (asc or desc)
+        /// </summary>
+        public string SortDirection { get; set; } = "asc";
+
+        /// <summary>
         /// Whether to show only KPIs that are at risk or below target
         /// </summary>
         public bool ShowAtRiskOnly { get; set; } = false;

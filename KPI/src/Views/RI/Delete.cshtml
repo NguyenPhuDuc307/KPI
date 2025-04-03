@@ -98,7 +98,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <form asp-controller="Ri" asp-action="DeleteConfirmed" method="post">
+                    <form asp-action="Delete" method="post">
                         <input type="hidden" name="id" value="@Model.Id" />
                         <div class="d-flex justify-content-between">
                             <a asp-controller="Ri" asp-action="Details" asp-route-id="@Model.Id"

@@ -89,6 +89,13 @@ namespace KPISolution.Models.ViewModels.KPI
         public MeasurementFrequency MeasurementFrequency { get; set; } = MeasurementFrequency.Monthly;
 
         /// <summary>
+        /// Frequency of the KPI measurements
+        /// </summary>
+        [Required]
+        [Display(Name = "Frequency")]
+        public MeasurementFrequency Frequency { get; set; }
+
+        /// <summary>
         /// Department responsible
         /// </summary>
         [StringLength(100)]
@@ -204,6 +211,13 @@ namespace KPISolution.Models.ViewModels.KPI
         public Guid? ParentKriId { get; set; }
 
         /// <summary>
+        /// Indicates whether this is a Key Result Indicator (KRI). If true, this Result Indicator
+        /// is considered a KRI for the organization.
+        /// </summary>
+        [Display(Name = "Is Key Result Indicator (KRI)")]
+        public bool IsRIKey { get; set; } = false;
+
+        /// <summary>
         /// Process area (for RIs)
         /// </summary>
         [Display(Name = "Process Area")]
@@ -262,12 +276,39 @@ namespace KPISolution.Models.ViewModels.KPI
         /// </summary>
         public SelectList? ParentKris { get; set; }
 
+        /// <summary>
+        /// List of RIs for dropdown
+        /// </summary>
+        public SelectList? ParentRis { get; set; }
+
+        /// <summary>
+        /// List of related PIs for the dropdown (used in RI creation)
+        /// </summary>
+        public SelectList? RelatedPis { get; set; }
+
+        /// <summary>
+        /// List of related RIs for the dropdown (used in KRI creation)
+        /// </summary>
+        public SelectList? RelatedRis { get; set; }
+
+        /// <summary>
+        /// List of indicator types for dropdown
+        /// </summary>
+        public SelectList? IndicatorTypes { get; set; }
+
         // PI specific properties
         /// <summary>
         /// Activity type for PIs
         /// </summary>
         [Display(Name = "Activity Type")]
         public ActivityType? ActivityType { get; set; }
+
+        /// <summary>
+        /// Indicates whether this is a Key Performance Indicator (KPI). If true, this Performance Indicator
+        /// is considered a KPI for the organization.
+        /// </summary>
+        [Display(Name = "Is Key Performance Indicator (KPI)")]
+        public bool IsPIKey { get; set; } = false;
 
         /// <summary>
         /// Performance level for PIs
@@ -301,21 +342,23 @@ namespace KPISolution.Models.ViewModels.KPI
         public SelectList? ActivityTypes { get; set; }
 
         /// <summary>
-        /// List of RIs for dropdown
-        /// </summary>
-        public SelectList? ParentRis { get; set; }
-
-        /// <summary>
-        /// List of indicator types for dropdown
-        /// </summary>
-        public SelectList? IndicatorTypes { get; set; }
-
-        /// <summary>
         /// Measurement unit (e.g., %, count, time)
         /// </summary>
         [Display(Name = "Measurement Unit")]
         [Required(ErrorMessage = "Measurement unit is required")]
         public string? MeasurementUnit { get; set; }
+
+        /// <summary>
+        /// Parent Result Indicator ID for Performance Indicators
+        /// </summary>
+        [Display(Name = "Parent Result Indicator")]
+        public Guid? RIId { get; set; }
+
+        /// <summary>
+        /// Parent Key Result Indicator ID for direct Performance Indicators
+        /// </summary>
+        [Display(Name = "Parent Key Result Indicator")]
+        public Guid? KRIId { get; set; }
 
         /// <summary>
         /// Constructor to set default values

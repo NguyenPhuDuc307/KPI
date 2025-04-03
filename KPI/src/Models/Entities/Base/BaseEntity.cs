@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace KPISolution.Models.Entities.Base
@@ -8,47 +9,39 @@ namespace KPISolution.Models.Entities.Base
     public abstract class BaseEntity
     {
         /// <summary>
-        /// Unique identifier for the entity
+        /// Primary key
         /// </summary>
         [Key]
-        [Required]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Date and time when the entity was created
         /// </summary>
-        [Required]
-        [Display(Name = "Created Date")]
-        [DataType(DataType.DateTime)]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
 
         /// <summary>
         /// User who created the entity
         /// </summary>
-        [Display(Name = "Created By")]
-        [StringLength(50)]
-        public string? CreatedBy { get; set; }
+        public string CreatedBy { get; set; } = string.Empty;
 
         /// <summary>
         /// Date and time when the entity was last updated
         /// </summary>
-        [Required]
-        [Display(Name = "Last Updated")]
-        [DataType(DataType.DateTime)]
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
 
         /// <summary>
         /// User who last updated the entity
         /// </summary>
-        [Display(Name = "Updated By")]
-        [StringLength(50)]
         public string? UpdatedBy { get; set; }
 
         /// <summary>
-        /// Flag indicating whether the entity is active
+        /// Whether the entity is deleted (soft delete)
         /// </summary>
-        [Required]
-        [Display(Name = "Active")]
+        public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Whether the entity is active
+        /// </summary>
         public bool IsActive { get; set; } = true;
     }
 }

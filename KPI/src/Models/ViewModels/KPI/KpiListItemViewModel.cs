@@ -16,6 +16,12 @@ namespace KPISolution.Models.ViewModels.KPI
         public string Department { get; set; } = string.Empty;
 
         /// <summary>
+        /// Person responsible for this KPI
+        /// </summary>
+        [Display(Name = "Responsible Person")]
+        public string? ResponsiblePerson { get; set; }
+
+        /// <summary>
         /// Parent KPI code (for RIs)
         /// </summary>
         [Display(Name = "Parent KPI")]

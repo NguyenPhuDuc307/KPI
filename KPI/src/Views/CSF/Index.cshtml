@@ -2,112 +2,97 @@
 @using KPISolution.Models.Enums
 
 @{
-    ViewData["Title"] = "Danh sách CSF";
+    ViewData["Title"] = "Yếu tố thành công quan trọng";
+    ViewData["Icon"] = "bi-check2-square";
+    ViewData["Subtitle"] = "Những yếu tố thiết yếu để đạt được thành công trong mục tiêu chiến lược";
+    ViewData["ShowFilterPanel"] = true;
+
+    if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+    {
+        ViewData["PrimaryButton"] = ("Thêm mới", "CSF", "Create", "", "bi-plus-lg");
+    }
+}
+
+@section FilterContent {
+    <form asp-action="Index" method="get" id="filterForm">
+        <div class="row g-3">
+            <div class="col-lg-4 col-md-6">
+                <div class="form-floating">
+                    <input asp-for="Filter.SearchTerm" class="form-control" placeholder="Tìm kiếm...">
+                    <label asp-for="Filter.SearchTerm">Tìm kiếm theo tên, mã hoặc mô tả</label>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="form-floating">
+                    <select asp-for="Filter.DepartmentId" asp-items="Model.Departments" class="form-select">
+                        <option value="">Tất cả phòng ban</option>
+                    </select>
+                    <label asp-for="Filter.DepartmentId">Phòng ban</label>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="form-floating">
+                    <select asp-for="Filter.Category" asp-items="Model.Categories" class="form-select">
+                        <option value="">Tất cả danh mục</option>
+                    </select>
+                    <label asp-for="Filter.Category">Danh mục</label>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="form-floating">
+                    <select asp-for="Filter.Priority" class="form-select">
+                        <option value="">Tất cả độ ưu tiên</option>
+                        <option value="@PriorityLevel.Critical">Quan trọng</option>
+                        <option value="@PriorityLevel.High">Cao</option>
+                        <option value="@PriorityLevel.Medium">Trung bình</option>
+                        <option value="@PriorityLevel.Low">Thấp</option>
+                    </select>
+                    <label asp-for="Filter.Priority">Độ ưu tiên</label>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="form-floating">
+                    <select asp-for="Filter.Status" asp-items="Model.Statuses" class="form-select">
+                        <option value="">Tất cả trạng thái</option>
+                    </select>
+                    <label asp-for="Filter.Status">Trạng thái</label>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="form-floating">
+                    <select asp-for="Filter.RiskLevel" asp-items="Model.RiskLevels" class="form-select">
+                        <option value="">Tất cả mức độ rủi ro</option>
+                    </select>
+                    <label asp-for="Filter.RiskLevel">Mức độ rủi ro</label>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-floating">
+                    <select asp-for="Filter.IsCompleted" class="form-select">
+                        <option value="">Tất cả trạng thái hoàn thành</option>
+                        <option value="true">Đã hoàn thành</option>
+                        <option value="false">Chưa hoàn thành</option>
+                    </select>
+                    <label asp-for="Filter.IsCompleted">Trạng thái hoàn thành</label>
+                </div>
+            </div>
+
+            <div class="col-md-6 d-flex align-items-center">
+                <div class="w-100 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-search me-1"></i> Tìm kiếm
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary flex-grow-1">
+                        <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
 }
 
 <div class="container-fluid px-4 pt-4 pb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0">Yếu tố thành công quan trọng (CSF)</h1>
-
-        @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
-        {
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>Thêm mới CSF
-            </a>
-        }
-    </div>
-
-    <!-- Filter Card -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-transparent">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Bộ lọc</h5>
-                <button class="btn btn-link p-0" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#filterCollapse">
-                    <i class="bi bi-funnel"></i>
-                </button>
-            </div>
-        </div>
-        <div class="collapse show" id="filterCollapse">
-            <div class="card-body">
-                <form asp-action="Index" method="get" id="filterForm">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="form-floating">
-                                <input asp-for="Filter.SearchTerm" class="form-control" placeholder="Tìm kiếm...">
-                                <label asp-for="Filter.SearchTerm">Tìm kiếm theo tên, mã hoặc mô tả</label>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-floating">
-                                <select asp-for="Filter.DepartmentId" asp-items="Model.Departments" class="form-select">
-                                    <option value="">Tất cả phòng ban</option>
-                                </select>
-                                <label asp-for="Filter.DepartmentId">Phòng ban</label>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-floating">
-                                <select asp-for="Filter.Category" asp-items="Model.Categories" class="form-select">
-                                    <option value="">Tất cả danh mục</option>
-                                </select>
-                                <label asp-for="Filter.Category">Danh mục</label>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-floating">
-                                <select asp-for="Filter.Priority" class="form-select">
-                                    <option value="">Tất cả độ ưu tiên</option>
-                                    <option value="@PriorityLevel.Critical">Quan trọng</option>
-                                    <option value="@PriorityLevel.High">Cao</option>
-                                    <option value="@PriorityLevel.Medium">Trung bình</option>
-                                    <option value="@PriorityLevel.Low">Thấp</option>
-                                </select>
-                                <label asp-for="Filter.Priority">Độ ưu tiên</label>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-floating">
-                                <select asp-for="Filter.Status" asp-items="Model.Statuses" class="form-select">
-                                    <option value="">Tất cả trạng thái</option>
-                                </select>
-                                <label asp-for="Filter.Status">Trạng thái</label>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-floating">
-                                <select asp-for="Filter.RiskLevel" asp-items="Model.RiskLevels" class="form-select">
-                                    <option value="">Tất cả mức độ rủi ro</option>
-                                </select>
-                                <label asp-for="Filter.RiskLevel">Mức độ rủi ro</label>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-floating">
-                                <select asp-for="Filter.IsCompleted" class="form-select">
-                                    <option value="">Tất cả</option>
-                                    <option value="true">Hoàn thành</option>
-                                    <option value="false">Chưa hoàn thành</option>
-                                </select>
-                                <label asp-for="Filter.IsCompleted">Tiến độ</label>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary me-2">
-                                    <i class="bi bi-search me-1"></i>Tìm kiếm
-                                </button>
-                                <a asp-action="Index" class="btn btn-outline-secondary">
-                                    <i class="bi bi-x-circle me-1"></i>Xóa bộ lọc
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Results Card -->
     <div class="card shadow-sm">
         <div class="card-header bg-transparent">
@@ -203,7 +188,7 @@
                                                 PriorityLevel.Low => "bg-secondary",
                                                 _ => "bg-secondary"
                                             };
-                                            
+
                                             var priorityDisplay = item.Priority switch
                                             {
                                                 PriorityLevel.Critical => "Quan trọng",
@@ -261,23 +246,20 @@
                                                             <i class="bi bi-arrow-up-circle me-2"></i>Cập nhật tiến độ
                                                         </a>
                                                     </li>
-                                                    @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
-                                                    {
-                                                        <li>
-                                                            <a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id">
-                                                                <i class="bi bi-pencil me-2"></i>Chỉnh sửa
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <hr class="dropdown-divider">
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item text-danger" asp-action="Delete"
-                                                                asp-route-id="@item.Id">
-                                                                <i class="bi bi-trash me-2"></i>Xóa
-                                                            </a>
-                                                        </li>
-                                                    }
+                                                    <li>
+                                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@item.Id">
+                                                            <i class="bi bi-pencil me-2"></i>Chỉnh sửa
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <hr class="dropdown-divider">
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item text-danger" asp-action="Delete"
+                                                            asp-route-id="@item.Id">
+                                                            <i class="bi bi-trash me-2"></i>Xóa
+                                                        </a>
+                                                    </li>
                                                 </ul>
                                             </div>
                                         </div>

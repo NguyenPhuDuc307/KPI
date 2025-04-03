@@ -482,5 +482,34 @@ namespace KPISolution.Models.ViewModels.KPI
         /// </summary>
         [Display(Name = "Weight")]
         public decimal? Weight { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether this PI is a key PI
+        /// </summary>
+        [Display(Name = "Is Key PI")]
+        public bool IsPIKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether this RI is a key RI
+        /// </summary>
+        [Display(Name = "Is Key RI")]
+        public bool IsRIKey { get; set; }
+
+        /// <summary>
+        /// Related Performance Indicators
+        /// </summary>
+        [Display(Name = "Related Performance Indicators")]
+        public List<LinkedKpiViewModel>? RelatedPIs { get; set; } = new List<LinkedKpiViewModel>();
+
+        /// <summary>
+        /// Related Result Indicators
+        /// </summary>
+        public List<LinkedKpiViewModel> RelatedRIs { get; set; } = new List<LinkedKpiViewModel>();
+
+        /// <summary>
+        /// Performance Indicators directly linked to KRI (without going through RI)
+        /// </summary>
+        [Display(Name = "Direct Performance Indicators")]
+        public List<LinkedKpiViewModel>? DirectPIs { get; set; } = new List<LinkedKpiViewModel>();
     }
 }

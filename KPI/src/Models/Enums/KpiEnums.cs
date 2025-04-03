@@ -23,7 +23,13 @@ namespace KPISolution.Models.Enums
         /// Performance Indicator - measures what to do to increase performance
         /// </summary>
         [Display(Name = "Performance Indicator")]
-        PerformanceIndicator = 3
+        PerformanceIndicator = 3,
+
+        /// <summary>
+        /// Standalone KPI - a full Key Performance Indicator
+        /// </summary>
+        [Display(Name = "Key Performance Indicator")]
+        StandaloneKPI = 4
     }
 
     /// <summary>
