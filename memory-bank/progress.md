@@ -62,6 +62,11 @@ Overall Completion: ~40%
 - [x] Status calculation based on target and actual values
 - [x] Trend visualization with charts
 - [x] Fixed link to add new KPI values from Details page
+- [x] **Refactored MeasurementController to use IUnitOfWork instead of ApplicationDbContext**
+- [x] **Updated Measurement-related ViewModels to follow naming convention (IndicatorMeasurementFilterViewModel, IndicatorValueViewModel)**
+- [x] **Created and implemented MeasurementListViewModel for displaying measurement values**
+- [x] **Enhanced filter functionality to work with UnitOfWork pattern**
+- [x] **Improved query building in MeasurementController for better performance**
 - [ ] Advanced analytics and forecasting (pending)
 - [ ] Bulk data import/export (pending)
 - [ ] Measurement approval workflow (pending)
@@ -80,6 +85,10 @@ Overall Completion: ~40%
 - [x] Progress tracking and visualization
 - [ ] Success Factor categorization and filtering (pending)
 - [ ] Success Factor reporting and analytics (pending)
+- [x] **Cập nhật tên các file Csf handler thành SuccessFactor handler**
+- [x] **Cập nhật Csf mapping profile thành SuccessFactor mapping profile**
+- [x] **Cập nhật authorization policies từ Csf thành SuccessFactor**
+- [x] **Cập nhật đường dẫn URL từ "Csf" thành "SuccessFactor"**
 
 ### UI and UX Improvements
 
@@ -109,56 +118,89 @@ Overall Completion: ~40%
 - [ ] Dark mode support (pending)
 - [ ] Print-friendly views (pending)
 
+### Enum Consolidation and Standardization
+
+- [x] **Consolidated and standardized enum files**
+  - [x] Renamed KpiEnums to IndicatorEnums for consistent naming
+  - [x] Merged CSFCategory.cs into SuccessFactorEnums.cs to eliminate duplication
+  - [x] Created MeasurementStatusEnum.cs for measurement status values
+  - [x] Created IndicatorPropertyEnums.cs for indicator properties
+  - [x] Created BasicIndicatorEnums.cs with basic indicator enums
+  - [x] Removed duplicate enum definitions across files
+  - [x] Updated RiskLevel enum to work with both SuccessFactor and IndicatorProperty
+  - [x] Moved deprecated enum files to backup folder
+  - [x] **Created RelationshipEnums.cs with RelationshipStrength and RelationshipType enums**
+  - [x] **Created MeasurementEnums.cs for measurement-related enums**
+  - [x] **Fixed MeasurementStatus enum to use Actual instead of Entered**
+- [ ] Update all code references to use the new enum structure (in progress)
+  - [x] **Updated namespace structure for enums (Indicator, Organization, Business, Relationship)**
+  - [x] **Updated ViewModels to use fully qualified enum references to avoid ambiguity**
+  - [x] **Fixed various ambiguous reference issues in ViewModels**
+  - [x] **Updated \_ViewImports.cshtml to include all necessary namespace references**
+- [ ] Finalize cleanup of unused enum files (pending)
+
+### Business Objective Management
+
+- [x] ~~**Created BusinessObjective entity model** inheriting from Objective~~ (Deprecated: Standardizing on base Objective class)
+- [ ] ~~Create BusinessObjective repository implementation~~ (Deprecated)
+- [ ] ~~Create BusinessObjective service implementation~~ (Deprecated)
+- [ ] ~~Create BusinessObjective controller with CRUD operations~~ (Adjusted: Will implement for base Objective)
+- [x] ~~**Updated BusinessObjective view models to use correct enum namespaces**~~ (Adjusted: Will use ObjectiveViewModel)
+- [ ] ~~Create comprehensive view set for BusinessObjective management~~ (Adjusted: Will create for base Objective)
+
 ## What's Left to Build
 
 ### Cập nhật cấu trúc phân cấp theo yêu cầu mới
 
-- [ ] **Mô hình dữ liệu mới** (Ưu tiên cao)
+- [ ] **Mô hình dữ liệu gộp** (Ưu tiên cao)
 
-  - [ ] Tạo Objective entity model
-  - [x] Tạo SuccessFactor (SF) entity model
-  - [ ] Cập nhật CriticalSuccessFactor (CSF) entity model
-  - [ ] Tạo ResultIndicator (RI) entity model
-  - [ ] Tạo PerformanceIndicator (PI) entity model
-  - [ ] Cập nhật KPI model để liên kết với PI
-  - [ ] Tạo KRI model để liên kết với RI
+  - [ ] Cập nhật Objective entity model (nếu cần bổ sung thuộc tính từ BusinessObjective cũ)
+  - [ ] Tạo SuccessFactor entity model để hỗ trợ cả SF và CSF
+    - [ ] Thêm cờ IsCritical để phân biệt SF và CSF
+    - [ ] Thêm quan hệ đệ quy cho SF cha-con (SF-CSF)
+    - [ ] Cập nhật quan hệ với Objective
+  - [ ] Tạo ResultIndicator entity model cho cả RI và KRI
+    - [ ] Thêm cờ IsKey để phân biệt RI và KRI
+    - [ ] Thiết lập quan hệ với SuccessFactor
+  - [ ] Tạo PerformanceIndicator entity model cho cả PI và KPI
+    - [ ] Thêm cờ IsKey để phân biệt PI và KPI
+    - [ ] Thiết lập quan hệ với SuccessFactor
+  - [ ] Thiết kế bảng Measurement thống nhất
   - [ ] Cập nhật mối quan hệ giữa các entity
   - [ ] Tạo migrations và cập nhật database
 
 - [ ] **Repository và Data Access** (Ưu tiên cao)
 
-  - [ ] Tạo ObjectiveRepository
-  - [x] Tạo SuccessFactorRepository
-  - [ ] Tạo ResultIndicatorRepository
-  - [ ] Tạo PerformanceIndicatorRepository
-  - [ ] Cập nhật CsfRepository
-  - [ ] Cập nhật KpiRepository
+  - [ ] Tạo/Cập nhật ObjectiveRepository (cho entity Objective cơ sở)
+  - [ ] Tạo SuccessFactorRepository để hỗ trợ cả SF và CSF
+  - [ ] Tạo ResultIndicatorRepository hỗ trợ cả RI và KRI
+  - [ ] Tạo PerformanceIndicatorRepository hỗ trợ cả PI và KPI
+  - [ ] Tạo MeasurementRepository hỗ trợ đa dạng indicators
+  - [ ] Thêm phương thức query chuyên biệt cho từng loại indicator
 
 - [ ] **Services Layer** (Ưu tiên cao)
 
-  - [ ] Tạo IObjectiveService và implementation
-  - [x] Tạo ISuccessFactorService và implementation
-  - [ ] Tạo IResultIndicatorService và implementation
-  - [ ] Tạo IPerformanceIndicatorService và implementation
-  - [ ] Cập nhật ICsfService và implementation
-  - [ ] Cập nhật IKpiService và implementation
+  - [ ] Tạo/Cập nhật IObjectiveService và implementation (cho entity Objective cơ sở)
+  - [ ] Cập nhật ISuccessFactorService hỗ trợ cả SF và CSF
+  - [ ] Tạo IResultIndicatorService hỗ trợ cả RI và KRI
+  - [ ] Tạo IPerformanceIndicatorService hỗ trợ cả PI và KPI
+  - [ ] Tạo IMeasurementService thống nhất
+  - [ ] Thêm logic phân loại cho từng loại indicator
 
 - [ ] **Controllers** (Ưu tiên cao)
 
-  - [ ] Tạo ObjectiveController
-  - [x] Tạo SuccessFactorController
-  - [ ] Tạo ResultIndicatorController
-  - [ ] Tạo PerformanceIndicatorController
-  - [ ] Cập nhật CsfController
-  - [ ] Cập nhật KpiController
+  - [ ] Tạo/Cập nhật ObjectiveController (cho entity Objective cơ sở)
+  - [ ] Cập nhật SuccessFactorController để xử lý cả SF và CSF
+  - [ ] Tạo ResultIndicatorController với actions riêng cho RI và KRI
+  - [ ] Tạo PerformanceIndicatorController với actions riêng cho PI và KPI
+  - [ ] Cập nhật MeasurementController để hỗ trợ tất cả loại indicator
 
 - [ ] **Views** (Ưu tiên cao)
-  - [ ] Tạo Objective views
-  - [x] Tạo SuccessFactor views
-  - [ ] Tạo ResultIndicator views
-  - [ ] Tạo PerformanceIndicator views
-  - [ ] Cập nhật CSF views
-  - [ ] Cập nhật KPI views
+  - [ ] Tạo/Cập nhật Objective views (cho entity Objective cơ sở)
+  - [ ] Cập nhật SuccessFactor views để hỗ trợ cả SF và CSF
+  - [ ] Tạo ResultIndicator views (RI và KRI)
+  - [ ] Tạo PerformanceIndicator views (PI và KPI)
+  - [ ] Cập nhật các view Measurement để hỗ trợ đa dạng indicators
 
 ### Measurement System Enhancement
 
@@ -170,7 +212,8 @@ Overall Completion: ~40%
   - [x] Fix "Add new value" button in KPI Details view
 
 - [ ] **Extended measurement capabilities** (Ưu tiên cao)
-  - [ ] Extend measurement system to all indicator types (KRI, RI, PI)
+  - [ ] Cập nhật hệ thống đo lường thống nhất cho tất cả indicators
+  - [ ] Xây dựng giao diện thống nhất cho việc thêm và xem giá trị
   - [ ] Implement value forecasting based on historical data
   - [ ] Add data import/export functionality
   - [ ] Create specialized reports based on measurements
@@ -267,6 +310,27 @@ Overall Completion: ~40%
    - Priority: High
    - Status: In progress
    - Plan: Mở rộng chức năng đo lường cho KRI, RI và PI
+
+6. **Tham chiếu mơ hồ trong Program.cs**:
+
+   - Priority: High
+   - Status: Identified
+   - Details: Tham chiếu mơ hồ giữa `KPISolution.Mappings.SuccessFactorMappingProfile` và `KPISolution.Models.Mappings.SuccessFactorMappingProfile`
+   - Plan: Xác định và sử dụng namespace chính xác
+
+7. **Thiếu tham chiếu đến một số interfaces và handlers mới**:
+
+   - Priority: High
+   - Status: Identified
+   - Details: Các dịch vụ và interface trong `KPISolution.Services.Interfaces` không được tìm thấy; thiếu tham chiếu đến `IndicatorResourceAuthorizationHandler`
+   - Plan: Tạo hoặc cập nhật các file cần thiết, đảm bảo đăng ký đầy đủ trong Program.cs
+
+8. **Xung đột enum trong Measurement**:
+
+   - Priority: Medium
+   - Status: Resolved
+   - Details: Xung đột giữa hai định nghĩa `IndicatorMeasurementType` đã được giải quyết bằng cách đánh dấu deprecated cho một version
+   - Plan: Tiếp tục loại bỏ các enum trùng lặp và chuẩn hóa namespace
 
 ### UX Issues
 

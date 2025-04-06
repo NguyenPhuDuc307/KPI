@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using KPISolution.Controllers;
-using KPISolution.Data.Repositories.Interfaces;
-using KPISolution.Models.Entities.KPI;
-using KPISolution.Models.Entities.CSF;
-using KPISolution.Models.Enums;
-using KPISolution.Models.ViewModels.KPI;
+.Controllers;
+.Data.Repositories.Interfaces;
+.Models.Entities.KPI;
+.Models.Entities.CSF;
+.Models.Enums;
+.Models.ViewModels.KPI;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using KPISolution.Authorization.Handlers;
+.Authorization.Handlers;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace KPISolution.Tests.Controllers

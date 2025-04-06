@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-
 namespace KPISolution.Controllers
 {
     /// <summary>
@@ -21,10 +19,10 @@ namespace KPISolution.Controllers
             string icon = "bi-circle",
             bool showButtons = true)
         {
-            ViewData["Title"] = title;
-            ViewData["Subtitle"] = subtitle;
-            ViewData["Icon"] = icon;
-            ViewData["ShowButtons"] = showButtons;
+            this.ViewData["Title"] = title;
+            this.ViewData["Subtitle"] = subtitle;
+            this.ViewData["Icon"] = icon;
+            this.ViewData["ShowButtons"] = showButtons;
         }
 
         /// <summary>
@@ -42,7 +40,7 @@ namespace KPISolution.Controllers
             string id = "",
             string icon = "bi-plus-lg")
         {
-            ViewData["PrimaryButton"] = (text, controller, action, id, icon);
+            this.ViewData["PrimaryButton"] = (text, controller, action, id, icon);
         }
 
         /// <summary>
@@ -60,7 +58,7 @@ namespace KPISolution.Controllers
             string id = "",
             string icon = "bi-arrow-left")
         {
-            ViewData["SecondaryButton"] = (text, controller, action, id, icon);
+            this.ViewData["SecondaryButton"] = (text, controller, action, id, icon);
         }
 
         /// <summary>
@@ -69,7 +67,7 @@ namespace KPISolution.Controllers
         /// <param name="enabled">Whether the filter panel is enabled</param>
         protected void SetFilterPanel(bool enabled = true)
         {
-            ViewData["ShowFilterPanel"] = enabled;
+            this.ViewData["ShowFilterPanel"] = enabled;
         }
 
         /// <summary>
@@ -78,7 +76,7 @@ namespace KPISolution.Controllers
         /// <param name="items">List of breadcrumb items (Text, Controller, Action, Id)</param>
         protected void SetBreadcrumb(List<(string Text, string Controller, string Action, string Id)> items)
         {
-            ViewData["BreadcrumbItems"] = items;
+            this.ViewData["BreadcrumbItems"] = items;
         }
 
         /// <summary>
@@ -87,7 +85,7 @@ namespace KPISolution.Controllers
         /// <param name="message">The success message</param>
         protected void AddSuccessAlert(string message)
         {
-            TempData["SuccessAlert"] = message;
+            this.TempData["SuccessAlert"] = message;
         }
 
         /// <summary>
@@ -96,7 +94,7 @@ namespace KPISolution.Controllers
         /// <param name="message">The error message</param>
         protected void AddErrorAlert(string message)
         {
-            TempData["ErrorAlert"] = message;
+            this.TempData["ErrorAlert"] = message;
         }
 
         /// <summary>
@@ -105,7 +103,7 @@ namespace KPISolution.Controllers
         /// <param name="message">The warning message</param>
         protected void AddWarningAlert(string message)
         {
-            TempData["WarningAlert"] = message;
+            this.TempData["WarningAlert"] = message;
         }
 
         /// <summary>
@@ -114,7 +112,7 @@ namespace KPISolution.Controllers
         /// <param name="message">The info message</param>
         protected void AddInfoAlert(string message)
         {
-            TempData["InfoAlert"] = message;
+            this.TempData["InfoAlert"] = message;
         }
     }
 }

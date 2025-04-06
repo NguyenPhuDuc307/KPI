@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using NUnit.Framework;
-using KPISolution.UITests;
+.UITests;
 
 namespace KPISolution.UITests;
 

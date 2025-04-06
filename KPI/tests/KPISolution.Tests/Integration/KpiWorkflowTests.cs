@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using KPISolution.Models.Entities.KPI;
-using KPISolution.Models.Enums;
+.Models.Entities.KPI;
+.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 

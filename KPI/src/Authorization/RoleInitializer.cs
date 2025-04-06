@@ -1,12 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using KPISolution.Models.Entities.Identity;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-
 namespace KPISolution.Authorization
 {
     /// <summary>
@@ -26,15 +17,15 @@ namespace KPISolution.Authorization
 
             try
             {
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<KpiRole>>();
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IndicatorRole>>();
 
                 // Danh sách các vai trò cần tạo
                 var roles = new List<string>
                 {
-                    KpiAuthorizationPolicies.RoleNames.Administrator,
-                    KpiAuthorizationPolicies.RoleNames.Manager,
-                    KpiAuthorizationPolicies.RoleNames.User,
-                    KpiAuthorizationPolicies.RoleNames.CMO
+                    IndicatorAuthorizationPolicies.RoleNames.Administrator,
+                    IndicatorAuthorizationPolicies.RoleNames.Manager,
+                    IndicatorAuthorizationPolicies.RoleNames.User,
+                    IndicatorAuthorizationPolicies.RoleNames.CMO
                 };
 
                 // Tạo các vai trò nếu chưa tồn tại
@@ -44,7 +35,7 @@ namespace KPISolution.Authorization
                     if (!roleExists)
                     {
                         // Tạo vai trò mới
-                        var role = new KpiRole { Name = roleName, IsSystemRole = true, IsActive = true };
+                        var role = new IndicatorRole { Name = roleName, IsSystemRole = true, IsActive = true };
                         var result = await roleManager.CreateAsync(role);
 
                         if (result.Succeeded)
@@ -110,7 +101,7 @@ namespace KPISolution.Authorization
                         logger.LogInformation("Đã tạo tài khoản admin {Email}", adminEmail);
 
                         // Gán vai trò admin
-                        var roleResult = await userManager.AddToRoleAsync(adminUser, KpiAuthorizationPolicies.RoleNames.Administrator);
+                        var roleResult = await userManager.AddToRoleAsync(adminUser, IndicatorAuthorizationPolicies.RoleNames.Administrator);
 
                         if (roleResult.Succeeded)
                         {
@@ -131,9 +122,9 @@ namespace KPISolution.Authorization
                 else
                 {
                     // Đảm bảo người dùng admin có vai trò admin
-                    if (!await userManager.IsInRoleAsync(adminUser, KpiAuthorizationPolicies.RoleNames.Administrator))
+                    if (!await userManager.IsInRoleAsync(adminUser, IndicatorAuthorizationPolicies.RoleNames.Administrator))
                     {
-                        var roleResult = await userManager.AddToRoleAsync(adminUser, KpiAuthorizationPolicies.RoleNames.Administrator);
+                        var roleResult = await userManager.AddToRoleAsync(adminUser, IndicatorAuthorizationPolicies.RoleNames.Administrator);
 
                         if (roleResult.Succeeded)
                         {

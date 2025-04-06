@@ -1,6 +1,3 @@
-using System;
-using System.ComponentModel.DataAnnotations;
-
 namespace KPISolution.Models.Entities.Base
 {
     /// <summary>
@@ -12,7 +9,7 @@ namespace KPISolution.Models.Entities.Base
         /// Primary key
         /// </summary>
         [Key]
-        public Guid Id { get; set; }
+        public Guid Id { get; init; }
 
         /// <summary>
         /// Date and time when the entity was created
@@ -22,7 +19,7 @@ namespace KPISolution.Models.Entities.Base
         /// <summary>
         /// User who created the entity
         /// </summary>
-        public string CreatedBy { get; set; } = string.Empty;
+        public string CreatedBy { get; init; } = string.Empty;
 
         /// <summary>
         /// Date and time when the entity was last updated

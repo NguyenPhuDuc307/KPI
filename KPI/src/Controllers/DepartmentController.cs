@@ -1,19 +1,4 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using KPISolution.Data.Repositories.Interfaces;
-using KPISolution.Models.ViewModels.Department;
-using KPISolution.Models.Entities.Organization;
-using KPISolution.Models.Enums;
-using KPISolution.Authorization;
-using Microsoft.AspNetCore.Identity;
-using KPISolution.Models.Entities.Identity;
-using KPISolution.Extensions;
 
 namespace KPISolution.Controllers
 {
@@ -38,9 +23,9 @@ namespace KPISolution.Controllers
             ILogger<DepartmentController> logger,
             UserManager<ApplicationUser> userManager)
         {
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            this._unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         }
 
         /// <summary>
@@ -52,16 +37,16 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching all departments");
+                this._logger.LogInformation("Fetching all departments");
 
-                var departments = await _unitOfWork.Departments.GetAllAsync();
+                var departments = await this._unitOfWork.Departments.GetAllAsync();
                 var viewModels = new List<DepartmentViewModel>();
 
                 // Tạo dữ liệu mẫu nếu không có phòng ban nào
                 if (!departments.Any())
                 {
-                    await CreateSampleDepartmentsAsync();
-                    departments = await _unitOfWork.Departments.GetAllAsync();
+                    await this.CreateSampleDepartmentsAsync();
+                    departments = await this._unitOfWork.Departments.GetAllAsync();
                 }
 
                 // Group by Code to remove duplicates (ensuring only one department per unique code)
@@ -88,7 +73,7 @@ namespace KPISolution.Controllers
                     // Get parent department name if exists
                     if (dept.ParentDepartmentId.HasValue)
                     {
-                        var parentDept = await _unitOfWork.Departments.GetByIdAsync(dept.ParentDepartmentId.Value);
+                        var parentDept = await this._unitOfWork.Departments.GetByIdAsync(dept.ParentDepartmentId.Value);
                         if (parentDept != null)
                         {
                             model.ParentDepartmentName = parentDept.Name;
@@ -98,7 +83,7 @@ namespace KPISolution.Controllers
                     // Get manager name if exists
                     if (!string.IsNullOrEmpty(dept.DepartmentHeadId))
                     {
-                        var manager = await _userManager.FindByIdAsync(dept.DepartmentHeadId);
+                        var manager = await this._userManager.FindByIdAsync(dept.DepartmentHeadId);
                         if (manager != null)
                         {
                             model.ManagerName = $"{manager.FirstName} {manager.LastName}";
@@ -107,15 +92,25 @@ namespace KPISolution.Controllers
                     }
 
                     // Count employees
-                    var employees = (await _userManager.GetUsersInRoleAsync("Employee"))
+                    var employees = (await this._userManager.GetUsersInRoleAsync("Employee"))
                         .Where(u => u.DepartmentId == dept.Id).ToList();
                     model.EmployeeCount = employees.Count;
 
-                    // Count KPIs
-                    var krisWithDept = await _unitOfWork.KRIs.GetAllAsync(k => k.Department == dept.Name);
-                    var pisWithDept = await _unitOfWork.PIs.GetAllAsync(k => k.Department == dept.Name);
-                    var risWithDept = await _unitOfWork.RIs.GetAllAsync(k => k.Department == dept.Name);
-                    model.KpiCount = krisWithDept.Count() + pisWithDept.Count() + risWithDept.Count();
+                    // Count KPIs - using the new indicator model structure
+                    // Key Result Indicators (KRIs) are Result Indicators with IsKey = true
+                    var kris = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => ri.IsKey && ri.DepartmentId == dept.Id);
+
+                    // Key Performance Indicators (KPIs) are Performance Indicators with IsKey = true
+                    var kpis = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => pi.IsKey && pi.DepartmentId == dept.Id);
+
+                    // Regular Result Indicators (RIs) are Result Indicators with IsKey = false
+                    var ris = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => !ri.IsKey && ri.DepartmentId == dept.Id);
+
+                    // Performance Indicators (PIs) are Performance Indicators with IsKey = false
+                    var pis = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => !pi.IsKey && pi.DepartmentId == dept.Id);
+
+                    model.IndicatorCount = kris.Count() + kpis.Count() + ris.Count() + pis.Count();
+                    model.TotalIndicators = kris.Count() + kpis.Count() + ris.Count() + pis.Count();
 
                     viewModels.Add(model);
                 }
@@ -124,7 +119,7 @@ namespace KPISolution.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching departments");
+                this._logger.LogError(ex, "Error fetching departments");
                 return View("Error");
             }
         }
@@ -139,21 +134,21 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Displaying create department form");
+                this._logger.LogInformation("Displaying create department form");
 
                 // Get departments for dropdown
-                var departments = await _unitOfWork.Departments.GetAllAsync();
-                ViewBag.ParentDepartments = new SelectList(departments, "Id", "Name");
+                var departments = await this._unitOfWork.Departments.GetAllAsync();
+                this.ViewBag.ParentDepartments = new SelectList(departments, "Id", "Name");
 
                 // Get users for manager dropdown
-                var users = await _userManager.GetUsersInRoleAsync("Manager");
-                ViewBag.Users = new SelectList(users, "Id", "FullName");
+                var users = await this._userManager.GetUsersInRoleAsync("Manager");
+                this.ViewBag.Users = new SelectList(users, "Id", "FullName");
 
                 return View();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error preparing create department form");
+                this._logger.LogError(ex, "Error preparing create department form");
                 return View("Error");
             }
         }
@@ -170,22 +165,22 @@ namespace KPISolution.Controllers
         {
             try
             {
-                if (ModelState.IsValid)
+                if (this.ModelState.IsValid)
                 {
-                    _logger.LogInformation("Creating new department: {Name}", model.Name);
+                    this._logger.LogInformation("Creating new department: {Name}", model.Name);
 
                     // Check if a department with the same code already exists
-                    var existingDept = await _unitOfWork.Departments.FirstOrDefaultAsync(d => d.Code == model.Code);
+                    var existingDept = await this._unitOfWork.Departments.FirstOrDefaultAsync(d => d.Code == model.Code);
                     if (existingDept != null)
                     {
-                        ModelState.AddModelError("Code", "A department with this code already exists");
+                        this.ModelState.AddModelError("Code", "A department with this code already exists");
 
                         // Repopulate dropdowns
-                        var departments = await _unitOfWork.Departments.GetAllAsync();
-                        ViewBag.ParentDepartments = new SelectList(departments, "Id", "Name");
+                        var departments = await this._unitOfWork.Departments.GetAllAsync();
+                        this.ViewBag.ParentDepartments = new SelectList(departments, "Id", "Name");
 
-                        var users = await _userManager.GetUsersInRoleAsync("Manager");
-                        ViewBag.Users = new SelectList(users, "Id", "FullName");
+                        var users = await this._userManager.GetUsersInRoleAsync("Manager");
+                        this.ViewBag.Users = new SelectList(users, "Id", "FullName");
 
                         return View(model);
                     }
@@ -200,41 +195,41 @@ namespace KPISolution.Controllers
                         DepartmentHeadId = model.ManagerId,
                         IsActive = true,
                         CreatedAt = DateTime.UtcNow,
-                        CreatedBy = User.Identity?.Name ?? "system",
+                        CreatedBy = this.User.Identity?.Name ?? "system",
                         UpdatedAt = DateTime.UtcNow,
-                        UpdatedBy = User.Identity?.Name ?? "system"
+                        UpdatedBy = this.User.Identity?.Name ?? "system"
                     };
 
                     // Calculate hierarchy level
                     if (model.ParentDepartmentId.HasValue)
                     {
-                        var parentDept = await _unitOfWork.Departments.GetByIdAsync(model.ParentDepartmentId.Value);
+                        var parentDept = await this._unitOfWork.Departments.GetByIdAsync(model.ParentDepartmentId.Value);
                         if (parentDept != null)
                         {
                             department.HierarchyLevel = parentDept.HierarchyLevel + 1;
                         }
                     }
 
-                    await _unitOfWork.Departments.AddAsync(department);
-                    await _unitOfWork.SaveChangesAsync();
+                    await this._unitOfWork.Departments.AddAsync(department);
+                    await this._unitOfWork.SaveChangesAsync();
 
-                    _logger.LogInformation("Department created successfully: {Id}", department.Id);
+                    this._logger.LogInformation("Department created successfully: {Id}", department.Id);
 
-                    return RedirectToAction(nameof(Index));
+                    return this.RedirectToAction(nameof(this.Index));
                 }
 
                 // If ModelState is invalid, repopulate dropdowns
-                var depts = await _unitOfWork.Departments.GetAllAsync();
-                ViewBag.ParentDepartments = new SelectList(depts, "Id", "Name");
+                var depts = await this._unitOfWork.Departments.GetAllAsync();
+                this.ViewBag.ParentDepartments = new SelectList(depts, "Id", "Name");
 
-                var allUsers = await _userManager.GetUsersInRoleAsync("Manager");
-                ViewBag.Users = new SelectList(allUsers, "Id", "FullName");
+                var allUsers = await this._userManager.GetUsersInRoleAsync("Manager");
+                this.ViewBag.Users = new SelectList(allUsers, "Id", "FullName");
 
                 return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating department");
+                this._logger.LogError(ex, "Error creating department");
                 return View("Error");
             }
         }
@@ -249,13 +244,13 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching details for department {Id}", id);
+                this._logger.LogInformation("Fetching details for department {Id}", id);
 
-                var department = await _unitOfWork.Departments.GetByIdAsync(id);
+                var department = await this._unitOfWork.Departments.GetByIdAsync(id);
                 if (department == null)
                 {
-                    _logger.LogWarning("Department not found: {Id}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Department not found: {Id}", id);
+                    return this.NotFound();
                 }
 
                 var viewModel = new DepartmentViewModel
@@ -274,7 +269,7 @@ namespace KPISolution.Controllers
                 // Get parent department name if exists
                 if (department.ParentDepartmentId.HasValue)
                 {
-                    var parentDept = await _unitOfWork.Departments.GetByIdAsync(department.ParentDepartmentId.Value);
+                    var parentDept = await this._unitOfWork.Departments.GetByIdAsync(department.ParentDepartmentId.Value);
                     if (parentDept != null)
                     {
                         viewModel.ParentDepartmentName = parentDept.Name;
@@ -284,7 +279,7 @@ namespace KPISolution.Controllers
                 // Get manager name if exists
                 if (!string.IsNullOrEmpty(department.DepartmentHeadId))
                 {
-                    var manager = await _userManager.FindByIdAsync(department.DepartmentHeadId);
+                    var manager = await this._userManager.FindByIdAsync(department.DepartmentHeadId);
                     if (manager != null)
                     {
                         viewModel.ManagerName = $"{manager.FirstName} {manager.LastName}";
@@ -293,21 +288,43 @@ namespace KPISolution.Controllers
                 }
 
                 // Count employees
-                var employees = (await _userManager.GetUsersInRoleAsync("Employee"))
+                var employees = (await this._userManager.GetUsersInRoleAsync("Employee"))
                     .Where(u => u.DepartmentId == department.Id).ToList();
                 viewModel.EmployeeCount = employees.Count;
 
-                // Count KPIs
-                var krisWithDept = await _unitOfWork.KRIs.GetAllAsync(k => k.Department == department.Name);
-                var pisWithDept = await _unitOfWork.PIs.GetAllAsync(k => k.Department == department.Name);
-                var risWithDept = await _unitOfWork.RIs.GetAllAsync(k => k.Department == department.Name);
-                viewModel.KpiCount = krisWithDept.Count() + pisWithDept.Count() + risWithDept.Count();
+                // Count KPIs - using the new indicator model structure
+                // Key Result Indicators (KRIs) are Result Indicators with IsKey = true
+                var kris = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => ri.IsKey && ri.DepartmentId == department.Id);
+
+                // Key Performance Indicators (KPIs) are Performance Indicators with IsKey = true
+                var kpis = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => pi.IsKey && pi.DepartmentId == department.Id);
+
+                // Regular Result Indicators (RIs) are Result Indicators with IsKey = false
+                var ris = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => !ri.IsKey && ri.DepartmentId == department.Id);
+
+                // Performance Indicators (PIs) are Performance Indicators with IsKey = false
+                var pis = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => !pi.IsKey && pi.DepartmentId == department.Id);
+
+                viewModel.IndicatorCount = kris.Count() + kpis.Count() + ris.Count() + pis.Count();
+                viewModel.TotalIndicators = kris.Count() + kpis.Count() + ris.Count() + pis.Count();
+
+                // Get indicators
+                // Key Result Indicators (KRIs) are Result Indicators with IsKey = true
+                var krisWithDept = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => ri.IsKey && ri.DepartmentId == department.Id);
+
+                // Key Performance Indicators (KPIs) are Performance Indicators with IsKey = true
+                var kpisWithDept = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => pi.IsKey && pi.DepartmentId == department.Id);
+
+                // Regular Result Indicators (RIs) are Result Indicators with IsKey = false
+                var risWithDept = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => !ri.IsKey && ri.DepartmentId == department.Id);
+
+                viewModel.IndicatorCount = krisWithDept.Count() + kpisWithDept.Count() + risWithDept.Count();
 
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching department details for {Id}", id);
+                this._logger.LogError(ex, "Error fetching department details for {Id}", id);
                 return View("Error");
             }
         }
@@ -323,13 +340,13 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching department {Id} for editing", id);
+                this._logger.LogInformation("Fetching department {Id} for editing", id);
 
-                var department = await _unitOfWork.Departments.GetByIdAsync(id);
+                var department = await this._unitOfWork.Departments.GetByIdAsync(id);
                 if (department == null)
                 {
-                    _logger.LogWarning("Department not found: {Id}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Department not found: {Id}", id);
+                    return this.NotFound();
                 }
 
                 var viewModel = new DepartmentViewModel
@@ -343,19 +360,19 @@ namespace KPISolution.Controllers
                 };
 
                 // Get departments for dropdown
-                var departments = await _unitOfWork.Departments.GetAllAsync();
+                var departments = await this._unitOfWork.Departments.GetAllAsync();
                 var departmentsExceptCurrent = departments.Where(d => d.Id != id).ToList();
-                ViewBag.ParentDepartments = new SelectList(departmentsExceptCurrent, "Id", "Name");
+                this.ViewBag.ParentDepartments = new SelectList(departmentsExceptCurrent, "Id", "Name");
 
                 // Get users for manager dropdown
-                var users = await _userManager.GetUsersInRoleAsync("Manager");
-                ViewBag.Users = new SelectList(users, "Id", "FullName");
+                var users = await this._userManager.GetUsersInRoleAsync("Manager");
+                this.ViewBag.Users = new SelectList(users, "Id", "FullName");
 
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error preparing edit form for department {Id}", id);
+                this._logger.LogError(ex, "Error preparing edit form for department {Id}", id);
                 return View("Error");
             }
         }
@@ -375,34 +392,34 @@ namespace KPISolution.Controllers
             {
                 if (id != model.Id)
                 {
-                    _logger.LogWarning("ID mismatch in Edit: {FormId} vs {RouteId}", model.Id, id);
-                    return NotFound();
+                    this._logger.LogWarning("ID mismatch in Edit: {FormId} vs {RouteId}", model.Id, id);
+                    return this.NotFound();
                 }
 
-                if (ModelState.IsValid)
+                if (this.ModelState.IsValid)
                 {
-                    _logger.LogInformation("Updating department: {Id}", id);
+                    this._logger.LogInformation("Updating department: {Id}", id);
 
-                    var department = await _unitOfWork.Departments.GetByIdAsync(id);
+                    var department = await this._unitOfWork.Departments.GetByIdAsync(id);
                     if (department == null)
                     {
-                        _logger.LogWarning("Department not found: {Id}", id);
-                        return NotFound();
+                        this._logger.LogWarning("Department not found: {Id}", id);
+                        return this.NotFound();
                     }
 
                     // Check if a department with the same code already exists (excluding current)
-                    var existingDept = await _unitOfWork.Departments.FirstOrDefaultAsync(d => d.Code == model.Code && d.Id != id);
+                    var existingDept = await this._unitOfWork.Departments.FirstOrDefaultAsync(d => d.Code == model.Code && d.Id != id);
                     if (existingDept != null)
                     {
-                        ModelState.AddModelError("Code", "A department with this code already exists");
+                        this.ModelState.AddModelError("Code", "A department with this code already exists");
 
                         // Repopulate dropdowns
-                        var departments = await _unitOfWork.Departments.GetAllAsync();
+                        var departments = await this._unitOfWork.Departments.GetAllAsync();
                         var departmentsExceptCurrent = departments.Where(d => d.Id != id).ToList();
-                        ViewBag.ParentDepartments = new SelectList(departmentsExceptCurrent, "Id", "Name");
+                        this.ViewBag.ParentDepartments = new SelectList(departmentsExceptCurrent, "Id", "Name");
 
-                        var users = await _userManager.GetUsersInRoleAsync("Manager");
-                        ViewBag.Users = new SelectList(users, "Id", "FullName");
+                        var users = await this._userManager.GetUsersInRoleAsync("Manager");
+                        this.ViewBag.Users = new SelectList(users, "Id", "FullName");
 
                         return View(model);
                     }
@@ -414,12 +431,12 @@ namespace KPISolution.Controllers
                     department.ParentDepartmentId = model.ParentDepartmentId;
                     department.DepartmentHeadId = model.ManagerId;
                     department.UpdatedAt = DateTime.UtcNow;
-                    department.UpdatedBy = User.Identity?.Name ?? "system";
+                    department.UpdatedBy = this.User.Identity?.Name ?? "system";
 
                     // Calculate hierarchy level
                     if (model.ParentDepartmentId.HasValue)
                     {
-                        var parentDept = await _unitOfWork.Departments.GetByIdAsync(model.ParentDepartmentId.Value);
+                        var parentDept = await this._unitOfWork.Departments.GetByIdAsync(model.ParentDepartmentId.Value);
                         if (parentDept != null)
                         {
                             department.HierarchyLevel = parentDept.HierarchyLevel + 1;
@@ -430,27 +447,27 @@ namespace KPISolution.Controllers
                         department.HierarchyLevel = 0;
                     }
 
-                    _unitOfWork.Departments.Update(department);
-                    await _unitOfWork.SaveChangesAsync();
+                    this._unitOfWork.Departments.Update(department);
+                    await this._unitOfWork.SaveChangesAsync();
 
-                    _logger.LogInformation("Department updated successfully: {Id}", department.Id);
+                    this._logger.LogInformation("Department updated successfully: {Id}", department.Id);
 
-                    return RedirectToAction(nameof(Index));
+                    return this.RedirectToAction(nameof(this.Index));
                 }
 
                 // If ModelState is invalid, repopulate dropdowns
-                var depts = await _unitOfWork.Departments.GetAllAsync();
+                var depts = await this._unitOfWork.Departments.GetAllAsync();
                 var deptsExceptCurrent = depts.Where(d => d.Id != id).ToList();
-                ViewBag.ParentDepartments = new SelectList(deptsExceptCurrent, "Id", "Name");
+                this.ViewBag.ParentDepartments = new SelectList(deptsExceptCurrent, "Id", "Name");
 
-                var allUsers = await _userManager.GetUsersInRoleAsync("Manager");
-                ViewBag.Users = new SelectList(allUsers, "Id", "FullName");
+                var allUsers = await this._userManager.GetUsersInRoleAsync("Manager");
+                this.ViewBag.Users = new SelectList(allUsers, "Id", "FullName");
 
                 return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating department {Id}", id);
+                this._logger.LogError(ex, "Error updating department {Id}", id);
                 return View("Error");
             }
         }
@@ -466,13 +483,13 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching department {Id} for deletion", id);
+                this._logger.LogInformation("Fetching department {Id} for deletion", id);
 
-                var department = await _unitOfWork.Departments.GetByIdAsync(id);
+                var department = await this._unitOfWork.Departments.GetByIdAsync(id);
                 if (department == null)
                 {
-                    _logger.LogWarning("Department not found: {Id}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Department not found: {Id}", id);
+                    return this.NotFound();
                 }
 
                 var viewModel = new DepartmentViewModel
@@ -487,38 +504,41 @@ namespace KPISolution.Controllers
                 };
 
                 // Check for child departments
-                var childDepts = await _unitOfWork.Departments.GetAllAsync(d => d.ParentDepartmentId == id);
+                var childDepts = await this._unitOfWork.Departments.GetAllAsync(d => d.ParentDepartmentId == id);
                 if (childDepts.Any())
                 {
-                    ViewBag.HasChildDepartments = true;
-                    ViewBag.ChildDepartmentsCount = childDepts.Count();
+                    this.ViewBag.HasChildDepartments = true;
+                    this.ViewBag.ChildDepartmentsCount = childDepts.Count();
                 }
 
                 // Check for employees
-                var employees = (await _userManager.GetUsersInRoleAsync("Employee"))
+                var employees = (await this._userManager.GetUsersInRoleAsync("Employee"))
                     .Where(u => u.DepartmentId == department.Id).ToList();
                 if (employees.Any())
                 {
-                    ViewBag.HasEmployees = true;
-                    ViewBag.EmployeesCount = employees.Count;
+                    this.ViewBag.HasEmployees = true;
+                    this.ViewBag.EmployeesCount = employees.Count;
                 }
 
                 // Check for KPIs
-                var krisWithDept = await _unitOfWork.KRIs.GetAllAsync(k => k.Department == department.Name);
-                var pisWithDept = await _unitOfWork.PIs.GetAllAsync(k => k.Department == department.Name);
-                var risWithDept = await _unitOfWork.RIs.GetAllAsync(k => k.Department == department.Name);
-                var kpiCount = krisWithDept.Count() + pisWithDept.Count() + risWithDept.Count();
-                if (kpiCount > 0)
+                var kris = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => ri.IsKey && ri.DepartmentId == department.Id);
+                var ris = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => !ri.IsKey && ri.DepartmentId == department.Id);
+                var kpis = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => pi.IsKey && pi.DepartmentId == department.Id);
+                var pis = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => !pi.IsKey && pi.DepartmentId == department.Id);
+
+                var indicatorCount = kris.Count() + kpis.Count() + ris.Count() + pis.Count();
+                if (indicatorCount > 0)
                 {
-                    ViewBag.HasKpis = true;
-                    ViewBag.KpisCount = kpiCount;
+                    // Pass warning message to view
+                    this.ViewBag.DeleteWarning = true;
+                    this.ViewBag.IndicatorsCount = indicatorCount;
                 }
 
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error preparing delete view for department {Id}", id);
+                this._logger.LogError(ex, "Error preparing delete view for department {Id}", id);
                 return View("Error");
             }
         }
@@ -535,56 +555,58 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Deleting department: {Id}", id);
+                this._logger.LogInformation("Deleting department: {Id}", id);
 
-                var department = await _unitOfWork.Departments.GetByIdAsync(id);
+                var department = await this._unitOfWork.Departments.GetByIdAsync(id);
                 if (department == null)
                 {
-                    _logger.LogWarning("Department not found: {Id}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Department not found: {Id}", id);
+                    return this.NotFound();
                 }
 
                 // Check for child departments
-                var childDepts = await _unitOfWork.Departments.GetAllAsync(d => d.ParentDepartmentId == id);
+                var childDepts = await this._unitOfWork.Departments.GetAllAsync(d => d.ParentDepartmentId == id);
                 if (childDepts.Any())
                 {
-                    _logger.LogWarning("Cannot delete department {Id} because it has child departments", id);
-                    TempData["ErrorMessage"] = "Cannot delete this department because it has child departments.";
-                    return RedirectToAction(nameof(Delete), new { id });
+                    this._logger.LogWarning("Cannot delete department {Id} because it has child departments", id);
+                    this.TempData["ErrorMessage"] = "Cannot delete this department because it has child departments.";
+                    return this.RedirectToAction(nameof(this.Delete), new { id });
                 }
 
                 // Check for employees
-                var employees = (await _userManager.GetUsersInRoleAsync("Employee"))
+                var employees = (await this._userManager.GetUsersInRoleAsync("Employee"))
                     .Where(u => u.DepartmentId == department.Id).ToList();
                 if (employees.Any())
                 {
-                    _logger.LogWarning("Cannot delete department {Id} because it has employees", id);
-                    TempData["ErrorMessage"] = "Cannot delete this department because it has employees.";
-                    return RedirectToAction(nameof(Delete), new { id });
+                    this._logger.LogWarning("Cannot delete department {Id} because it has employees", id);
+                    this.TempData["ErrorMessage"] = "Cannot delete this department because it has employees.";
+                    return this.RedirectToAction(nameof(this.Delete), new { id });
                 }
 
                 // Check for KPIs
-                var krisWithDept = await _unitOfWork.KRIs.GetAllAsync(k => k.Department == department.Name);
-                var pisWithDept = await _unitOfWork.PIs.GetAllAsync(k => k.Department == department.Name);
-                var risWithDept = await _unitOfWork.RIs.GetAllAsync(k => k.Department == department.Name);
-                var kpiCount = krisWithDept.Count() + pisWithDept.Count() + risWithDept.Count();
-                if (kpiCount > 0)
+                var kris = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => ri.IsKey && ri.DepartmentId == department.Id);
+                var ris = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => !ri.IsKey && ri.DepartmentId == department.Id);
+                var kpis = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => pi.IsKey && pi.DepartmentId == department.Id);
+                var pis = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => !pi.IsKey && pi.DepartmentId == department.Id);
+
+                var indicatorCount = kris.Count() + kpis.Count() + ris.Count() + pis.Count();
+                if (indicatorCount > 0)
                 {
-                    _logger.LogWarning("Cannot delete department {Id} because it has KPIs", id);
-                    TempData["ErrorMessage"] = "Cannot delete this department because it has KPIs.";
-                    return RedirectToAction(nameof(Delete), new { id });
+                    this._logger.LogWarning("Cannot delete department {Id} because it has KPIs", id);
+                    this.TempData["ErrorMessage"] = "Cannot delete this department because it has KPIs.";
+                    return this.RedirectToAction(nameof(this.Delete), new { id });
                 }
 
-                _unitOfWork.Departments.Delete(department);
-                await _unitOfWork.SaveChangesAsync();
+                this._unitOfWork.Departments.Delete(department);
+                await this._unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Department deleted successfully: {Id}", id);
+                this._logger.LogInformation("Department deleted successfully: {Id}", id);
 
-                return RedirectToAction(nameof(Index));
+                return this.RedirectToAction(nameof(this.Index));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting department {Id}", id);
+                this._logger.LogError(ex, "Error deleting department {Id}", id);
                 return View("Error");
             }
         }
@@ -598,9 +620,9 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Fetching organizational hierarchy");
+                this._logger.LogInformation("Fetching organizational hierarchy");
 
-                var allDepartments = await _unitOfWork.Departments.GetAllAsync();
+                var allDepartments = await this._unitOfWork.Departments.GetAllAsync();
 
                 // Find root departments (those without a parent)
                 var rootDepartments = allDepartments.Where(d => !d.ParentDepartmentId.HasValue).ToList();
@@ -617,13 +639,13 @@ namespace KPISolution.Controllers
                         HierarchyLevel = 0,
                         DepartmentPath = rootDept.Name,
                         Description = rootDept.Description ?? string.Empty,
-                        ChildDepartments = new List<DepartmentHierarchyViewModel>()
+                        ChildDepartments = []
                     };
 
                     // Get manager name if exists
                     if (!string.IsNullOrEmpty(rootDept.DepartmentHeadId))
                     {
-                        var manager = await _userManager.FindByIdAsync(rootDept.DepartmentHeadId);
+                        var manager = await this._userManager.FindByIdAsync(rootDept.DepartmentHeadId);
                         if (manager != null)
                         {
                             rootViewModel.DepartmentHead = $"{manager.FirstName} {manager.LastName}";
@@ -631,7 +653,7 @@ namespace KPISolution.Controllers
                     }
 
                     // Build child departments recursively
-                    await BuildDepartmentHierarchy(rootViewModel, allDepartments, rootDept.Id);
+                    await this.BuildDepartmentHierarchy(rootViewModel, allDepartments, rootDept.Id);
 
                     hierarchyViewModel.Add(rootViewModel);
                 }
@@ -640,7 +662,7 @@ namespace KPISolution.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching organizational hierarchy");
+                this._logger.LogError(ex, "Error fetching organizational hierarchy");
                 return View("Error");
             }
         }
@@ -674,13 +696,13 @@ namespace KPISolution.Controllers
                         HierarchyLevel = parentViewModel.HierarchyLevel + 1,
                         DepartmentPath = $"{parentViewModel.DepartmentPath} > {childDept.Name}",
                         Description = childDept.Description ?? string.Empty,
-                        ChildDepartments = new List<DepartmentHierarchyViewModel>()
+                        ChildDepartments = []
                     };
 
                     // Get manager name if exists
                     if (!string.IsNullOrEmpty(childDept.DepartmentHeadId))
                     {
-                        var manager = await _userManager.FindByIdAsync(childDept.DepartmentHeadId);
+                        var manager = await this._userManager.FindByIdAsync(childDept.DepartmentHeadId);
                         if (manager != null)
                         {
                             childViewModel.DepartmentHead = $"{manager.FirstName} {manager.LastName}";
@@ -688,7 +710,7 @@ namespace KPISolution.Controllers
                     }
 
                     // Recursively build child departments
-                    await BuildDepartmentHierarchy(childViewModel, allDepartments, childDept.Id);
+                    await this.BuildDepartmentHierarchy(childViewModel, allDepartments, childDept.Id);
 
                     parentViewModel.ChildDepartments.Add(childViewModel);
                 }
@@ -701,7 +723,7 @@ namespace KPISolution.Controllers
         /// <returns>Task to await</returns>
         private async Task CreateSampleDepartmentsAsync()
         {
-            _logger.LogInformation("Creating sample departments");
+            this._logger.LogInformation("Creating sample departments");
 
             var departments = new List<Department>
             {
@@ -770,14 +792,106 @@ namespace KPISolution.Controllers
             foreach (var dept in departments)
             {
                 // Check if department with same code already exists
-                var existingDept = await _unitOfWork.Departments.FirstOrDefaultAsync(d => d.Code == dept.Code);
+                var existingDept = await this._unitOfWork.Departments.FirstOrDefaultAsync(d => d.Code == dept.Code);
                 if (existingDept == null)
                 {
-                    await _unitOfWork.Departments.AddAsync(dept);
+                    await this._unitOfWork.Departments.AddAsync(dept);
                 }
             }
 
-            await _unitOfWork.SaveChangesAsync();
+            await this._unitOfWork.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Hiển thị cấu trúc phòng ban dạng cây
+        /// </summary>
+        /// <returns>View hiển thị cấu trúc phòng ban dạng cây</returns>
+        [HttpGet]
+        public async Task<IActionResult> Tree()
+        {
+            try
+            {
+                this._logger.LogInformation("Hiển thị cấu trúc phòng ban dạng cây");
+
+                // Lấy tất cả phòng ban
+                var allDepartments = await this._unitOfWork.Departments.GetAllAsync();
+
+                // Nếu không có phòng ban nào, tạo dữ liệu mẫu
+                if (!allDepartments.Any())
+                {
+                    await this.CreateSampleDepartmentsAsync();
+                    allDepartments = await this._unitOfWork.Departments.GetAllAsync();
+                }
+
+                // Lấy các phòng ban gốc (không có phòng ban cha)
+                var rootDepartments = allDepartments.Where(d => d.ParentDepartmentId == null).ToList();
+
+                // Tạo cấu trúc cây phòng ban
+                var treeViewModel = new List<DepartmentHierarchyViewModel>();
+
+                foreach (var rootDept in rootDepartments)
+                {
+                    var rootViewModel = new DepartmentHierarchyViewModel
+                    {
+                        DepartmentId = rootDept.Id,
+                        DepartmentName = rootDept.Name,
+                        HierarchyLevel = 0,
+                        DepartmentPath = rootDept.Name,
+                        Description = rootDept.Description ?? string.Empty,
+                        ChildDepartments = [],
+                        CreatedDate = rootDept.CreatedAt,
+                        LastModified = rootDept.UpdatedAt ?? DateTime.UtcNow,
+                        Status = rootDept.IsActive ? "Hoạt động" : "Không hoạt động"
+                    };
+
+                    // Lấy thông tin trưởng phòng nếu có
+                    if (!string.IsNullOrEmpty(rootDept.DepartmentHeadId))
+                    {
+                        var manager = await this._userManager.FindByIdAsync(rootDept.DepartmentHeadId);
+                        if (manager != null)
+                        {
+                            rootViewModel.DepartmentHead = $"{manager.FirstName} {manager.LastName}";
+                        }
+                    }
+
+                    // Đếm số lượng nhân viên
+                    var employees = (await this._userManager.GetUsersInRoleAsync("Employee"))
+                        .Where(u => u.DepartmentId == rootDept.Id).ToList();
+                    rootViewModel.TotalEmployees = employees.Count;
+
+                    // Xây dựng cây phòng ban con theo đệ quy
+                    await this.BuildDepartmentHierarchy(rootViewModel, allDepartments, rootDept.Id);
+
+                    // Cập nhật tổng số nhân viên bao gồm cả nhân viên ở phòng ban con
+                    rootViewModel.TotalEmployees += this.CountTotalEmployeesInChildren(rootViewModel.ChildDepartments);
+
+                    treeViewModel.Add(rootViewModel);
+                }
+
+                return View(treeViewModel);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Lỗi khi hiển thị cấu trúc phòng ban dạng cây");
+                return View("Error");
+            }
+        }
+
+        /// <summary>
+        /// Đếm tổng số nhân viên trong các phòng ban con
+        /// </summary>
+        private int CountTotalEmployeesInChildren(List<DepartmentHierarchyViewModel> children)
+        {
+            int total = 0;
+            foreach (var child in children)
+            {
+                total += child.TotalEmployees;
+                if (child.HasChildren)
+                {
+                    total += this.CountTotalEmployeesInChildren(child.ChildDepartments);
+                }
+            }
+            return total;
         }
     }
 }

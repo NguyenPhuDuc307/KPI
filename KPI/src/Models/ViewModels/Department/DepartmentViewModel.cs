@@ -1,6 +1,3 @@
-using System;
-using System.ComponentModel.DataAnnotations;
-
 namespace KPISolution.Models.ViewModels.Department
 {
     /// <summary>
@@ -11,7 +8,7 @@ namespace KPISolution.Models.ViewModels.Department
         /// <summary>
         /// Gets or sets the unique identifier for the department.
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; init; }
 
         /// <summary>
         /// Gets or sets the name of the department.
@@ -19,7 +16,7 @@ namespace KPISolution.Models.ViewModels.Department
         [Required]
         [Display(Name = "Department Name")]
         [StringLength(100)]
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the code of the department.
@@ -27,20 +24,20 @@ namespace KPISolution.Models.ViewModels.Department
         [Required]
         [Display(Name = "Department Code")]
         [StringLength(20)]
-        public string Code { get; set; } = string.Empty;
+        public string Code { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the description of the department.
         /// </summary>
         [Display(Name = "Description")]
         [StringLength(500)]
-        public string Description { get; set; } = string.Empty;
+        public string Description { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the parent department ID.
         /// </summary>
         [Display(Name = "Parent Department")]
-        public Guid? ParentDepartmentId { get; set; }
+        public Guid? ParentDepartmentId { get; init; }
 
         /// <summary>
         /// Gets or sets the parent department name.
@@ -69,36 +66,42 @@ namespace KPISolution.Models.ViewModels.Department
         /// <summary>
         /// Gets or sets the number of KPIs.
         /// </summary>
-        [Display(Name = "Number of KPIs")]
-        public int KpiCount { get; set; }
+        [Display(Name = "Number of Indicators")]
+        public int IndicatorCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of Indicators.
+        /// </summary>
+        [Display(Name = "Number of Indicators")]
+        public int TotalIndicators { get; set; }
 
         /// <summary>
         /// Gets or sets the overall performance score.
         /// </summary>
         [Display(Name = "Performance Score")]
-        public decimal? PerformanceScore { get; set; }
+        public decimal? PerformanceScore { get; init; }
 
         /// <summary>
         /// Gets or sets the status of the department.
         /// </summary>
         [Display(Name = "Status")]
-        public string Status { get; set; } = string.Empty;
+        public string Status { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the CSS class for status indication.
         /// </summary>
-        public string StatusCssClass { get; set; } = string.Empty;
+        public string StatusCssClass { get; init; } = string.Empty;
 
         /// <summary>
         /// Gets or sets when the department was created.
         /// </summary>
         [Display(Name = "Created Date")]
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; init; }
 
         /// <summary>
         /// Gets or sets when the department was last updated.
         /// </summary>
         [Display(Name = "Last Updated")]
-        public DateTime? LastUpdated { get; set; }
+        public DateTime? LastUpdated { get; init; }
     }
 }

@@ -1,4 +1,5 @@
-@model KPISolution.Models.ViewModels.Department.DepartmentViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model DepartmentViewModel
 
 @{
     ViewData["Title"] = "Tạo phòng ban mới";
@@ -111,14 +112,14 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    
+
         <script>
             $(document).ready(function() {
                 // Initialize select2
                 $('.form-select').select2({
                     theme: 'bootstrap-5'
                 });
-            
+
                 // Auto generate code from name
                 $('#Name').on('change', function() {
                     if ($('#Code').val() === '') {
@@ -127,7 +128,7 @@
                             .replace(/[^a-zA-Z0-9]/g, '') // Remove special characters
                             .toUpperCase()                // Convert to uppercase
                             .substring(0, 8);             // Take first 8 characters
-                    
+
                         $('#Code').val(deptCode);
                     }
                 });

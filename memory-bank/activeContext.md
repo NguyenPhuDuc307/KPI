@@ -2,30 +2,30 @@
 
 ## Current Focus
 
-Dựa trên yêu cầu mới về cấu trúc phân cấp đầy đủ, chúng ta cần phải điều chỉnh tập trung phát triển. Hiện tại, trọng tâm phát triển là:
+Dựa trên yêu cầu mới về cấu trúc phân cấp đầy đủ và thay đổi quan trọng về việc gộp các entity, chúng ta cần phải điều chỉnh tập trung phát triển. Hiện tại, trọng tâm phát triển là:
 
-1. **Cập nhật mô hình dữ liệu** để bao gồm cấu trúc phân cấp đầy đủ:
+1. **Cập nhật mô hình dữ liệu** để bao gồm cấu trúc phân cấp đầy đủ với 3 entity chính:
 
-   - Thêm các thực thể Objective, SF, RI, PI, KRI
+   - Gộp SF và CSF vào một entity SuccessFactor với cờ IsCritical
+   - Gộp RI và KRI vào một entity ResultIndicator với cờ IsKey
+   - Gộp PI và KPI vào một entity PerformanceIndicator với cờ IsKey
    - Định nghĩa lại các mối quan hệ giữa các thực thể
    - Cập nhật migration để áp dụng thay đổi vào cơ sở dữ liệu
 
 2. **Phát triển các Service Layers cho cấu trúc mới**:
 
    - Thiết kế và triển khai ObjectiveService
-   - Thiết kế và triển khai SuccessFactorService
-   - Cập nhật CsfService để kết nối với SF
-   - Triển khai ResultIndicatorService và PerformanceIndicatorService
-   - Cập nhật KpiService để là một phần của PerformanceIndicatorService
+   - Thiết kế và triển khai SuccessFactorService (hỗ trợ cả SF và CSF)
+   - Triển khai ResultIndicatorService (hỗ trợ cả RI và KRI)
+   - Triển khai PerformanceIndicatorService (hỗ trợ cả PI và KPI)
 
 3. **Phát triển giao diện người dùng**:
    - Thiết kế và xây dựng giao diện quản lý Objectives
-   - Xây dựng giao diện quản lý SF
-   - Cập nhật giao diện CSF để kết nối với SF
-   - Xây dựng giao diện quản lý RI và PI
-   - Cập nhật giao diện KPI để trở thành một phần của PI
+   - Xây dựng giao diện quản lý SF với tab riêng cho SF và CSF
+   - Xây dựng giao diện quản lý RI với tab riêng cho RI và KRI
+   - Xây dựng giao diện quản lý PI với tab riêng cho PI và KPI
    - **Chuẩn hóa tất cả các views theo tiếng Anh** và đảm bảo tính nhất quán trong UX
-   - **Hoàn thiện chức năng quản lý giá trị KPI** và đảm bảo hoạt động đúng trên tất cả các loại chỉ số
+   - **Hoàn thiện chức năng quản lý giá trị đo lường** và đảm bảo hoạt động đúng trên tất cả các loại chỉ số
 
 ## Recent Changes
 
@@ -37,6 +37,77 @@ Dựa trên yêu cầu mới về cấu trúc phân cấp đầy đủ, chúng t
 - Configured logging with Serilog
 - Added email service infrastructure
 - **Triển khai tính năng điều chỉnh tỷ lệ UI để giải quyết vấn đề giao diện quá lớn**
+
+### Quy tắc đặt tên mới và Chuẩn hóa
+
+- **Đã thực hiện chuẩn hóa quy tắc đặt tên trong toàn dự án**:
+
+  - Sử dụng tên đầy đủ thay vì viết tắt (SuccessFactor thay vì SF)
+  - Đổi KPI thành Performance Indicator (PI)
+  - Đổi KRI thành Result Indicator (RI)
+  - Đổi CSF thành Success Factor (SF)
+  - Cập nhật tất cả các enum, ViewModel, và tài liệu theo quy tắc mới
+  - **Thay đổi "Csf"/"CSF" thành "SuccessFactor" trong toàn bộ hệ thống, bao gồm tên class, handler, controller và authorization policy**
+  - **Đổi "Kpi"/"KPI" thành "Indicator" hoặc "PerformanceIndicator" tùy ngữ cảnh**
+
+- **Cập nhật ViewModels để phản ánh quy tắc đặt tên mới**:
+
+  - Tạo mới PerformanceIndicatorViewModel thay thế KpiViewModel
+  - Tạo mới ResultIndicatorViewModel cho RI (Result Indicator)
+  - Cập nhật SuccessFactorViewModel từ CSFViewModel
+  - Đổi tên CSF namespace thành SuccessFactor
+  - Cập nhật tất cả tài liệu và hiển thị
+
+- **Cập nhật các enum để phản ánh quy tắc đặt tên mới**:
+  - Đổi KpiType thành IndicatorType
+  - Đổi KpiStatus thành IndicatorStatus
+  - Đổi CSFStatus thành SuccessFactorStatus
+  - Đổi CSFCategory thành SuccessFactorCategory
+  - Cập nhật tất cả các giá trị enum và hiển thị
+
+### Cập nhật Handler và Authorization
+
+- **Cập nhật các Authorization Handler**:
+
+  - Đổi tên `CsfAuthorizationHandler` thành `SuccessFactorAuthorizationHandler`
+  - Đổi tên `CsfResourceAuthorizationHandler` thành `SuccessFactorResourceAuthorizationHandler`
+  - Cập nhật các tham chiếu trong `Program.cs`
+
+- **Cập nhật các Authorization Policy**:
+  - Thay đổi `CanViewCsfs` thành `CanViewSuccessFactors`
+  - Thay đổi `CanManageCsfs` thành `CanManageSuccessFactors`
+  - Thay đổi `CanDeleteCsfs` thành `CanDeleteSuccessFactors`
+
+### Cập nhật Mapping và Controller
+
+- **Cập nhật AutoMapper Profiles**:
+
+  - Đổi tên `CsfMappingProfile` thành `SuccessFactorMappingProfile`
+  - Cập nhật các tham chiếu trong `Program.cs`
+
+- **Cập nhật URL Routes**:
+  - Thay đổi đường dẫn URL từ `Csf/` thành `SuccessFactor/`
+  - Cập nhật controller references từ `"Csf"` thành `"SuccessFactor"`
+
+### Cấu trúc và tổ chức Enums
+
+- **Gộp và chuẩn hóa các file enum thành một cấu trúc thống nhất**:
+
+  - Chuyển đổi từ KpiEnums sang IndicatorEnums để thống nhất hệ thống tên
+  - Gộp CSFCategory.cs và SuccessFactorEnums.cs để tránh trùng lặp
+  - Tạo file MeasurementStatusEnum.cs cho trạng thái đo lường
+  - Tạo file IndicatorPropertyEnums.cs cho các thuộc tính của indicator
+  - Tạo file BasicIndicatorEnums.cs với các enum cơ bản cho indicator
+  - Loại bỏ các enum trùng lặp giữa các file
+  - Cập nhật RiskLevel enum để phù hợp với cả SuccessFactor và IndicatorProperty
+  - **Tạo file RelationshipEnums.cs để định nghĩa enum RelationshipStrength và RelationshipType**
+  - **Tạo file MeasurementEnums.cs để tập trung các enum liên quan đến đo lường**
+
+- **Cập nhật namespace cho Enums**:
+  - Tổ chức các enum thành các namespace riêng biệt: Indicator, Organization, Business, Relationship
+  - Sửa references trong viewmodels để sử dụng namespace đầy đủ và tránh ambiguous references
+  - Cập nhật các `using` statements trong tất cả các file để phản ánh cấu trúc namespace mới
+  - Sử dụng fully qualified names cho các enum trong các ViewModel để tránh xung đột
 
 ### Organization Management
 
@@ -57,6 +128,18 @@ Dựa trên yêu cầu mới về cấu trúc phân cấp đầy đủ, chúng t
 - **Đã đảm bảo các view của SF không sử dụng các thuộc tính không tồn tại như Category và RiskLevel**
 - **Đã sửa lỗi trong KPI/Details.cshtml để nút "Thêm giá trị mới" hoạt động chính xác**
 - **Đã làm rõ luồng làm việc với giá trị KPI thông qua MeasurementController**
+- **Tạo BusinessObjective entity để thừa kế từ Objective, bổ sung các thuộc tính chuyên biệt**
+- **Cập nhật các ViewModel (BusinessObjectiveDetailsViewModel, ObjectiveViewModel, ObjectiveEditViewModel) để sử dụng enum references chính xác**
+
+### Cải thiện Measurement System
+
+- **Đã refactor MeasurementController để sử dụng IUnitOfWork thay vì ApplicationDbContext**
+- **Đã cập nhật các ViewModels liên quan đến Measurement để tuân theo quy tắc đặt tên mới (IndicatorMeasurementFilterViewModel, IndicatorValueViewModel)**
+- **Đã tạo và triển khai MeasurementListViewModel để hiển thị các giá trị đo lường**
+- **Đã nâng cấp chức năng lọc để làm việc tốt hơn với UnitOfWork pattern**
+- **Đã cải thiện cách xây dựng truy vấn trong MeasurementController để tăng hiệu suất**
+- **Đã cập nhật MeasurementStatus enum để sử dụng Actual thay vì Entered**
+- **Đã cập nhật \_ViewImports.cshtml để bao gồm tất cả các tham chiếu namespace cần thiết**
 
 ### UI và UX Improvements
 
@@ -111,44 +194,55 @@ Dựa trên yêu cầu mới về cấu trúc phân cấp đầy đủ, chúng t
 
 ### Immediate Tasks
 
-1. **Tiếp tục cập nhật mô hình dữ liệu**
+1. **Cập nhật mô hình dữ liệu gộp**
 
-   - Hoàn thiện các entity classes còn lại (Objective, RI, PI, KRI)
-   - Điều chỉnh các entity classes hiện có (CSF, KPI)
-   - Cập nhật DbContext và các migration
+   - Triển khai mô hình SuccessFactor mới (gộp SF và CSF)
+   - Triển khai mô hình ResultIndicator mới (gộp RI và KRI)
+   - Triển khai mô hình PerformanceIndicator mới (gộp PI và KPI)
+   - Thiết kế bảng Measurement để hỗ trợ cả hai loại indicator
+   - Cập nhật DbContext và tạo migrations
 
-2. **Cập nhật Repositories**
+2. **Hoàn thành việc gộp và chuẩn hóa các Enum**
 
-   - Tạo repository cho Objective
-   - ~~Tạo repository cho SuccessFactor~~ (Đã hoàn thành)
-   - Tạo repository cho ResultIndicator và PerformanceIndicator
-   - Cập nhật KPI repository để làm việc với cấu trúc mới
+   - Kiểm tra và đảm bảo không còn trùng lặp enum trong hệ thống
+   - Xóa các file enum cũ không còn sử dụng
+   - Kiểm tra xem có cần cập nhật enum nào khác để phù hợp với cấu trúc mới
+   - Cập nhật tất cả các references trong code để sử dụng enum mới
 
-3. **Triển khai các Service mới**
+3. **Cập nhật Repositories**
+
+   - Cập nhật SuccessFactorRepository để hỗ trợ cả SF và CSF
+   - Tạo ResultIndicatorRepository để hỗ trợ cả RI và KRI
+   - Tạo PerformanceIndicatorRepository để hỗ trợ cả PI và KPI
+   - Tạo các phương thức query chuyên biệt cho từng loại (GetSF, GetCSF, GetKPI, etc.)
+
+4. **Triển khai các Service mới**
 
    - Thiết kế và triển khai IObjectiveService
-   - ~~Thiết kế và triển khai ISuccessFactorService~~ (Đã hoàn thành)
-   - Thiết kế và triển khai IResultIndicatorService và IPerformanceIndicatorService
-   - Cập nhật IKpiService và ICsfService để phù hợp với cấu trúc mới
+   - Cập nhật ISuccessFactorService để hỗ trợ cả SF và CSF
+   - Thiết kế và triển khai IResultIndicatorService (cho cả RI và KRI)
+   - Thiết kế và triển khai IPerformanceIndicatorService (cho cả PI và KPI)
+   - Thêm logic phân loại và xử lý khác nhau cho các loại indicator
 
-4. **Tiếp tục phát triển Controllers mới**
+5. **Cập nhật Controllers**
 
    - Tạo ObjectiveController
-   - ~~Tạo SuccessFactorController~~ (Đã hoàn thành)
-   - Tạo ResultIndicatorController và PerformanceIndicatorController
-   - Cập nhật KpiController và CsfController hiện có
+   - Cập nhật SuccessFactorController để hỗ trợ cả SF và CSF
+   - Tạo ResultIndicatorController với action riêng cho RI và KRI
+   - Tạo PerformanceIndicatorController với action riêng cho PI và KPI
+   - Thêm logic hiển thị và validation phù hợp với từng loại
 
-5. **Tiếp tục phát triển Views mới**
+6. **Cập nhật Views**
 
-   - Tạo views cho Objective (index, details, create, edit)
-   - ~~Tạo views cho SuccessFactor (index, details, create, edit)~~ (Đã hoàn thành)
-   - Tạo views cho ResultIndicator và PerformanceIndicator
-   - Cập nhật views hiện có của KPI và CSF
-   - **Mở rộng khả năng quản lý giá trị đo lường cho tất cả các loại chỉ số (KRI, RI, PI)**
+   - Tạo views cho Objective
+   - Cập nhật views cho SuccessFactor để phù hợp với mô hình mới
+   - Tạo views cho ResultIndicator với hiển thị khác nhau cho RI và KRI
+   - Tạo views cho PerformanceIndicator với hiển thị khác nhau cho PI và KPI
+   - **Mở rộng khả năng quản lý giá trị đo lường để hoạt động với cả RI và PI**
 
-6. **Hoàn thiện chuẩn hóa giao diện**
-   - Chuyển đổi các views PI còn lại sang tiếng Anh
-   - Kiểm tra tính nhất quán giữa tất cả các trang
+7. **Hoàn thiện chuẩn hóa giao diện**
+   - Chuyển đổi tất cả views sang tiếng Anh
+   - Đảm bảo tính nhất quán trong cách hiển thị các loại indicator
    - Đảm bảo responsive design trên tất cả các views
 
 ### Upcoming Tasks
@@ -179,6 +273,7 @@ Dựa trên yêu cầu mới về cấu trúc phân cấp đầy đủ, chúng t
    - Quyết định sử dụng class riêng biệt cho mỗi loại indicator thay vì dùng discriminator
    - Cân nhắc việc quản lý KRI và KPI bằng flag hoặc bằng các entity riêng
    - Xác định cách xử lý các công thức tính toán phức tạp giữa các indicators
+   - **Quyết định:** Chuẩn hóa sử dụng entity `Objective` cơ sở thay vì `BusinessObjective` để đồng bộ hệ thống. Các thuộc tính đặc thù (nếu cần) sẽ được xem xét tích hợp vào `Objective` hoặc xử lý theo cách khác.
 
 2. **Hiệu suất của truy vấn phân cấp**
 

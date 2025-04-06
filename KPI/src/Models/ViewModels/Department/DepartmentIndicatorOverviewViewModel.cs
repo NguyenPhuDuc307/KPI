@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using KPISolution.Models.ViewModels.Indicator;
-
 namespace KPISolution.Models.ViewModels.Department
 {
     /// <summary>

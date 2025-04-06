@@ -1,5 +1,3 @@
-using System;
-
 namespace KPISolution.Models.ViewModels.Dashboard.Widgets
 {
     /// <summary>
@@ -10,21 +8,21 @@ namespace KPISolution.Models.ViewModels.Dashboard.Widgets
         /// <summary>
         /// Nội dung văn bản
         /// </summary>
-        public string Content { get; set; } = string.Empty;
+        public string Content { get; init; } = string.Empty;
 
         /// <summary>
         /// Có xử lý markdown không
         /// </summary>
-        public bool ParseMarkdown { get; set; } = false;
+        public bool ParseMarkdown { get; init; } = false;
 
         /// <summary>
         /// Nội dung đã được xử lý từ markdown
         /// </summary>
-        public string ParsedContent { get; set; } = string.Empty;
+        public string ParsedContent { get; init; } = string.Empty;
 
         /// <summary>
         /// Có phải là HTML không
         /// </summary>
-        public bool IsHtml { get; set; } = false;
+        public bool IsHtml { get; init; } = false;
     }
 }

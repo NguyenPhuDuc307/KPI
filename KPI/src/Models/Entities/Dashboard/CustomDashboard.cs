@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using KPISolution.Models.Entities.Base;
-using KPISolution.Models.Enums;
-
 namespace KPISolution.Models.Entities.Dashboard
 {
     /// <summary>
@@ -22,18 +16,18 @@ namespace KPISolution.Models.Entities.Dashboard
         /// User ID who owns this dashboard
         /// </summary>
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public string UserId { get; init; } = string.Empty;
 
         /// <summary>
         /// Username who owns this dashboard
         /// </summary>
         [Required]
-        public string UserName { get; set; } = string.Empty;
+        public string UserName { get; init; } = string.Empty;
 
         /// <summary>
         /// Date/time when the dashboard was last refreshed
         /// </summary>
-        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+        public DateTime LastUpdated { get; init; } = DateTime.UtcNow;
 
         /// <summary>
         /// Date/time when the dashboard configuration was last modified
@@ -64,6 +58,6 @@ namespace KPISolution.Models.Entities.Dashboard
         /// <summary>
         /// Items shown on this dashboard
         /// </summary>
-        public virtual ICollection<DashboardItem> DashboardItems { get; set; } = new List<DashboardItem>();
+        public virtual ICollection<DashboardItem> DashboardItems { get; init; } = new List<DashboardItem>();
     }
 }

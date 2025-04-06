@@ -1,0 +1,39 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    var title = ViewData["Title"]?.ToString();
+    var icon = ViewData["Icon"]?.ToString() ?? "bi-check2-circle";
+    var subtitle = ViewData["Subtitle"]?.ToString();
+    var showButton = ViewData["PrimaryButton"] as ValueTuple<string, string, string, string, string>?;
+    var commandButtons = ViewData["CommandButtons"] as (string, string, string, string, string)[];
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-1 d-flex align-items-center">
+            <i class="bi @icon me-2"></i>@title
+        </h3>
+        @if (!string.IsNullOrEmpty(subtitle))
+        {
+            <p class="text-muted small mb-0">@subtitle</p>
+        }
+    </div>
+    <div class="btn-group">
+        @if (showButton.HasValue)
+        {
+            <a asp-controller="@showButton.Value.Item2" asp-action="@showButton.Value.Item3"
+                asp-route-id="@showButton.Value.Item4" class="btn btn-primary">
+                <i class="bi @showButton.Value.Item5 me-1"></i> @showButton.Value.Item1
+            </a>
+        }
+        @if (commandButtons != null && commandButtons.Length > 0)
+        {
+            foreach (var button in commandButtons)
+            {
+                <a asp-controller="@button.Item2" asp-action="@button.Item3" asp-route-id="@button.Item4"
+                    class="btn @(button.Item3 == "Delete" ? "btn-danger" : button.Item3 == "Index" ? "btn-secondary" : "btn-primary")">
+                    <i class="bi @button.Item5 me-1"></i> @button.Item1
+                </a>
+            }
+        }
+    </div>
+</div>

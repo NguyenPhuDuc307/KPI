@@ -1,4 +1,5 @@
-@model KPISolution.Controllers.EditUserViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model EditUserViewModel
 
 @{
     ViewData["Title"] = "Chỉnh sửa người dùng";
@@ -22,7 +23,7 @@
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="UserName" />
             <input type="hidden" asp-for="Email" />
-            
+
             <div class="row">
                 <div class="col-md-6">
                     <div class="card mb-3">
@@ -34,19 +35,19 @@
                                 <label asp-for="Email" class="form-label"></label>
                                 <input asp-for="Email" class="form-control" disabled />
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label asp-for="LastName" class="form-label"></label>
                                 <input asp-for="LastName" class="form-control" />
                                 <span asp-validation-for="LastName" class="text-danger"></span>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label asp-for="FirstName" class="form-label"></label>
                                 <input asp-for="FirstName" class="form-control" />
                                 <span asp-validation-for="FirstName" class="text-danger"></span>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label asp-for="JobTitle" class="form-label"></label>
                                 <input asp-for="JobTitle" class="form-control" />
@@ -55,7 +56,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="card mb-3">
                         <div class="card-header bg-light">
@@ -69,7 +70,7 @@
                                 </select>
                                 <span asp-validation-for="DepartmentId" class="text-danger"></span>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label asp-for="ManagerId" class="form-label"></label>
                                 <select asp-for="ManagerId" class="form-select" asp-items="ViewBag.Managers">
@@ -79,7 +80,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="card mb-3">
                         <div class="card-header bg-light">
                             <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Vai trò & Phân quyền</h5>
@@ -92,17 +93,22 @@
                                 </select>
                                 <span asp-validation-for="Role" class="text-danger"></span>
                             </div>
-                            
+
                             <div class="mb-3 form-check">
                                 <input asp-for="IsKpiOwner" class="form-check-input" />
                                 <label asp-for="IsKpiOwner" class="form-check-label"></label>
                             </div>
-                            
+
+                            <div class="mb-3 form-check">
+                                <input asp-for="IsIndicatorOwner" class="form-check-input" />
+                                <label asp-for="IsIndicatorOwner" class="form-check-label"></label>
+                            </div>
+
                             <div class="mb-3 form-check">
                                 <input asp-for="IsDepartmentAdmin" class="form-check-input" />
                                 <label asp-for="IsDepartmentAdmin" class="form-check-label"></label>
                             </div>
-                            
+
                             <div class="mb-3 form-check">
                                 <input asp-for="IsActive" class="form-check-input" />
                                 <label asp-for="IsActive" class="form-check-label"></label>
@@ -111,7 +117,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="text-center mt-3">
                 <button type="submit" class="btn btn-primary px-5">
                     <i class="bi bi-save me-1"></i>Lưu thay đổi
@@ -122,14 +128,14 @@
 </div>
 
 @section Scripts {
-        <script>
-            $(document).ready(function() {
-                // Initialize select2 for dropdowns
-                $('select').select2({
-                    theme: 'bootstrap-5'
-                });
+    <script>
+        $(document).ready(function () {
+            // Initialize select2 for dropdowns
+            $('select').select2({
+                theme: 'bootstrap-5'
             });
-        </script>
+        });
+    </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }

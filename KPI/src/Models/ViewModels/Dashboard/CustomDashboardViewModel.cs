@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using KPISolution.Models.Enums;
-
 namespace KPISolution.Models.ViewModels.Dashboard
 {
     /// <summary>
-    /// View model for custom user dashboards allowing personalized KPI monitoring
+    /// View model for custom user dashboards allowing personalized Indicator monitoring
     /// </summary>
     public class CustomDashboardViewModel
     {
@@ -15,18 +10,18 @@ namespace KPISolution.Models.ViewModels.Dashboard
         /// </summary>
         public CustomDashboardViewModel()
         {
-            DashboardItems = new List<DashboardItemViewModel>();
-            AvailableKpis = new List<KpiSummaryViewModel>();
-            SavedLayouts = new List<DashboardLayoutViewModel>();
-            SharedUsers = new List<DashboardUserViewModel>();
-            AvailableUsers = new List<DashboardUserViewModel>();
-            AvailableCsfs = new List<CsfSummaryViewModel>();
+            this.DashboardItems = [];
+            this.AvailableIndicators = [];
+            this.SavedLayouts = [];
+            this.SharedUsers = [];
+            this.AvailableUsers = [];
+            this.AvailableSuccessFactors = [];
         }
 
         /// <summary>
         /// Dashboard ID
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; init; }
 
         /// <summary>
         /// Title of the dashboard
@@ -34,107 +29,107 @@ namespace KPISolution.Models.ViewModels.Dashboard
         [Required(ErrorMessage = "Title is required")]
         [StringLength(100, ErrorMessage = "Title cannot be longer than 100 characters")]
         [Display(Name = "Dashboard Title")]
-        public required string Title { get; set; } = string.Empty;
+        public required string Title { get; init; } = string.Empty;
 
         /// <summary>
         /// Description of the dashboard
         /// </summary>
         [StringLength(500, ErrorMessage = "Description cannot be longer than 500 characters")]
         [Display(Name = "Description")]
-        public string Description { get; set; } = string.Empty;
+        public string Description { get; init; } = string.Empty;
 
         /// <summary>
         /// User ID who owns this dashboard
         /// </summary>
-        public required string UserId { get; set; } = string.Empty;
+        public required string UserId { get; init; } = string.Empty;
 
         /// <summary>
         /// Username who owns this dashboard
         /// </summary>
         [Display(Name = "Owner")]
-        public required string UserName { get; set; } = string.Empty;
+        public required string UserName { get; init; } = string.Empty;
 
         /// <summary>
         /// Date/time when the dashboard was last refreshed
         /// </summary>
         [Display(Name = "Last Updated")]
-        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+        public DateTime LastUpdated { get; init; } = DateTime.UtcNow;
 
         /// <summary>
         /// Date/time when the dashboard configuration was last modified
         /// </summary>
         [Display(Name = "Last Modified")]
-        public DateTime LastModified { get; set; } = DateTime.UtcNow;
+        public DateTime LastModified { get; init; } = DateTime.UtcNow;
 
         /// <summary>
         /// Items shown on this dashboard
         /// </summary>
-        public List<DashboardItemViewModel> DashboardItems { get; set; } = new List<DashboardItemViewModel>();
+        public List<DashboardItemViewModel> DashboardItems { get; init; } = [];
 
         /// <summary>
         /// Alias for DashboardItems for backward compatibility
         /// </summary>
-        public List<DashboardItemViewModel> Items => DashboardItems;
+        public List<DashboardItemViewModel> Items => this.DashboardItems;
 
         /// <summary>
-        /// KPIs available to add to the dashboard
+        /// Indicators available to add to the dashboard
         /// </summary>
-        [Display(Name = "Available KPIs")]
-        public List<KpiSummaryViewModel> AvailableKpis { get; set; } = new List<KpiSummaryViewModel>();
+        [Display(Name = "Available Indicators")]
+        public List<IndicatorSummaryViewModel> AvailableIndicators { get; set; } = [];
 
         /// <summary>
-        /// CSFs available to add to the dashboard
+        /// SuccessFactors available to add to the dashboard
         /// </summary>
-        [Display(Name = "Available CSFs")]
-        public List<CsfSummaryViewModel> AvailableCsfs { get; set; } = new List<CsfSummaryViewModel>();
+        [Display(Name = "Available Success Factors")]
+        public List<SuccessFactorSummaryViewModel> AvailableSuccessFactors { get; init; } = [];
 
         /// <summary>
         /// Saved dashboard layouts
         /// </summary>
         [Display(Name = "Saved Layouts")]
-        public List<DashboardLayoutViewModel> SavedLayouts { get; set; }
+        public List<DashboardLayoutViewModel> SavedLayouts { get; init; }
 
         /// <summary>
         /// Layout configuration (JSON)
         /// </summary>
-        public string? LayoutConfiguration { get; set; }
+        public string? LayoutConfiguration { get; init; }
 
         /// <summary>
         /// Whether this dashboard is the user's default
         /// </summary>
         [Display(Name = "Set as Default")]
-        public bool IsDefault { get; set; }
+        public bool IsDefault { get; init; }
 
         /// <summary>
         /// Whether this dashboard is shared with others
         /// </summary>
         [Display(Name = "Share Dashboard")]
-        public bool IsShared { get; set; }
+        public bool IsShared { get; init; }
 
         /// <summary>
         /// Whether this dashboard is public (visible to all users)
         /// </summary>
         [Display(Name = "Public Dashboard")]
-        public bool IsPublic { get; set; }
+        public bool IsPublic { get; init; }
 
         /// <summary>
         /// Users this dashboard is shared with
         /// </summary>
         [Display(Name = "Shared With")]
-        public List<DashboardUserViewModel> SharedUsers { get; set; } = new List<DashboardUserViewModel>();
+        public List<DashboardUserViewModel> SharedUsers { get; init; } = [];
 
         /// <summary>
         /// Users available for sharing
         /// </summary>
         [Display(Name = "Available Users")]
-        public List<DashboardUserViewModel> AvailableUsers { get; set; } = new List<DashboardUserViewModel>();
+        public List<DashboardUserViewModel> AvailableUsers { get; init; } = [];
 
         /// <summary>
         /// Refresh interval in minutes
         /// </summary>
         [Display(Name = "Auto-refresh (minutes)")]
         [Range(0, 1440, ErrorMessage = "Refresh interval must be between 0 and 1440 minutes")]
-        public int RefreshInterval { get; set; }
+        public int RefreshInterval { get; init; }
     }
 
     /// <summary>
@@ -145,23 +140,23 @@ namespace KPISolution.Models.ViewModels.Dashboard
         /// <summary>
         /// Item ID
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; init; }
 
         /// <summary>
-        /// KPI ID
+        /// Indicator ID
         /// </summary>
-        public Guid? KpiId { get; set; }
+        public Guid? IndicatorId { get; init; }
 
         /// <summary>
-        /// CSF ID
+        /// SuccessFactor ID if this item displays a Success Factor
         /// </summary>
-        public Guid? CsfId { get; set; }
+        public Guid? SuccessFactorId { get; init; }
 
         /// <summary>
         /// Chart type for displaying this item
         /// </summary>
         [Display(Name = "Chart Type")]
-        public ChartType ChartType { get; set; } = ChartType.Card;
+        public ChartType ChartType { get; init; } = ChartType.Card;
 
         /// <summary>
         /// Title of the item
@@ -169,60 +164,60 @@ namespace KPISolution.Models.ViewModels.Dashboard
         [Required]
         [StringLength(100)]
         [Display(Name = "Title")]
-        public string Title { get; set; } = string.Empty;
+        public string Title { get; init; } = string.Empty;
 
         /// <summary>
         /// Width of the item (1-12 column grid)
         /// </summary>
         [Range(1, 12)]
         [Display(Name = "Width")]
-        public int Width { get; set; } = 4;
+        public int Width { get; init; } = 4;
 
         /// <summary>
         /// Height of the item (1-12 row grid)
         /// </summary>
         [Range(1, 12)]
         [Display(Name = "Height")]
-        public int Height { get; set; } = 4;
+        public int Height { get; init; } = 4;
 
         /// <summary>
         /// X position (column)
         /// </summary>
         [Range(0, 11)]
-        public int X { get; set; }
+        public int X { get; init; }
 
         /// <summary>
         /// Y position (row)
         /// </summary>
         [Range(0, 11)]
-        public int Y { get; set; }
+        public int Y { get; init; }
 
         /// <summary>
         /// Data configuration (JSON)
         /// </summary>
-        public string DataConfiguration { get; set; } = string.Empty;
+        public string DataConfiguration { get; init; } = string.Empty;
 
         /// <summary>
         /// Order in which the item appears (for non-grid layouts)
         /// </summary>
-        public int Order { get; set; }
+        public int Order { get; init; }
 
         /// <summary>
-        /// Item type (KPI, CSF, custom)
+        /// Item type (Indicator, SuccessFactor, custom)
         /// </summary>
-        public DashboardItemType ItemType { get; set; } = DashboardItemType.Kpi;
+        public DashboardItemType ItemType { get; init; } = DashboardItemType.Chart;
 
         /// <summary>
         /// Whether to show legends on charts
         /// </summary>
         [Display(Name = "Show Legend")]
-        public bool ShowLegend { get; set; } = true;
+        public bool ShowLegend { get; init; } = true;
 
         /// <summary>
         /// Time period to display
         /// </summary>
         [Display(Name = "Time Period")]
-        public TimePeriod TimePeriod { get; set; } = TimePeriod.Last30Days;
+        public TimePeriod TimePeriod { get; init; } = TimePeriod.Last30Days;
 
         /// <summary>
         /// Widget type for display
@@ -303,84 +298,6 @@ namespace KPISolution.Models.ViewModels.Dashboard
         /// </summary>
         [Display(Name = "System Template")]
         public bool IsSystemTemplate { get; set; }
-    }
-
-    /// <summary>
-    /// Type of dashboard item
-    /// </summary>
-    public enum DashboardItemType
-    {
-        /// <summary>
-        /// KPI chart or card
-        /// </summary>
-        [Display(Name = "KPI")]
-        Kpi = 1,
-
-        /// <summary>
-        /// CSF progress
-        /// </summary>
-        [Display(Name = "CSF")]
-        Csf = 2,
-
-        /// <summary>
-        /// Department overview
-        /// </summary>
-        [Display(Name = "Department")]
-        Department = 3,
-
-        /// <summary>
-        /// Text or information card
-        /// </summary>
-        [Display(Name = "Text")]
-        Text = 4,
-
-        /// <summary>
-        /// Custom metric
-        /// </summary>
-        [Display(Name = "Custom")]
-        Custom = 5
-    }
-
-    /// <summary>
-    /// Types of charts available for dashboard items
-    /// </summary>
-    public enum ChartType
-    {
-        /// <summary>
-        /// Card with key metrics
-        /// </summary>
-        [Display(Name = "Card")]
-        Card = 1,
-
-        /// <summary>
-        /// Line chart showing trends
-        /// </summary>
-        [Display(Name = "Line Chart")]
-        LineChart = 2,
-
-        /// <summary>
-        /// Bar chart for comparisons
-        /// </summary>
-        [Display(Name = "Bar Chart")]
-        BarChart = 3,
-
-        /// <summary>
-        /// Pie chart for distribution
-        /// </summary>
-        [Display(Name = "Pie Chart")]
-        PieChart = 4,
-
-        /// <summary>
-        /// Gauge chart for progress
-        /// </summary>
-        [Display(Name = "Gauge")]
-        Gauge = 5,
-
-        /// <summary>
-        /// Table with detailed data
-        /// </summary>
-        [Display(Name = "Table")]
-        Table = 6
     }
 
     /// <summary>

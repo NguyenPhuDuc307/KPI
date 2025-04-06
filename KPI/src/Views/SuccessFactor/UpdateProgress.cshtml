@@ -1,0 +1,443 @@
+@model KPISolution.Models.ViewModels.SuccessFactor.SuccessFactorProgressViewModel
+@using KPISolution.Models.Extensions
+@using KPISolution.Models.Enums
+@using KPISolution.Models.Enums.SuccessFactor
+
+@{
+    ViewData["Icon"] = "bi-check-circle-fill";
+    ViewData["Title"] = "Cập nhật tiến độ";
+    ViewData["PageTitle"] = "Cập nhật tiến độ";
+    ViewData["PageDescription"] = "Cập nhật thông tin tiến độ cho yếu tố thành công";
+    ViewData["ActiveMenu"] = "SuccessFactor";
+}
+
+<div class="container-fluid px-0">
+    <!-- Breadcrumb & Nút điều hướng -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Home" asp-action="Index"><i class="bi bi-house-door"></i></a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a asp-controller="SuccessFactor" asp-action="Index">Yếu tố thành công</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a asp-controller="SuccessFactor" asp-action="Details" asp-route-id="@Model.SuccessFactorId">@Model.SuccessFactorCode</a>
+                </li>
+                <li class="breadcrumb-item active">Cập nhật tiến độ</li>
+            </ol>
+        </nav>
+        <div>
+            <a asp-controller="SuccessFactor" asp-action="Details" asp-route-id="@Model.SuccessFactorId"
+                class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại chi tiết
+            </a>
+        </div>
+    </div>
+
+    <!-- Thông tin cơ bản & Form cập nhật -->
+    <div class="row g-3">
+        <!-- Cột bên trái - Thông tin cơ bản -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span class="fw-bold">Thông tin cơ bản</span>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h5 class="fw-bold text-primary">@Model.SuccessFactorName</h5>
+                        <span class="badge bg-secondary px-3 py-2">@Model.SuccessFactorCode</span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="text-center mb-2">
+                            <div class="progress-circle mx-auto" data-value="@Model.PreviousPercentage">
+                                <span class="progress-value fw-bold">
+                                    @Model.PreviousPercentage<span>%</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold">Trạng thái hiện tại:</span>
+                            <span class="badge @(Model.PreviousStatus.HasValue ? Model.PreviousStatus.Value.GetStatusBadgeClass() : "bg-secondary")">
+                                @(Model.PreviousStatus.HasValue ? Model.PreviousStatus.Value.GetDisplayName() : "Không xác định")
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold">Mức độ rủi ro:</span>
+                            <span class="badge @(Model.PreviousRiskLevel.HasValue ? Model.PreviousRiskLevel.Value.GetRiskBadgeClass() : "bg-secondary")">
+                                @(Model.PreviousRiskLevel.HasValue ? Model.PreviousRiskLevel.Value.GetDisplayName() : "Không xác định")
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Ngày mục tiêu:</span>
+                            <span>@(Model.TargetDate != default(DateTime) ? Model.TargetDate.ToString("dd/MM/yyyy") : "Chưa thiết lập")</span>
+                        </div>
+                    </div>
+                    
+                    <hr />
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Cập nhật tiến độ giúp theo dõi sự tiến triển của yếu tố thành công và đảm bảo các mục tiêu được hoàn thành đúng hạn.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột bên phải - Form cập nhật -->
+        <div class="col-lg-8">
+            <form asp-action="UpdateProgress" method="post" id="progressForm" class="needs-validation">
+                <input type="hidden" asp-for="SuccessFactorId" />
+                <input type="hidden" asp-for="SuccessFactorName" />
+                <input type="hidden" asp-for="SuccessFactorCode" />
+                <input type="hidden" asp-for="PreviousPercentage" />
+                <input type="hidden" asp-for="PreviousStatus" />
+                <input type="hidden" asp-for="PreviousRiskLevel" />
+                <input type="hidden" asp-for="TargetDate" />
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger mb-3">
+                        <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Vui lòng sửa các lỗi sau:</h5>
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                    </div>
+                }
+
+                <div class="row g-3">
+                    <!-- Thông tin cập nhật chính -->
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-primary text-white d-flex align-items-center">
+                                <i class="bi bi-pencil-square me-2"></i>
+                                <span class="fw-bold">Cập nhật tiến độ</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label asp-for="UpdateDate" class="form-label required">Ngày cập nhật</label>
+                                    <input asp-for="UpdateDate" class="form-control" type="date" required />
+                                    <span asp-validation-for="UpdateDate" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="ProgressPercentage" class="form-label required">Tiến độ</label>
+                                    <div class="range-slider mb-2">
+                                        <input asp-for="ProgressPercentage" type="range" class="form-range" min="0" max="100" id="progressRange" />
+                                        <div class="d-flex justify-content-between">
+                                            <span>0%</span>
+                                            <span>25%</span>
+                                            <span>50%</span>
+                                            <span>75%</span>
+                                            <span>100%</span>
+                                        </div>
+                                    </div>
+                                    <div class="input-group">
+                                        <input asp-for="ProgressPercentage" class="form-control" type="number" min="0" max="100" required id="progressNumber" />
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <span asp-validation-for="ProgressPercentage" class="text-danger"></span>
+                                </div>
+
+                                <div class="progress mb-3" style="height: 25px;">
+                                    <div id="progressPreview" class="progress-bar" role="progressbar" 
+                                        style="width: @Model.ProgressPercentage%; transition: width 0.3s ease;" 
+                                        aria-valuenow="@Model.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                                        @Model.ProgressPercentage%
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Status" class="form-label required">Trạng thái mới</label>
+                                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<SuccessFactorStatus>()" class="form-select" required>
+                                    </select>
+                                    <span asp-validation-for="Status" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="RiskLevel" class="form-label required">Mức độ rủi ro</label>
+                                    <select asp-for="RiskLevel" asp-items="Html.GetEnumSelectList<RiskLevel>()" class="form-select" required>
+                                    </select>
+                                    <span asp-validation-for="RiskLevel" class="text-danger"></span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label asp-for="NextUpdateDate" class="form-label">Ngày cập nhật tiếp theo</label>
+                                    <input asp-for="NextUpdateDate" class="form-control" type="date" />
+                                    <span asp-validation-for="NextUpdateDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông tin bổ sung -->
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-primary text-white d-flex align-items-center">
+                                <i class="bi bi-chat-square-text me-2"></i>
+                                <span class="fw-bold">Thông tin bổ sung</span>
+                            </div>
+                            <div class="card-body">
+                                <ul class="nav nav-tabs mb-3" id="detailTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
+                                            Nhận xét
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="issues-tab" data-bs-toggle="tab" data-bs-target="#issues" type="button" role="tab">
+                                            Vấn đề
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button" role="tab">
+                                            Hành động
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content" id="detailTabsContent">
+                                    <div class="tab-pane fade show active" id="comments" role="tabpanel">
+                                        <div class="mb-3">
+                                            <label asp-for="Comments" class="form-label">Nhận xét</label>
+                                            <textarea asp-for="Comments" class="form-control" rows="5" placeholder="Nhập nhận xét của bạn về tiến độ hiện tại..."></textarea>
+                                            <span asp-validation-for="Comments" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tab-pane fade" id="issues" role="tabpanel">
+                                        <div class="mb-3">
+                                            <label asp-for="Issues" class="form-label">Vấn đề gặp phải</label>
+                                            <textarea asp-for="Issues" class="form-control" rows="5" placeholder="Mô tả các vấn đề hoặc khó khăn đang gặp phải..."></textarea>
+                                            <span asp-validation-for="Issues" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="tab-pane fade" id="actions" role="tabpanel">
+                                        <div class="mb-3">
+                                            <label asp-for="Actions" class="form-label">Hành động đã thực hiện</label>
+                                            <textarea asp-for="Actions" class="form-control" rows="3" placeholder="Liệt kê các hành động đã thực hiện..."></textarea>
+                                            <span asp-validation-for="Actions" class="text-danger"></span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label asp-for="NextSteps" class="form-label">Các bước tiếp theo</label>
+                                            <textarea asp-for="NextSteps" class="form-control" rows="3" placeholder="Nêu các bước tiếp theo cần thực hiện..."></textarea>
+                                            <span asp-validation-for="NextSteps" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <hr />
+                                
+                                <div class="mb-3 form-check">
+                                    <input asp-for="NeedsAttention" class="form-check-input" type="checkbox" />
+                                    <label asp-for="NeedsAttention" class="form-check-label fw-bold text-danger">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Cần sự chú ý của lãnh đạo
+                                    </label>
+                                </div>
+
+                                <div class="mb-0" id="attentionReasonGroup" style="display: none;">
+                                    <label asp-for="AttentionReason" class="form-label">Lý do cần chú ý</label>
+                                    <textarea asp-for="AttentionReason" class="form-control" rows="2" placeholder="Nêu lý do cần sự chú ý của lãnh đạo..."></textarea>
+                                    <span asp-validation-for="AttentionReason" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nút bấm hành động -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a asp-action="Details" asp-route-id="@Model.SuccessFactorId" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i>Lưu cập nhật
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .progress-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+        }
+
+        .progress-circle:after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background-color: white;
+        }
+
+        .progress-circle .progress-value {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 1;
+        }
+        
+        .required:after {
+            content: "*";
+            color: red;
+            margin-left: 3px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+        }
+        
+        .range-slider {
+            padding: 0 5px;
+        }
+        
+        #progressRange {
+            cursor: pointer;
+        }
+        
+        #progressPreview {
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Khởi tạo progress circle
+            createProgressCircle();
+            
+            // Initialize select2 for better dropdown experience
+            $('.form-select').select2({
+                theme: 'bootstrap-5'
+            });
+
+            // Toggle attention reason visibility based on checkbox
+            $('#NeedsAttention').change(function () {
+                if ($(this).is(':checked')) {
+                    $('#attentionReasonGroup').slideDown(200);
+                    $('#AttentionReason').attr('required', true);
+                } else {
+                    $('#attentionReasonGroup').slideUp(200);
+                    $('#AttentionReason').attr('required', false);
+                }
+            });
+
+            // Check initial state
+            if ($('#NeedsAttention').is(':checked')) {
+                $('#attentionReasonGroup').show();
+                $('#AttentionReason').attr('required', true);
+            }
+
+            // Set default values
+            if (!$('#UpdateDate').val()) {
+                $('#UpdateDate').val(new Date().toISOString().substr(0, 10));
+            }
+
+            // Synchronize range and number inputs
+            $('#progressRange, #progressNumber').on('input', function () {
+                var value = $(this).val();
+                
+                // Update the other control
+                if ($(this).attr('id') === 'progressRange') {
+                    $('#progressNumber').val(value);
+                } else {
+                    $('#progressRange').val(value);
+                }
+                
+                updateProgressBar(value);
+            });
+            
+            // Initialize progress bar
+            updateProgressBar($('#progressNumber').val());
+        });
+        
+        // Create progress circle
+        function createProgressCircle() {
+            let el = $('.progress-circle');
+            let percentage = el.attr('data-value');
+            let color;
+
+            if (percentage < 30) color = '#dc3545'; // danger
+            else if (percentage < 70) color = '#ffc107'; // warning
+            else color = '#198754'; // success
+
+            let radius = el.width() / 2;
+            let circumference = 2 * Math.PI * (radius - 15);
+            let dashoffset = circumference * (1 - percentage / 100);
+
+            let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'progress-ring');
+            svg.setAttribute('width', el.width());
+            svg.setAttribute('height', el.height());
+
+            let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('class', 'progress-ring__circle');
+            circle.setAttribute('stroke', color);
+            circle.setAttribute('stroke-width', '15');
+            circle.setAttribute('stroke-linecap', 'round');
+            circle.setAttribute('fill', 'transparent');
+            circle.setAttribute('r', radius - 15);
+            circle.setAttribute('cx', radius);
+            circle.setAttribute('cy', radius);
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = dashoffset;
+
+            svg.appendChild(circle);
+            el.append(svg);
+        }
+        
+        // Update progress bar
+        function updateProgressBar(percentage) {
+            var bgClass;
+            
+            if (percentage < 30) {
+                bgClass = "bg-danger";
+            } else if (percentage < 70) {
+                bgClass = "bg-warning";
+            } else {
+                bgClass = "bg-success";
+            }
+
+            $('#progressPreview')
+                .css('width', percentage + '%')
+                .attr('aria-valuenow', percentage)
+                .text(percentage + '%')
+                .removeClass('bg-danger bg-warning bg-success')
+                .addClass(bgClass);
+        }
+    </script>
+}

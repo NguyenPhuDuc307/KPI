@@ -1,0 +1,219 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model List<DepartmentHierarchyViewModel>
+
+@{
+    ViewData["Title"] = "Cấu trúc phòng ban";
+    ViewData["Subtitle"] = "Hiển thị cấu trúc phòng ban dạng cây";
+    ViewData["Icon"] = "bi-diagram-3";
+}
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <h4 class="text-primary">
+            <i class="bi bi-diagram-3"></i> Cấu trúc phòng ban
+        </h4>
+    </div>
+    <div class="col-md-6 text-end">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-list me-1"></i> Danh sách phòng ban
+        </a>
+        <a asp-action="Hierarchy" class="btn btn-outline-primary">
+            <i class="bi bi-diagram-2 me-1"></i> Xem phân cấp phòng ban
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i> Chưa có phòng ban nào được tạo. Vui lòng tạo phòng ban để xem cấu trúc cây.
+                </div>
+        }
+        else
+        {
+                <div class="department-tree">
+                    <ul class="tree-root">
+                        @foreach (var rootDept in Model)
+                        {
+                                <li class="mb-3">
+                                    <div class="department-node">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-building me-2 text-primary"></i>
+                                            <strong>@rootDept.DepartmentName</strong>
+                                            <span class="badge bg-primary ms-2">Phòng ban gốc</span>
+                                        </div>
+                                        <div class="department-info mt-2">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <small><i class="bi bi-person me-1"></i> Trưởng phòng: @(string.IsNullOrEmpty(rootDept.DepartmentHead) ? "Chưa phân công" : rootDept.DepartmentHead)</small>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <small><i class="bi bi-people me-1"></i> Nhân viên: @rootDept.TotalEmployees</small>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <small><i class="bi bi-calendar2 me-1"></i> Ngày tạo: @rootDept.CreatedDate.ToString("dd/MM/yyyy")</small>
+                                                </div>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(rootDept.Description))
+                                            {
+                                                    <div class="mt-1">
+                                                        <small><i class="bi bi-info-circle me-1"></i> @rootDept.Description</small>
+                                                    </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (rootDept.HasChildren && rootDept.ChildDepartments.Any())
+                                    {
+                                            <div class="tree-view">
+                                                <ul class="tree">
+                                                    <li>
+                                                        <div class="tree-node department-node">
+                                                            <div class="node-content">
+                                                                <span class="department-name">@rootDept.DepartmentName</span>
+                                                                <span class="badge bg-primary ms-2">@rootDept.TotalEmployees nhân viên</span>
+                                                                @if (!string.IsNullOrEmpty(rootDept.DepartmentHead))
+                                                                {
+                                                                    <span class="department-head"><i class="bi bi-person me-1"></i>@rootDept.DepartmentHead</span>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                        @if (rootDept.HasChildren)
+                                                        {
+                                                            <ul>
+                                                                @await Html.PartialAsync("~/Views/Shared/Tree/_TreeNodePartial.cshtml", rootDept.ChildDepartments)
+                                                            </ul>
+                                                        }
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                    }
+                                </li>
+                        }
+                    </ul>
+                </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+        <style>
+            .department-tree ul {
+                list-style-type: none;
+                padding-left: 0;
+            }
+
+            .department-tree .tree-root {
+                padding-left: 0;
+            }
+
+            .department-node {
+                border-left: 3px solid #0d6efd;
+                padding: 10px 15px;
+                background-color: #f8f9fa;
+                border-radius: 0 4px 4px 0;
+                margin-bottom: 10px;
+            }
+
+            /* Thêm style cho tree-view */
+            .tree-view {
+                margin-left: 20px;
+                position: relative;
+            }
+
+            .tree-view:before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                border-left: 2px solid #e0e7ef;
+            }
+
+            .tree-view .tree {
+                margin-top: 15px;
+                padding-left: 25px;
+            }
+
+            .tree-view .tree li {
+                position: relative;
+                list-style-type: none;
+            }
+
+            .tree-view .tree li:before {
+                content: '';
+                position: absolute;
+                left: -25px;
+                top: 15px;
+                width: 20px;
+                border-top: 2px solid #e0e7ef;
+            }
+
+            .tree-view .tree li:after {
+                content: '';
+                position: absolute;
+                left: -25px;
+                top: 0;
+                height: 15px;
+                border-left: 2px solid #e0e7ef;
+            }
+
+            .tree-view .tree ul {
+                padding-left: 25px;
+                margin-top: 10px;
+            }
+
+            .department-children > li {
+                position: relative;
+                margin-bottom: 10px;
+            }
+
+            .department-children > li::before {
+                content: '';
+                position: absolute;
+                left: -20px;
+                top: 0;
+                height: 100%;
+                border-left: 1px dashed #ccc;
+            }
+
+            .department-children > li::after {
+                content: '';
+                position: absolute;
+                left: -20px;
+                top: 15px;
+                width: 20px;
+                border-top: 1px dashed #ccc;
+            }
+
+            .department-children > li:last-child::before {
+                height: 15px;
+            }
+
+            /* Thêm style cho các badge */
+            .badge.bg-primary {
+                font-weight: normal;
+                font-size: 0.75rem;
+            }
+
+            /* Thêm style cho node-content */
+            .node-content {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .department-head {
+                font-size: 0.8rem;
+                color: #6c757d;
+                margin-left: auto;
+            }
+
+            .department-name {
+                font-weight: bold;
+                color: #0d6efd;
+            }
+        </style>
+}

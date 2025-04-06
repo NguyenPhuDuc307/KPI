@@ -1,7 +1,8 @@
-@model KPISolution.Models.ViewModels.Dashboard.DepartmentDashboardViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model DepartmentDashboardViewModel
 
 @{
-    ViewData["Title"] = $"Bảng điều khiển - {Model.DepartmentName}";
+    ViewData["Title"] = $"Department Dashboard - {Model.DepartmentName}";
 }
 
 <div class="container-fluid">
@@ -21,7 +22,7 @@
             <div class="card border-primary h-100">
                 <div class="card-body">
                     <h5 class="card-title">Tổng số KPI</h5>
-                    <div class="display-4 text-primary mb-2">@Model.TotalKpiCount</div>
+                    <div class="display-4 text-primary mb-2">@Model.TotalIndicatorCount</div>
                     <div class="small text-muted">Số chỉ số KPI của phòng ban</div>
                 </div>
             </div>
@@ -30,10 +31,13 @@
             <div class="card border-success h-100">
                 <div class="card-body">
                     <h5 class="card-title">Đạt mục tiêu</h5>
-                    <div class="display-4 text-success mb-2">@Model.KpiSummaries.Count(k => k.Status ==
-                                                KPISolution.Models.Enums.KpiStatus.OnTarget)</div>
-                    <div class="small text-muted">@(Model.TotalKpiCount > 0 ? ((float)Model.KpiSummaries.Count(k =>
-                                                k.Status == KPISolution.Models.Enums.KpiStatus.OnTarget) / Model.TotalKpiCount *
+                    <div class="display-4 text-success mb-2">
+                        @Model.KpiSummaries.Count(k => k.Status ==
+                        IndicatorStatus.OnTarget)
+                    </div>
+                    <div class="small text-muted">
+                        @(Model.TotalIndicatorCount > 0 ? ((float)Model.KpiSummaries.Count(k =>
+                                                k.Status == IndicatorStatus.OnTarget) / Model.TotalIndicatorCount *
                                                 100).ToString("F1") : "0")% đạt mục tiêu</div>
                 </div>
             </div>
@@ -42,8 +46,10 @@
             <div class="card border-warning h-100">
                 <div class="card-body">
                     <h5 class="card-title">Cần chú ý</h5>
-                    <div class="display-4 text-warning mb-2">@Model.KpiSummaries.Count(k => k.Status ==
-                                                KPISolution.Models.Enums.KpiStatus.AtRisk)</div>
+                    <div class="display-4 text-warning mb-2">
+                        @Model.KpiSummaries.Count(k => k.Status ==
+                                                IndicatorStatus.AtRisk)
+                    </div>
                     <div class="small text-muted">Cần theo dõi và kiểm soát</div>
                 </div>
             </div>
@@ -52,8 +58,10 @@
             <div class="card border-danger h-100">
                 <div class="card-body">
                     <h5 class="card-title">Không đạt</h5>
-                    <div class="display-4 text-danger mb-2">@Model.KpiSummaries.Count(k => k.Status ==
-                                                KPISolution.Models.Enums.KpiStatus.BelowTarget)</div>
+                    <div class="display-4 text-danger mb-2">
+                        @Model.KpiSummaries.Count(k => k.Status ==
+                                                IndicatorStatus.BelowTarget)
+                    </div>
                     <div class="small text-muted">Yêu cầu hành động khắc phục</div>
                 </div>
             </div>
@@ -86,9 +94,9 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
-                        @if (Model.LinkedCsfs.Any())
+                        @if (Model.LinkedSuccessFactors.Any())
                         {
-                            foreach (var csf in Model.LinkedCsfs)
+                            foreach (var csf in Model.LinkedSuccessFactors)
                             {
                                 <div class="list-group-item">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -212,7 +220,7 @@
             const performanceData = [65, 68, 72, 75, 82, 80];
             const targetData = [70, 70, 70, 75, 75, 75];
 
-            new Chart(ctx, {
+            const performanceTrendChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: months,
@@ -247,8 +255,8 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: false,
-                            min: 50,
+                            beginAtZero: true,
+                            min: 0,
                             max: 100,
                             title: {
                                 display: true,
@@ -257,6 +265,22 @@
                         }
                     }
                 }
+            });
+
+            // Xử lý lỗi zoom vô hạn
+            function resizeChart(chart) {
+                if (chart) {
+                    chart.resize();
+                }
+            }
+
+            // Gọi hàm resize khi cửa sổ thay đổi kích thước
+            var resizeTimer;
+            $(window).on('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function () {
+                    resizeChart(performanceTrendChart);
+                }, 100);
             });
         });
     </script>

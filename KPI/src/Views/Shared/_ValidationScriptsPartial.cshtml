@@ -1,47 +1,35 @@
-﻿@* jQuery Validation and Bootstrap validation integration *@
-<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
 
-@* Custom validation script for enhanced client-side validation *@
 <script>
-    // Add custom validation methods
+    // Thêm hàm validation tùy chỉnh
     $(document).ready(function () {
-        // Add custom date range validation
-        $.validator.addMethod('daterange', function (value, element, params) {
-            if (!value) return true; // Skip validation if empty (handle with required if needed)
-
-            var startDateStr = $(params[0]).val();
-            if (!startDateStr) return true; // Skip validation if start date is empty
-
-            try {
-                var startDate = new Date(startDateStr);
-                var endDate = new Date(value);
-                return endDate >= startDate;
-            } catch (e) {
-                return false;
+        // Hiển thị tất cả các lỗi validation trong thẻ summary
+        $.validator.setDefaults({
+            errorElement: 'span',
+            errorClass: 'text-danger',
+            highlight: function (element, errorClass, validClass) {
+                $(element).addClass('is-invalid').removeClass('is-valid');
+            },
+            unhighlight: function (element, errorClass, validClass) {
+                $(element).removeClass('is-invalid').addClass('is-valid');
             }
-        }, 'End date must be greater than or equal to start date');
-
-        // Add custom numeric range validation
-        $.validator.addMethod('numericrange', function (value, element, params) {
-            if (!value) return true; // Skip validation if empty
-
-            var minValue = parseFloat($(params[0]).val());
-            if (isNaN(minValue)) return true; // Skip validation if min value is not a number
-
-            var val = parseFloat(value);
-            return !isNaN(val) && val >= minValue;
-        }, 'Maximum value must be greater than or equal to minimum value');
-
-        // Add adapter for the custom validators
-        $.validator.unobtrusive.adapters.add('daterange', ['startdate'], function (options) {
-            options.rules['daterange'] = ['#' + options.params.startdate];
-            options.messages['daterange'] = options.message;
         });
 
-        $.validator.unobtrusive.adapters.add('numericrange', ['minvalue'], function (options) {
-            options.rules['numericrange'] = ['#' + options.params.minvalue];
-            options.messages['numericrange'] = options.message;
+        // Thêm phương thức validation cho ngày
+        $.validator.addMethod('dateGreaterThan', function (value, element, params) {
+            if (!value || !$(params).val()) return true;
+
+            var startDate = new Date($(params).val());
+            var endDate = new Date(value);
+
+            return endDate > startDate;
+        }, 'Ngày kết thúc phải sau ngày bắt đầu');
+
+        // Đăng ký adapter với unobtrusive validation
+        $.validator.unobtrusive.adapters.add('dategreaterthan', ['startdate'], function (options) {
+            options.rules['dateGreaterThan'] = '#' + options.params.startdate;
+            options.messages['dateGreaterThan'] = options.message;
         });
     });
 </script>

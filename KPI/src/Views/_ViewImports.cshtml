@@ -1,11 +1,46 @@
-﻿@using KPISolution
+﻿@using System
+@using System.Collections.Generic
+@using System.Globalization
+@using System.Linq
+@using Microsoft.AspNetCore.Html
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+
 @using KPISolution.Models
-@using KPISolution.Models.ViewModels
-@using KPISolution.Models.ViewModels.CSF
-@using KPISolution.Models.ViewModels.KPI
+@using KPISolution.Models.Entities
+@using KPISolution.Models.Entities.Base
+@using KPISolution.Models.Entities.Identity
+@using KPISolution.Models.Entities.Indicator
+@using KPISolution.Models.Entities.Organization
+@using KPISolution.Models.Entities.Dashboard
+@using KPISolution.Models.Entities.Measurement
+@using KPISolution.Models.Entities.Notification
+
 @using KPISolution.Models.Enums
+@using KPISolution.Models.Enums.Indicator
+@using KPISolution.Models.Enums.Measurement
+@using KPISolution.Models.Enums.Notification
+@using KPISolution.Models.Enums.Relationship
+@using KPISolution.Models.Enums.SuccessFactor
+@using KPISolution.Models.Enums.Object
+@using KPISolution.Models.Enums.Visualization
+@using KPISolution.Models.Enums.Auth
+
+@using KPISolution.Models.ViewModels
+@using KPISolution.Models.ViewModels.Indicator
+@using KPISolution.Models.ViewModels.Indicator.PerformanceIndicator
+@using KPISolution.Models.ViewModels.Indicator.ResultIndicator
+@using KPISolution.Models.ViewModels.Hierarchy
+@using KPISolution.Models.ViewModels.Indicator.ListModel
+@using KPISolution.Models.ViewModels.Measurement
+@using KPISolution.Models.ViewModels.SuccessFactor
 @using KPISolution.Models.ViewModels.Dashboard
 @using KPISolution.Models.ViewModels.Dashboard.Widgets
 @using KPISolution.Models.ViewModels.Department
+@using KPISolution.Models.ViewModels.Objective
+@using KPISolution.Models.ViewModels.Organization
+@using KPISolution.Models.ViewModels.Users
 
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@inject IAuthorizationService AuthService

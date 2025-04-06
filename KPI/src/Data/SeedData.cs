@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using KPISolution.Models.Entities.Organization;
-using KPISolution.Authorization;
-using KPISolution.Models.Entities.Identity;
 using System.Diagnostics;
 
 namespace KPISolution.Data
@@ -20,7 +15,7 @@ namespace KPISolution.Data
             using var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<KpiRole>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IndicatorRole>>();
 
             await SeedAsync(userManager, roleManager, context);
         }
@@ -28,7 +23,7 @@ namespace KPISolution.Data
         /// <summary>
         /// Seeds all data in the correct order
         /// </summary>
-        private static async Task SeedAsync(UserManager<ApplicationUser> userManager, RoleManager<KpiRole> roleManager, ApplicationDbContext context)
+        private static async Task SeedAsync(UserManager<ApplicationUser> userManager, RoleManager<IndicatorRole> roleManager, ApplicationDbContext context)
         {
             try
             {
@@ -54,24 +49,60 @@ namespace KPISolution.Data
         /// <summary>
         /// Seeds default roles
         /// </summary>
-        private static async Task SeedRolesAsync(RoleManager<KpiRole> roleManager)
+        private static async Task SeedRolesAsync(RoleManager<IndicatorRole> roleManager)
         {
             // Create roles if they don't exist
-            string[] roleNames = {
-                KpiAuthorizationPolicies.RoleNames.Administrator,
-                KpiAuthorizationPolicies.RoleNames.Manager,
-                KpiAuthorizationPolicies.RoleNames.User,
-                "Executive",
-                "Analyst",
-                "DepartmentAdmin"
-            };
-
+            string[] roleNames = ["Administrator", "Manager", "User", "Guest", "CMO", "IndicatorOwner", "DepartmentManager"
+            ];
             foreach (var roleName in roleNames)
             {
-                var roleExist = await roleManager.RoleExistsAsync(roleName);
-                if (!roleExist)
+                if (!await roleManager.RoleExistsAsync(roleName))
                 {
-                    await roleManager.CreateAsync(new KpiRole { Name = roleName, IsSystemRole = true, IsActive = true });
+                    var description = roleName switch
+                    {
+                        "Administrator" => "Quản trị viên hệ thống, có toàn quyền.",
+                        "Manager" => "Quản lý, có quyền quản lý chỉ số và người dùng trong phòng ban.",
+                        "User" => "Người dùng thông thường, có thể xem và cập nhật chỉ số được giao.",
+                        "Guest" => "Khách, chỉ có quyền xem hạn chế.",
+                        "CMO" => "Giám đốc Marketing, có quyền xem báo cáo và dashboard tổng thể.",
+                        "IndicatorOwner" => "Người sở hữu chỉ số, chịu trách nhiệm về chỉ số cụ thể.",
+                        "DepartmentManager" => "Trưởng phòng, quản lý các hoạt động trong phòng ban.",
+                        _ => $"Vai trò {roleName}"
+                    };
+                    // Tạo IndicatorRole thay vì KpiRole
+                    var role = new IndicatorRole
+                    {
+                        Name = roleName,
+                        NormalizedName = roleName.ToUpper(),
+                        Description = description,
+                        IsSystemRole = (roleName == "Administrator" || roleName == "Manager" || roleName == "User" || roleName == "Guest"),
+                        CreatedAt = DateTime.UtcNow,
+                        CreatedBy = "SystemSeed",
+                        IsActive = true,
+                        PermissionLevel = roleName switch
+                        {
+                            "Administrator" => (int)PermissionLevel.Administrator,
+                            "Manager" => (int)PermissionLevel.Manager,
+                            "DepartmentManager" => (int)PermissionLevel.Manager,
+                            "CMO" => (int)PermissionLevel.Manager, // Hoặc cấp độ phù hợp khác
+                            "IndicatorOwner" => (int)PermissionLevel.Editor,
+                            "User" => (int)PermissionLevel.Contributor,
+                            "Guest" => (int)PermissionLevel.Viewer,
+                            _ => (int)PermissionLevel.Viewer
+                        },
+                        Permissions = roleName switch
+                        {
+                            "Administrator" => KPISolution.Models.Entities.Identity.IndicatorPermission.Admin,
+                            "Manager" => KPISolution.Models.Entities.Identity.IndicatorPermission.View | KPISolution.Models.Entities.Identity.IndicatorPermission.Create | KPISolution.Models.Entities.Identity.IndicatorPermission.Edit | KPISolution.Models.Entities.Identity.IndicatorPermission.Assign | KPISolution.Models.Entities.Identity.IndicatorPermission.ViewAll,
+                            "DepartmentManager" => KPISolution.Models.Entities.Identity.IndicatorPermission.View | KPISolution.Models.Entities.Identity.IndicatorPermission.Create | KPISolution.Models.Entities.Identity.IndicatorPermission.Edit | KPISolution.Models.Entities.Identity.IndicatorPermission.Assign | KPISolution.Models.Entities.Identity.IndicatorPermission.ViewAll,
+                            "CMO" => KPISolution.Models.Entities.Identity.IndicatorPermission.View | KPISolution.Models.Entities.Identity.IndicatorPermission.ViewAll | KPISolution.Models.Entities.Identity.IndicatorPermission.Export, // Quyền xem và xuất dữ liệu
+                            "IndicatorOwner" => KPISolution.Models.Entities.Identity.IndicatorPermission.View | KPISolution.Models.Entities.Identity.IndicatorPermission.Edit, // Quyền xem và sửa chỉ số mình sở hữu
+                            "User" => KPISolution.Models.Entities.Identity.IndicatorPermission.View, // Chỉ quyền xem
+                            "Guest" => KPISolution.Models.Entities.Identity.IndicatorPermission.None,
+                            _ => KPISolution.Models.Entities.Identity.IndicatorPermission.None
+                        }
+                    };
+                    await roleManager.CreateAsync(role);
                 }
             }
         }
@@ -79,7 +110,7 @@ namespace KPISolution.Data
         /// <summary>
         /// Seeds users with various roles
         /// </summary>
-        private static async Task<List<ApplicationUser>> SeedUsersAsync(UserManager<ApplicationUser> userManager, RoleManager<KpiRole> roleManager)
+        private static async Task<List<ApplicationUser>> SeedUsersAsync(UserManager<ApplicationUser> userManager, RoleManager<IndicatorRole> roleManager)
         {
             var users = new List<ApplicationUser>();
 
@@ -106,7 +137,7 @@ namespace KPISolution.Data
                 var result = await userManager.CreateAsync(admin, "Admin@123456");
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(admin, KpiAuthorizationPolicies.RoleNames.Administrator);
+                    await userManager.AddToRoleAsync(admin, "Administrator");
                     users.Add(admin);
                 }
             }
@@ -138,7 +169,7 @@ namespace KPISolution.Data
                 var result = await userManager.CreateAsync(executive, "Exec@123456");
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(executive, "Executive");
+                    await userManager.AddToRoleAsync(executive, "Manager");
                     users.Add(executive);
                 }
             }
@@ -180,8 +211,8 @@ namespace KPISolution.Data
                     var result = await userManager.CreateAsync(managerUser, "Manager@123");
                     if (result.Succeeded)
                     {
-                        await userManager.AddToRoleAsync(managerUser, KpiAuthorizationPolicies.RoleNames.Manager);
-                        await userManager.AddToRoleAsync(managerUser, "DepartmentAdmin");
+                        await userManager.AddToRoleAsync(managerUser, "Manager");
+                        await userManager.AddToRoleAsync(managerUser, "DepartmentManager");
                         users.Add(managerUser);
                     }
                 }
@@ -222,7 +253,7 @@ namespace KPISolution.Data
                     var result = await userManager.CreateAsync(analystUser, "Analyst@123");
                     if (result.Succeeded)
                     {
-                        await userManager.AddToRoleAsync(analystUser, "Analyst");
+                        await userManager.AddToRoleAsync(analystUser, "User");
                         users.Add(analystUser);
                     }
                 }
@@ -268,7 +299,7 @@ namespace KPISolution.Data
                     var result = await userManager.CreateAsync(user, "User@123");
                     if (result.Succeeded)
                     {
-                        await userManager.AddToRoleAsync(user, KpiAuthorizationPolicies.RoleNames.User);
+                        await userManager.AddToRoleAsync(user, "User");
                         users.Add(user);
                     }
                 }

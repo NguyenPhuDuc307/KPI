@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace KPISolution.Services.Email
 {
@@ -25,9 +24,9 @@ namespace KPISolution.Services.Email
             ILogger<EmailSender> logger,
             IHostEnvironment environment)
         {
-            _smtpSettings = smtpSettings.Value;
-            _logger = logger;
-            _environment = environment;
+            this._smtpSettings = smtpSettings.Value;
+            this._logger = logger;
+            this._environment = environment;
         }
 
         /// <inheritdoc/>
@@ -36,16 +35,16 @@ namespace KPISolution.Services.Email
             try
             {
                 // In development environment, only log the email instead of sending it
-                if (_environment.IsDevelopment())
+                if (this._environment.IsDevelopment())
                 {
-                    _logger.LogInformation("DEVELOPMENT MODE - Email would be sent to {Email} with subject '{Subject}'", email, subject);
-                    _logger.LogDebug("Email content: {Content}", message);
+                    this._logger.LogInformation("DEVELOPMENT MODE - Email would be sent to {Email} with subject '{Subject}'", email, subject);
+                    this._logger.LogDebug("Email content: {Content}", message);
                     return; // Skip actual sending in development
                 }
 
                 var mail = new MailMessage
                 {
-                    From = new MailAddress(_smtpSettings.SenderEmail, _smtpSettings.SenderName),
+                    From = new MailAddress(this._smtpSettings.SenderEmail, this._smtpSettings.SenderName),
                     Subject = subject,
                     Body = message,
                     IsBodyHtml = true
@@ -53,21 +52,21 @@ namespace KPISolution.Services.Email
 
                 mail.To.Add(new MailAddress(email));
 
-                using (var client = new SmtpClient(_smtpSettings.Server, _smtpSettings.Port))
+                using (var client = new SmtpClient(this._smtpSettings.Server, this._smtpSettings.Port))
                 {
-                    client.Credentials = new NetworkCredential(_smtpSettings.Username, _smtpSettings.Password);
-                    client.EnableSsl = _smtpSettings.UseSsl;
+                    client.Credentials = new NetworkCredential(this._smtpSettings.Username, this._smtpSettings.Password);
+                    client.EnableSsl = this._smtpSettings.UseSsl;
 
                     await client.SendMailAsync(mail);
-                    _logger.LogInformation("Email sent successfully to {Email} with subject '{Subject}'", email, subject);
+                    this._logger.LogInformation("Email sent successfully to {Email} with subject '{Subject}'", email, subject);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send email to {Email} with subject '{Subject}' - This is non-critical in development mode", email, subject);
+                this._logger.LogError(ex, "Failed to send email to {Email} with subject '{Subject}' - This is non-critical in development mode", email, subject);
 
                 // Don't rethrow in development environment to allow registration/password reset to continue
-                if (!_environment.IsDevelopment())
+                if (!this._environment.IsDevelopment())
                 {
                     throw;
                 }
@@ -89,7 +88,7 @@ namespace KPISolution.Services.Email
                     <style>
                         body {{ font-family: Arial, sans-serif; color: #333; }}
                         .container {{ padding: 20px; }}
-                        .button {{ background-color: #4CAF50; border: none; color: white; padding: 10px 20px; text-align: center; 
+                        .button {{ background-color: #4CAF50; border: none; color: white; padding: 10px 20px; text-align: center;
                                   text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 4px; }}
                     </style>
                 </head>
@@ -106,7 +105,7 @@ namespace KPISolution.Services.Email
                 </body>
                 </html>";
 
-            await SendEmailAsync(email, subject, message);
+            await this.SendEmailAsync(email, subject, message);
         }
 
         /// <summary>
@@ -124,7 +123,7 @@ namespace KPISolution.Services.Email
                     <style>
                         body {{ font-family: Arial, sans-serif; color: #333; }}
                         .container {{ padding: 20px; }}
-                        .button {{ background-color: #4CAF50; border: none; color: white; padding: 10px 20px; text-align: center; 
+                        .button {{ background-color: #4CAF50; border: none; color: white; padding: 10px 20px; text-align: center;
                                   text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 4px; }}
                     </style>
                 </head>
@@ -142,7 +141,7 @@ namespace KPISolution.Services.Email
                 </body>
                 </html>";
 
-            await SendEmailAsync(email, subject, message);
+            await this.SendEmailAsync(email, subject, message);
         }
 
         /// <summary>
@@ -175,7 +174,7 @@ namespace KPISolution.Services.Email
                 </body>
                 </html>";
 
-            await SendEmailAsync(email, subject, htmlMessage);
+            await this.SendEmailAsync(email, subject, htmlMessage);
         }
     }
 }

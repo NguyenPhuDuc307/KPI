@@ -1,4 +1,5 @@
-@model KPISolution.Models.ViewModels.Department.DepartmentViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model DepartmentViewModel
 
 @{
     ViewData["Title"] = "Xóa phòng ban";
@@ -11,7 +12,8 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-                    <li class="breadcrumb-item"><a asp-controller="Department" asp-action="Index">Quản lý phòng ban</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Department" asp-action="Index">Quản lý phòng ban</a>
+                    </li>
                     <li class="breadcrumb-item active" aria-current="page">Xóa</li>
                 </ol>
             </nav>
@@ -32,22 +34,27 @@
                     <div>
                         <h5 class="alert-heading">Cảnh báo!</h5>
                         <p>Bạn có chắc chắn muốn xóa phòng ban này? Hành động này không thể hoàn tác.</p>
-                        @if (Model.EmployeeCount > 0 || Model.KpiCount > 0)
+                        @if (Model.EmployeeCount > 0 || Model.IndicatorCount > 0)
                         {
+                            <div class="alert alert-warning" role="alert">
+                                <h4 class="alert-heading">Cảnh báo!</h4>
+                                <p>Phòng ban này đang được sử dụng.</p>
                                 <hr>
-                                <p class="mb-0">
-                                    <strong>Thông tin liên quan:</strong><br />
+                                <ul>
                                     @if (Model.EmployeeCount > 0)
                                     {
-                                            <span class="text-danger">- Có @Model.EmployeeCount nhân viên thuộc phòng ban này.</span>
-                                
-                                            <br />
+                                        <li><span class="text-danger">- Có @Model.EmployeeCount nhân viên thuộc phòng ban
+                                                này.</span></li>
                                     }
-                                    @if (Model.KpiCount > 0)
+                                    @if (Model.IndicatorCount > 0)
                                     {
-                                            <span class="text-danger">- Có @Model.KpiCount KPI thuộc phòng ban này.</span>
+                                        <li><span class="text-danger">- Có @Model.IndicatorCount Indicator thuộc phòng ban
+                                                này.</span></li>
                                     }
-                                </p>
+                                </ul>
+                                <p class="mb-0">Bạn cần phân công nhân viên và chuyển các Indicator sang phòng ban khác
+                                    trước khi xóa.</p>
+                            </div>
                         }
                     </div>
                 </div>
@@ -67,7 +74,8 @@
                         </tr>
                         <tr>
                             <th>Phòng ban cha</th>
-                            <td>@(string.IsNullOrEmpty(Model.ParentDepartmentName) ? "Không có" : Model.ParentDepartmentName)</td>
+                            <td>@(string.IsNullOrEmpty(Model.ParentDepartmentName) ? "Không có" :
+                                                                Model.ParentDepartmentName)</td>
                         </tr>
                         <tr>
                             <th>Quản lý</th>
@@ -78,11 +86,11 @@
                             <td>
                                 @if (Model.Status == "Active")
                                 {
-                                        <span class="badge bg-success">Hoạt động</span>
+                                    <span class="badge bg-success">Hoạt động</span>
                                 }
                                 else
                                 {
-                                        <span class="badge bg-danger">Không hoạt động</span>
+                                    <span class="badge bg-danger">Không hoạt động</span>
                                 }
                             </td>
                         </tr>
@@ -91,8 +99,8 @@
                             <td><span class="badge bg-info text-dark">@Model.EmployeeCount</span></td>
                         </tr>
                         <tr>
-                            <th>Số lượng KPI</th>
-                            <td><span class="badge bg-primary">@Model.KpiCount</span></td>
+                            <th>Số lượng Indicator</th>
+                            <td><span class="badge bg-primary">@Model.IndicatorCount</span></td>
                         </tr>
                     </table>
                 </div>
@@ -111,4 +119,4 @@
             </form>
         </div>
     </div>
-</div> 
+</div>

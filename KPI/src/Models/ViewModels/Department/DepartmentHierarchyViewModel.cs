@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-
 namespace KPISolution.Models.ViewModels.Department
 {
     /// <summary>
@@ -18,7 +14,7 @@ namespace KPISolution.Models.ViewModels.Department
         /// Gets or sets the department name.
         /// </summary>
         [Display(Name = "Department")]
-        public string DepartmentName { get; set; }
+        public string DepartmentName { get; init; }
 
         /// <summary>
         /// Gets or sets the parent department ID.
@@ -30,13 +26,13 @@ namespace KPISolution.Models.ViewModels.Department
         /// Gets or sets the parent department name.
         /// </summary>
         [Display(Name = "Parent Department")]
-        public string ParentDepartmentName { get; set; }
+        public string ParentDepartmentName { get; init; }
 
         /// <summary>
         /// Gets or sets the department level in the hierarchy.
         /// </summary>
         [Display(Name = "Hierarchy Level")]
-        public int HierarchyLevel { get; set; }
+        public int HierarchyLevel { get; init; }
 
         /// <summary>
         /// Gets or sets the department head information.
@@ -48,13 +44,13 @@ namespace KPISolution.Models.ViewModels.Department
         /// Gets or sets the list of child departments.
         /// </summary>
         [Display(Name = "Child Departments")]
-        public List<DepartmentHierarchyViewModel> ChildDepartments { get; set; }
+        public List<DepartmentHierarchyViewModel> ChildDepartments { get; init; }
 
         /// <summary>
         /// Gets or sets the department path from root.
         /// </summary>
         [Display(Name = "Department Path")]
-        public string DepartmentPath { get; set; }
+        public string DepartmentPath { get; init; }
 
         /// <summary>
         /// Gets or sets whether this department has children.
@@ -71,7 +67,7 @@ namespace KPISolution.Models.ViewModels.Department
         /// Gets or sets the creation date of the department.
         /// </summary>
         [Display(Name = "Created Date")]
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedDate { get; init; }
 
         /// <summary>
         /// Gets or sets the last modified date of the department.
@@ -89,21 +85,21 @@ namespace KPISolution.Models.ViewModels.Department
         /// Gets or sets the department description.
         /// </summary>
         [Display(Name = "Description")]
-        public string Description { get; set; }
+        public string Description { get; init; }
 
         /// <summary>
         /// Initializes a new instance of the DepartmentHierarchyViewModel class.
         /// </summary>
         public DepartmentHierarchyViewModel()
         {
-            DepartmentName = string.Empty;
-            ParentDepartmentName = string.Empty;
-            DepartmentHead = string.Empty;
-            DepartmentPath = string.Empty;
-            Description = string.Empty;
-            ChildDepartments = new List<DepartmentHierarchyViewModel>();
-            HasChildren = false;
-            Status = "Active";
+            this.DepartmentName = string.Empty;
+            this.ParentDepartmentName = string.Empty;
+            this.DepartmentHead = string.Empty;
+            this.DepartmentPath = string.Empty;
+            this.Description = string.Empty;
+            this.ChildDepartments = [];
+            this.HasChildren = false;
+            this.Status = "Active";
         }
     }
 }

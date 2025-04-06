@@ -74,12 +74,14 @@ The project is organized into 10 phases covering the full spectrum of features:
 
 1. Clean architecture with separation of concerns
 2. Repository pattern for data access
-3. Dependency injection for services
-4. Comprehensive testing at all levels
-5. Detailed documentation (technical and user)
-6. Security best practices following OWASP guidelines
-7. Responsive design for all interfaces
-8. Internationalization support for Vietnamese language
+3. Unit of Work pattern for transaction management and coordinated data access
+4. Dependency injection for services
+5. Comprehensive testing at all levels
+6. Detailed documentation (technical and user)
+7. Security best practices following OWASP guidelines
+8. Responsive design for all interfaces
+9. Internationalization support for Vietnamese language
+10. Consistent use of design patterns across controllers and repositories
 
 ## Current Development Progress
 

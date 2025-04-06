@@ -1,24 +1,8 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using KPISolution.Data.Repositories.Interfaces;
-using KPISolution.Models.ViewModels.Dashboard;
-using KPISolution.Models.Entities.KPI;
-using KPISolution.Models.Entities.CSF;
-using KPISolution.Models.Entities.Organization;
-using KPISolution.Models.Entities.Dashboard;
-using KPISolution.Models.Enums;
-using KPISolution.Authorization;
-
+using System.Security.Claims;
 namespace KPISolution.Controllers
 {
     /// <summary>
-    /// Controller responsible for managing different types of dashboards including executive, 
+    /// Controller responsible for managing different types of dashboards including executive,
     /// department-specific, and custom user dashboards.
     /// </summary>
     [Authorize]
@@ -26,18 +10,22 @@ namespace KPISolution.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<DashboardController> _logger;
+        private readonly IMapper _mapper;
 
         /// <summary>
         /// Initializes a new instance of the DashboardController.
         /// </summary>
         /// <param name="unitOfWork">Unit of work for data access</param>
         /// <param name="logger">Logger for the DashboardController</param>
+        /// <param name="mapper">Mapper for object mapping</param>
         public DashboardController(
             IUnitOfWork unitOfWork,
-            ILogger<DashboardController> logger)
+            ILogger<DashboardController> logger,
+            IMapper mapper)
         {
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         /// <summary>
@@ -51,34 +39,39 @@ namespace KPISolution.Controllers
             try
             {
                 // Store the pagination parameters for use in the view
-                ViewBag.DepartmentPage = departmentPage;
-                ViewBag.KriPage = kriPage;
+                this.ViewBag.DepartmentPage = departmentPage;
+                this.ViewBag.KriPage = kriPage;
 
                 // Create view model
                 var viewModel = new ExecutiveDashboardViewModel
                 {
                     Title = "Bảng điều khiển điều hành",
-                    LastUpdated = DateTime.Now
+                    LastUpdated = DateTime.Now,
+                    DepartmentPage = departmentPage,
+                    KriPage = kriPage
                 };
 
-                _logger.LogInformation("Loading executive dashboard");
+                this._logger.LogInformation("Loading executive dashboard");
 
-                // Get KRIs and populate KRI summaries
-                var kris = await _unitOfWork.KRIs.GetAllAsync();
-                viewModel.KriSummaries = kris.Select(k => new KpiSummaryViewModel
+                // Get KRIs (ResultIndicators with IsKey = true) and populate KRI summaries
+                var kris = await this._unitOfWork.ResultIndicators.GetAllAsync(r => r.IsKey); // Use ResultIndicators and filter by IsKey
+                viewModel.KriSummaries = kris.Select(k => new ExecutiveIndicatorSummaryViewModel
                 {
                     Id = k.Id,
-                    Name = k.Name ?? string.Empty,
+                    Name = k.Name ?? "Unnamed KRI",
                     Code = k.Code ?? string.Empty,
                     TargetValue = k.TargetValue,
-                    MeasurementUnit = k.Unit ?? string.Empty,
-                    Department = k.Department ?? string.Empty,
-                    Status = k.Status
+                    CurrentValue = k.CurrentValue,
+                    MeasurementUnit = k.Unit.ToString(),
+                    Status = k.Status,
+                    Department = k.Department?.Name ?? "Unassigned",
+                    StatusCssClass = this.GetStatusCssClass(k.Status),
+                    StatusDisplay = this.GetStatusDisplay(k.Status)
                 }).ToList();
 
-                // Get CSFs and populate CSF summaries
-                var csfs = await _unitOfWork.CriticalSuccessFactors.GetAllAsync();
-                viewModel.CsfSummaries = csfs.Select(c => new CsfSummaryViewModel
+                // Get CSFs (SuccessFactors with IsCritical = true) and populate CSF summaries
+                var csfs = await this._unitOfWork.SuccessFactors.GetAllAsync(sf => sf.IsCritical);
+                viewModel.SuccessFactorSummaries = csfs.Select(c => new ExecutiveSuccessFactorSummaryViewModel
                 {
                     Id = c.Id,
                     Name = c.Name,
@@ -86,107 +79,187 @@ namespace KPISolution.Controllers
                     ProgressPercentage = c.ProgressPercentage
                 }).ToList();
 
-                // Get departments and create performance metrics by department
-                var departments = await _unitOfWork.Departments.GetAllAsync();
-                viewModel.PerformanceByDepartment = departments.Select(d => new DepartmentPerformanceViewModel
-                {
-                    DepartmentId = d.Id,
-                    Name = d.Name
-                }).ToList();
+                // Lấy tất cả các phòng ban
+                var departments = await this._unitOfWork.Departments.GetAllAsync();
+                viewModel.PerformanceByDepartment = [];
 
-                // Calculate statistics
-                viewModel.TotalKpiCount = viewModel.KriSummaries.Count;
-
-                // Count KPIs by status
-                foreach (KpiStatus status in Enum.GetValues(typeof(KpiStatus)))
+                // Duyệt qua từng phòng ban và lấy thông tin hiệu suất
+                foreach (var department in departments)
                 {
-                    viewModel.KpisByStatus[status] = viewModel.KriSummaries.Count(k => k.Status == status);
+                    // Lấy tất cả chỉ số của phòng ban
+                    var departmentPIs = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => pi.DepartmentId == department.Id);
+                    var departmentRIs = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => ri.DepartmentId == department.Id);
+
+                    // Kết hợp danh sách chỉ số
+                    var allIndicators = new List<BaseEntity>();
+                    allIndicators.AddRange(departmentPIs);
+                    allIndicators.AddRange(departmentRIs);
+
+                    // Đếm số lượng chỉ số đang có vấn đề (ở trạng thái AtRisk hoặc BelowTarget)
+                    int atRiskCount = allIndicators.Count(i =>
+                        (i is PerformanceIndicator pi && (pi.Status == IndicatorStatus.AtRisk || pi.Status == IndicatorStatus.BelowTarget)) ||
+                        (i is ResultIndicator ri && (ri.Status == IndicatorStatus.AtRisk || ri.Status == IndicatorStatus.BelowTarget))
+                    );
+
+                    // Đếm số lượng chỉ số đạt mục tiêu
+                    int onTargetCount = allIndicators.Count(i =>
+                        (i is PerformanceIndicator pi && pi.Status == IndicatorStatus.OnTarget) ||
+                        (i is ResultIndicator ri && ri.Status == IndicatorStatus.OnTarget)
+                    );
+
+                    // Tính phần trăm hiệu suất dựa trên số lượng chỉ số đạt mục tiêu
+                    int performancePercentage = allIndicators.Count > 0
+                        ? (int)Math.Round((double)onTargetCount / allIndicators.Count * 100)
+                        : 0;
+
+                    // Thêm thông tin hiệu suất phòng ban vào danh sách
+                    viewModel.PerformanceByDepartment.Add(new DepartmentPerformanceViewModel
+                    {
+                        DepartmentId = department.Id,
+                        DepartmentName = department.Name,
+                        PerformanceScore = performancePercentage,
+                        TargetAchievementRate = allIndicators.Count > 0
+                            ? (decimal)onTargetCount / allIndicators.Count * 100
+                            : 0,
+                        CompletionRate = performancePercentage,
+                        TotalIndicators = allIndicators.Count,
+                        IndicatorsOnTarget = onTargetCount,
+                        IndicatorsBelowTarget = atRiskCount,
+                        LastUpdated = DateTime.Now
+                    });
                 }
 
-                // Add hierarchy structure counts from database
-                var objectives = await _unitOfWork.BusinessObjectives.GetAllAsync();
-                var successFactors = await _unitOfWork.SuccessFactors.GetAllAsync();
-                var criticalSuccessFactors = await _unitOfWork.CriticalSuccessFactors.GetAllAsync();
-                var pis = await _unitOfWork.PIs.GetAllAsync();
-                var ris = await _unitOfWork.RIs.GetAllAsync();
-                var keyResultIndicators = await _unitOfWork.KRIs.GetAllAsync();
-
-                // Populate hierarchy counts
+                // Lấy tất cả các Objectives từ database
+                var objectives = await this._unitOfWork.Objectives.GetAllAsync();
                 viewModel.ObjectiveCount = objectives.Count();
-                viewModel.SfCount = successFactors.Count();
-                viewModel.CsfCount = criticalSuccessFactors.Count();
-                viewModel.IndicatorCount = pis.Count() + ris.Count();
-                viewModel.KeyIndicatorCount = keyResultIndicators.Count();
 
-                // If no data exists, provide sample data for display
-                if (viewModel.ObjectiveCount == 0) viewModel.ObjectiveCount = 8;
-                if (viewModel.SfCount == 0) viewModel.SfCount = 8;
-                if (viewModel.CsfCount == 0) viewModel.CsfCount = 6;
-                if (viewModel.IndicatorCount == 0) viewModel.IndicatorCount = 72;
-                if (viewModel.KeyIndicatorCount == 0) viewModel.KeyIndicatorCount = 144;
-
-                // For KPI status cards, use a different count than the hierarchy display
-                // This separates hierarchy item counts from KPI status counts
-                if (viewModel.TotalKpiCount == 0)
+                // Lấy chi tiết từng Objective và điền vào ObjectiveSummaries
+                viewModel.ObjectiveSummaries = [];
+                foreach (var objective in objectives)
                 {
-                    // The TotalKpiCount value will be used in the status summary cards
-                    viewModel.TotalKpiCount = 144;
+                    var objectiveSuccessFactors = await this._unitOfWork.SuccessFactors.GetAllAsync(sf => sf.ObjectiveId == objective.Id);
+                    var objectiveCriticalSuccessFactors = objectiveSuccessFactors.Where(sf => sf.IsCritical).ToList();
 
-                    // Add sample data for KPI status chart
-                    viewModel.KpisByStatus[KpiStatus.OnTarget] = 60;
-                    viewModel.KpisByStatus[KpiStatus.AtRisk] = 24;
-                    viewModel.KpisByStatus[KpiStatus.BelowTarget] = 24;
-                    viewModel.KpisByStatus[KpiStatus.Active] = 15;
-                    viewModel.KpisByStatus[KpiStatus.Draft] = 13;
-                    viewModel.KpisByStatus[KpiStatus.UnderReview] = 8;
+                    // Đếm số lượng KPI liên quan đến Objective này
+                    var allKpis = new List<BaseEntity>();
+                    foreach (var sf in objectiveSuccessFactors)
+                    {
+                        var indicators = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => ri.SuccessFactorId == sf.Id);
+                        allKpis.AddRange(indicators);
+                    }
+
+                    // Tính toán tiến độ dựa trên trung bình của tiến độ các success factor
+                    int progress = objectiveSuccessFactors.Any()
+                        ? (int)Math.Round(objectiveSuccessFactors.Average(sf => sf.ProgressPercentage))
+                        : 0;
+
+                    // Xác định CSS class dựa trên tiến độ
+                    string progressCssClass = progress switch
+                    {
+                        >= 80 => "bg-success",
+                        >= 60 => "bg-warning",
+                        >= 40 => "bg-info",
+                        _ => "bg-danger"
+                    };
+
+                    // Lấy tên phòng ban
+                    string departmentName = "Chưa phân bổ";
+                    if (objective.DepartmentId.HasValue)
+                    {
+                        var department = await this._unitOfWork.Departments.GetByIdAsync(objective.DepartmentId.Value);
+                        if (department != null)
+                        {
+                            departmentName = department.Name;
+                        }
+                    }
+
+                    viewModel.ObjectiveSummaries.Add(new ObjectiveSummaryViewModel
+                    {
+                        Id = objective.Id,
+                        Name = objective.Name,
+                        DepartmentName = departmentName,
+                        ProgressPercentage = progress,
+                        ProgressCssClass = progressCssClass,
+                        SuccessFactorCount = objectiveSuccessFactors.Count(),
+                        CriticalSuccessFactorCount = objectiveCriticalSuccessFactors.Count(),
+                        IndicatorCount = allKpis.Count()
+                    });
                 }
 
-                // Calculate the OnTargetPercentage based on the sample data
-                viewModel.OnTargetPercentage = viewModel.TotalKpiCount > 0 && viewModel.KpisByStatus.ContainsKey(KpiStatus.OnTarget)
-                    ? (decimal)viewModel.KpisByStatus[KpiStatus.OnTarget] / viewModel.TotalKpiCount * 100
+                // Lấy tất cả các Success Factors từ database
+                var successFactors = await this._unitOfWork.SuccessFactors.GetAllAsync();
+                viewModel.SuccessFactorCount = successFactors.Count();
+
+                // Lấy tất cả Critical Success Factors (Success Factors có IsCritical = true)
+                var criticalSuccessFactors = await this._unitOfWork.SuccessFactors.GetAllAsync(sf => sf.IsCritical);
+                viewModel.SuccessFactorCount = criticalSuccessFactors.Count();
+
+                // Lấy tất cả Performance Indicators và Result Indicators
+                var pis = await this._unitOfWork.PerformanceIndicators.GetAllAsync();
+                var ris = await this._unitOfWork.ResultIndicators.GetAllAsync();
+                viewModel.IndicatorCount = pis.Count() + ris.Count();
+
+                // Lấy tất cả Key Result Indicators (Result Indicators có IsKey = true)
+                var keyResultIndicators = await this._unitOfWork.ResultIndicators.GetAllAsync(r => r.IsKey);
+                viewModel.KeyIndicatorCount = keyResultIndicators.Count() + pis.Count(p => p.IsKey);
+
+                // Tính tổng số KPIs/KRIs
+                viewModel.TotalIndicatorCount = viewModel.KeyIndicatorCount;
+
+                // Đếm số lượng KPIs theo trạng thái
+                foreach (IndicatorStatus status in Enum.GetValues(typeof(IndicatorStatus)))
+                {
+                    int statusCount =
+                        pis.Count(pi => pi.IsKey && pi.Status == status) +
+                        keyResultIndicators.Count(ri => ri.Status == status);
+
+                    viewModel.IndicatorsByStatus[status] = statusCount;
+                }
+
+                // Tính phần trăm chỉ số đạt mục tiêu
+                viewModel.OnTargetPercentage = viewModel.TotalIndicatorCount > 0 && viewModel.IndicatorsByStatus.ContainsKey(IndicatorStatus.OnTarget)
+                    ? (decimal)viewModel.IndicatorsByStatus[IndicatorStatus.OnTarget] / viewModel.TotalIndicatorCount * 100
                     : 0;
 
-                // Thêm dữ liệu mẫu cho hiệu suất theo phòng ban nếu không có dữ liệu
-                if (!viewModel.PerformanceByDepartment.Any() || viewModel.PerformanceByDepartment.All(d => d.KpiCount == 0))
-                {
-                    viewModel.PerformanceByDepartment.Clear();
+                // Các repository Alerts và MeasurementUpdates chưa được định nghĩa trong IUnitOfWork
+                // Tạm thời sử dụng dữ liệu mẫu cho phần alerts và updates
+                viewModel.AlertsRequiringAttention =
+                [
+                    new IndicatorAlertViewModel
+                    {
+                        Id = Guid.NewGuid(),
+                        IndicatorId = Guid.NewGuid(),
+                        IndicatorName = "KPI-001: Tỷ lệ đơn hàng đúng hạn",
+                        Message = "Tỷ lệ đơn hàng đúng hạn giảm xuống dưới 85%, cần kiểm tra ngay",
+                        Severity = AlertSeverity.Critical,
+                        SeverityDisplay = "Nghiêm trọng",
+                        SeverityCssClass = "text-danger",
+                        CreatedOn = DateTime.Now.AddDays(-2)
+                    }
+                ];
 
-                    // Thêm các phòng ban mẫu với dữ liệu hiệu suất
-                    AddSampleDepartment(viewModel, "IT", 85, 12, 1);
-                    AddSampleDepartment(viewModel, "HR", 72, 8, 2);
-                    AddSampleDepartment(viewModel, "Finance", 91, 10, 0);
-                    AddSampleDepartment(viewModel, "Marketing", 68, 7, 2);
-                    AddSampleDepartment(viewModel, "Operations", 79, 15, 3);
-                    AddSampleDepartment(viewModel, "Sales", 88, 9, 1);
-                    AddSampleDepartment(viewModel, "Legal", 94, 4, 0);
-                    AddSampleDepartment(viewModel, "R&D", 82, 6, 1);
-                    AddSampleDepartment(viewModel, "Customer Service", 75, 8, 2);
-                    AddSampleDepartment(viewModel, "Quality Assurance", 89, 5, 0);
-                }
+                viewModel.RecentUpdates =
+                [
+                    new IndicatorUpdateViewModel
+                    {
+                        IndicatorId = Guid.NewGuid(),
+                        IndicatorName = "KPI-005: Chỉ số hài lòng khách hàng",
+                        PreviousValue = 85,
+                        NewValue = 92,
+                        PercentageChange = 7,
+                        ChangeCssClass = "text-success",
+                        UpdatedAt = DateTime.Now.AddDays(-7),
+                        UpdatedBy = "system"
+                    }
+                ];
 
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading executive dashboard");
+                this._logger.LogError(ex, "Error loading executive dashboard");
                 return View("Error");
             }
-        }
-
-        /// <summary>
-        /// Helper method to add sample department data
-        /// </summary>
-        private void AddSampleDepartment(ExecutiveDashboardViewModel viewModel, string name, int performance, int kpiCount, int atRiskCount)
-        {
-            viewModel.PerformanceByDepartment.Add(new DepartmentPerformanceViewModel
-            {
-                DepartmentId = Guid.NewGuid(),
-                Name = name,
-                PerformancePercentage = performance,
-                KpiCount = kpiCount,
-                AtRiskCount = atRiskCount,
-                PerformanceCssClass = performance > 80 ? "bg-success" : (performance > 60 ? "bg-warning" : "bg-danger")
-            });
         }
 
         /// <summary>
@@ -199,40 +272,16 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Loading department dashboard for department {DepartmentId}", id);
+                this._logger.LogInformation("Loading department dashboard for department {DepartmentId}", id);
 
                 // Get the department
-                var department = await _unitOfWork.Departments.GetByIdAsync(id);
+                var department = await this._unitOfWork.Departments.GetByIdAsync(id);
 
-                // Nếu không tìm thấy phòng ban, tạo phòng ban mẫu với ID đã cho
                 if (department == null)
                 {
-                    _logger.LogWarning("Department not found with ID {DepartmentId}. Creating sample department.", id);
-
-                    department = new Department
-                    {
-                        Id = id,
-                        Name = "IT Department",
-                        Code = "IT",
-                        Description = "Information Technology Department",
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow,
-                        CreatedBy = "system",
-                        UpdatedAt = DateTime.UtcNow,
-                        UpdatedBy = "system",
-                        HierarchyLevel = 0
-                    };
-
-                    // Không lưu vào DB để tránh ảnh hưởng dữ liệu thật, chỉ dùng làm dữ liệu tạm thời
+                    this._logger.LogWarning("Department not found with ID {DepartmentId}.", id);
+                    return this.NotFound();
                 }
-
-                // Tạm bỏ kiểm tra quyền truy cập
-                // if (!await UserHasAccessToDepartment(User, id))
-                // {
-                //     _logger.LogWarning("User {UserId} attempted to access unauthorized department {DepartmentId}",
-                //         User.Identity?.Name ?? "unknown", id);
-                //     return Forbid();
-                // }
 
                 // Create the view model
                 var viewModel = new DepartmentDashboardViewModel
@@ -242,103 +291,45 @@ namespace KPISolution.Controllers
                     LastUpdated = DateTime.UtcNow
                 };
 
-                // Get KPIs for this department - using department name
-                var allKpis = new List<KpiBase>();
+                // Fetch PIs belonging to this department
+                var pisForDepartment = await this._unitOfWork.PerformanceIndicators
+                    .GetAllAsync(p => p.DepartmentId == id);
 
-                // Tìm KPI cho phòng ban này hoặc tạo dữ liệu mẫu nếu không có
-                var kris = await _unitOfWork.KRIs.GetAllAsync(k => k.Department == department.Name);
-                var pis = await _unitOfWork.PIs.GetAllAsync(p => p.Department == department.Name);
-                var ris = await _unitOfWork.RIs.GetAllAsync(r => r.Department == department.Name);
+                // Fetch RIs using Include/ThenInclude on the IQueryable returned by GetAll()
+                var risForDepartment = await this._unitOfWork.ResultIndicators.GetAll() // Assuming GetAll() returns IQueryable<ResultIndicator>
+                    .Include(r => r.SuccessFactor)
+                        .ThenInclude(sf => sf != null ? sf.Objective : null) // Safe navigation for ThenInclude
+                            .ThenInclude(o => o != null ? o.Department : null) // Safe navigation for ThenInclude
+                    .Where(r => r.SuccessFactor != null && r.SuccessFactor.Objective != null && r.SuccessFactor.Objective.DepartmentId == id)
+                    .ToListAsync();
 
-                allKpis.AddRange(kris);
-                allKpis.AddRange(pis);
-                allKpis.AddRange(ris);
+                // Combine the lists
+                var allKpisForDepartment = new List<BaseEntity>();
+                allKpisForDepartment.AddRange(pisForDepartment);
+                allKpisForDepartment.AddRange(risForDepartment);
 
-                // Nếu không có KPI nào, tạo dữ liệu mẫu
-                if (!allKpis.Any())
-                {
-                    // Thêm một số KPI mẫu làm mẫu (không gán CurrentValue trực tiếp)
-                    var systemUptimeKpi = new KRI
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "System Uptime",
-                        Code = "KRI-01",
-                        Department = department.Name,
-                        TargetValue = 99.9M,
-                        Unit = "%",
-                        Status = KpiStatus.OnTarget
-                    };
-
-                    var projectDeliveryKpi = new KRI
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Project Delivery",
-                        Code = "KRI-02",
-                        Department = department.Name,
-                        TargetValue = 95M,
-                        Unit = "%",
-                        Status = KpiStatus.AtRisk
-                    };
-
-                    var customerSatisfactionKpi = new PI
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Customer Satisfaction",
-                        Code = "PI-01",
-                        Department = department.Name,
-                        TargetValue = 4.5M,
-                        Unit = "points",
-                        Status = KpiStatus.OnTarget
-                    };
-
-                    allKpis.Add(systemUptimeKpi);
-                    allKpis.Add(projectDeliveryKpi);
-                    allKpis.Add(customerSatisfactionKpi);
-                }
-
-                // Populate KPI summaries
-                viewModel.KpiSummaries = allKpis.Select(k => new KpiSummaryViewModel
+                // Populate KPI summaries - Handle Department based on type
+                viewModel.KpiSummaries = allKpisForDepartment.Select(k => new IndicatorSummaryViewModel
                 {
                     Id = k.Id,
-                    Name = k.Name ?? string.Empty,
-                    Code = k.Code ?? string.Empty,
-                    TargetValue = k.TargetValue,
-                    // Sử dụng giá trị cứng cho CurrentValue chỉ với mục đích hiển thị
-                    CurrentValue = k.Status == KpiStatus.OnTarget ? k.TargetValue :
-                                  (k.Status == KpiStatus.AtRisk ? k.TargetValue * 0.8M : k.TargetValue * 0.5M),
-                    MeasurementUnit = k.Unit ?? string.Empty,
-                    Status = k.Status,
-                    StatusCssClass = GetStatusCssClass(k.Status),
-                    StatusDisplay = GetStatusDisplay(k.Status)
+                    Name = k is PerformanceIndicator pi ? pi.Name : (k is ResultIndicator ri ? ri.Name : "Unknown Indicator"),
+                    Code = k is PerformanceIndicator pi_c ? pi_c.Code : (k is ResultIndicator ri_c ? ri_c.Code : string.Empty),
+                    TargetValue = k is PerformanceIndicator pi_t ? pi_t.TargetValue : (k is ResultIndicator ri_t ? ri_t.TargetValue : null),
+                    // Handle CurrentValue similarly if needed based on type
+                    CurrentValue = k is PerformanceIndicator pi_cv ? pi_cv.CurrentValue : (k is ResultIndicator ri_cv ? ri_cv.CurrentValue : null), // Example: assuming CurrentValue exists on both
+                    MeasurementUnit = (k is PerformanceIndicator pi_u ? pi_u.Unit : (k is ResultIndicator ri_u ? ri_u.Unit : null))?.ToString() ?? string.Empty, // Safely call ToString()
+                    Status = k is PerformanceIndicator pi_s ? pi_s.Status : (k is ResultIndicator ri_s ? ri_s.Status : IndicatorStatus.Draft), // Example default
+                    // Get Department Name based on type
+                    Department = (k is PerformanceIndicator pi_d ? pi_d.Department?.Name : (k is ResultIndicator ri_d ? ri_d.SuccessFactor?.Objective?.Department?.Name : string.Empty)) ?? string.Empty, // Ensure non-null
+                    StatusCssClass = this.GetStatusCssClass(k is PerformanceIndicator pi_sc ? pi_sc.Status : (k is ResultIndicator ri_sc ? ri_sc.Status : IndicatorStatus.Draft)),
+                    StatusDisplay = this.GetStatusDisplay(k is PerformanceIndicator pi_sd ? pi_sd.Status : (k is ResultIndicator ri_sd ? ri_sd.Status : IndicatorStatus.Draft))
                 }).ToList();
 
                 // Get CSFs linked to this department
-                var csfsByDepartment = await _unitOfWork.CriticalSuccessFactors.GetAllAsync(c => c.Department != null && c.Department.Name == department.Name);
+                var csfsByDepartment = await this._unitOfWork.SuccessFactors
+                     .GetAllAsync(c => c.IsCritical && c.DepartmentId == id);
 
-                // Nếu không có CSF nào, thêm dữ liệu mẫu
-                if (!csfsByDepartment.Any())
-                {
-                    // Thêm CSF mẫu
-                    csfsByDepartment = new List<CriticalSuccessFactor>
-                    {
-                        new CriticalSuccessFactor
-                        {
-                            Id = Guid.NewGuid(),
-                            Name = "Technical Excellence",
-                            Code = "CSF-01",
-                            ProgressPercentage = 85
-                        },
-                        new CriticalSuccessFactor
-                        {
-                            Id = Guid.NewGuid(),
-                            Name = "Customer Focus",
-                            Code = "CSF-02",
-                            ProgressPercentage = 72
-                        }
-                    };
-                }
-
-                viewModel.LinkedCsfs = csfsByDepartment.Select(c => new CsfSummaryViewModel
+                viewModel.LinkedSuccessFactors = csfsByDepartment.Select(c => new SuccessFactorSummaryViewModel
                 {
                     Id = c.Id,
                     Name = c.Name ?? string.Empty,
@@ -349,10 +340,10 @@ namespace KPISolution.Controllers
                 }).ToList();
 
                 // Calculate statistics
-                viewModel.TotalKpiCount = viewModel.KpiSummaries.Count;
-                viewModel.AtRiskKpiCount = viewModel.KpiSummaries.Count(k => k.Status == KpiStatus.AtRisk || k.Status == KpiStatus.BelowTarget);
-                viewModel.OnTargetPercentage = viewModel.TotalKpiCount > 0
-                    ? (decimal)viewModel.KpiSummaries.Count(k => k.Status == KpiStatus.OnTarget) / viewModel.TotalKpiCount * 100
+                viewModel.TotalIndicatorCount = viewModel.KpiSummaries.Count;
+                viewModel.AtRiskIndicatorCount = viewModel.KpiSummaries.Count(k => k.Status == IndicatorStatus.AtRisk || k.Status == IndicatorStatus.BelowTarget);
+                viewModel.OnTargetPercentage = viewModel.TotalIndicatorCount > 0
+                    ? (decimal)viewModel.KpiSummaries.Count(k => k.Status == IndicatorStatus.OnTarget) / viewModel.TotalIndicatorCount * 100
                     : 0;
                 viewModel.OverallPerformance = viewModel.OnTargetPercentage;
                 viewModel.PerformanceCssClass = viewModel.OverallPerformance > 80 ? "bg-success" :
@@ -362,7 +353,7 @@ namespace KPISolution.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading department dashboard for department {DepartmentId}", id);
+                this._logger.LogError(ex, "Error loading department dashboard for department {DepartmentId}", id);
                 return View("Error");
             }
         }
@@ -370,16 +361,16 @@ namespace KPISolution.Controllers
         /// <summary>
         /// Helper method to get CSS class for status display
         /// </summary>
-        private string GetStatusCssClass(KpiStatus status)
+        private string GetStatusCssClass(IndicatorStatus status)
         {
             return status switch
             {
-                KpiStatus.OnTarget => "bg-success",
-                KpiStatus.AtRisk => "bg-warning",
-                KpiStatus.BelowTarget => "bg-danger",
-                KpiStatus.Active => "bg-primary",
-                KpiStatus.Draft => "bg-secondary",
-                KpiStatus.UnderReview => "bg-info",
+                IndicatorStatus.OnTarget => "bg-success",
+                IndicatorStatus.AtRisk => "bg-warning",
+                IndicatorStatus.BelowTarget => "bg-danger",
+                IndicatorStatus.Active => "bg-primary",
+                IndicatorStatus.Draft => "bg-secondary",
+                IndicatorStatus.UnderReview => "bg-info",
                 _ => "bg-secondary"
             };
         }
@@ -387,16 +378,16 @@ namespace KPISolution.Controllers
         /// <summary>
         /// Helper method to get display text for status
         /// </summary>
-        private string GetStatusDisplay(KpiStatus status)
+        private string GetStatusDisplay(IndicatorStatus status)
         {
             return status switch
             {
-                KpiStatus.OnTarget => "Đạt mục tiêu",
-                KpiStatus.AtRisk => "Cần chú ý",
-                KpiStatus.BelowTarget => "Không đạt",
-                KpiStatus.Active => "Hoạt động",
-                KpiStatus.Draft => "Bản nháp",
-                KpiStatus.UnderReview => "Đang xem xét",
+                IndicatorStatus.OnTarget => "Đạt mục tiêu",
+                IndicatorStatus.AtRisk => "Cần chú ý",
+                IndicatorStatus.BelowTarget => "Không đạt",
+                IndicatorStatus.Active => "Hoạt động",
+                IndicatorStatus.Draft => "Bản nháp",
+                IndicatorStatus.UnderReview => "Đang xem xét",
                 _ => "Không xác định"
             };
         }
@@ -411,8 +402,8 @@ namespace KPISolution.Controllers
         {
             try
             {
-                var userName = User.Identity?.Name ?? "unknown";
-                _logger.LogInformation("Loading custom dashboard {DashboardId} for user {UserId}",
+                var userName = this.User.Identity?.Name ?? "unknown";
+                this._logger.LogInformation("Loading custom dashboard {DashboardId} for user {UserId}",
                     id, userName);
 
                 CustomDashboardViewModel viewModel;
@@ -420,7 +411,7 @@ namespace KPISolution.Controllers
                 if (!id.HasValue)
                 {
                     // Get user's default dashboard
-                    var defaultDashboard = await _unitOfWork.CustomDashboards.FirstOrDefaultAsync(
+                    var defaultDashboard = await this._unitOfWork.CustomDashboards.FirstOrDefaultAsync(
                         d => d.UserId == userName && d.IsDefault);
 
                     if (defaultDashboard == null)
@@ -433,56 +424,57 @@ namespace KPISolution.Controllers
                             UserName = userName,
                             IsDefault = true
                         };
-                        await _unitOfWork.CustomDashboards.AddAsync(defaultDashboard);
-                        await _unitOfWork.SaveChangesAsync();
+                        await this._unitOfWork.CustomDashboards.AddAsync(defaultDashboard);
+                        await this._unitOfWork.SaveChangesAsync();
                     }
 
-                    viewModel = MapToViewModel(defaultDashboard);
+                    viewModel = this.MapToViewModel(defaultDashboard);
                 }
                 else
                 {
                     // Get specific dashboard
-                    var dashboard = await _unitOfWork.CustomDashboards.GetByIdAsync(id.Value);
+                    var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id.Value);
                     if (dashboard == null)
                     {
-                        _logger.LogWarning("Custom dashboard not found {DashboardId}", id);
-                        return NotFound();
+                        this._logger.LogWarning("Custom dashboard not found {DashboardId}", id);
+                        return this.NotFound();
                     }
 
                     if (!dashboard.IsShared && dashboard.UserId != userName)
                     {
-                        _logger.LogWarning("User {UserId} attempted to access unauthorized dashboard {DashboardId}",
+                        this._logger.LogWarning("User {UserId} attempted to access unauthorized dashboard {DashboardId}",
                             userName, id);
-                        return Forbid();
+                        return this.Forbid();
                     }
 
-                    viewModel = MapToViewModel(dashboard);
+                    viewModel = this.MapToViewModel(dashboard);
                 }
 
                 // Get all KPIs to populate available KPIs
-                var allKpis = new List<KpiBase>();
-                var kris = await _unitOfWork.KRIs.GetAllAsync();
-                var pis = await _unitOfWork.PIs.GetAllAsync();
-                var ris = await _unitOfWork.RIs.GetAllAsync();
+                var allKpis = new List<BaseEntity>();
+                var kris = await this._unitOfWork.ResultIndicators.GetAllAsync(r => r.IsKey); // Use ResultIndicators with filter
+                var pis = await this._unitOfWork.PerformanceIndicators.GetAllAsync();
+                var ris = await this._unitOfWork.ResultIndicators.GetAllAsync(); // Get all RIs
 
-                allKpis.AddRange(kris);
+                allKpis.AddRange(kris); // Add KRIs (which are RIs with IsKey=true)
                 allKpis.AddRange(pis);
-                allKpis.AddRange(ris);
+                // Add RIs that are *not* KRIs to avoid duplicates
+                allKpis.AddRange(ris.Where(r => !r.IsKey));
 
                 // Populate available KPIs
-                viewModel.AvailableKpis = allKpis.Select(k => new KpiSummaryViewModel
+                viewModel.AvailableIndicators = allKpis.Select(k => new IndicatorSummaryViewModel
                 {
                     Id = k.Id,
-                    Name = k.Name ?? string.Empty,
-                    Code = k.Code ?? string.Empty,
-                    Department = k.Department ?? string.Empty
+                    Name = k is PerformanceIndicator pi ? pi.Name : (k is ResultIndicator ri ? ri.Name : "Unknown Indicator"),
+                    Code = k is PerformanceIndicator pi_c ? pi_c.Code : (k is ResultIndicator ri_c ? ri_c.Code : string.Empty),
+                    Department = (k is PerformanceIndicator pi_d ? pi_d.Department?.Name : (k is ResultIndicator ri_d ? ri_d.SuccessFactor?.Objective?.Department?.Name : string.Empty)) ?? string.Empty // Ensure non-null
                 }).ToList();
 
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading custom dashboard {DashboardId}", id);
+                this._logger.LogError(ex, "Error loading custom dashboard {DashboardId}", id);
                 return View("Error");
             }
         }
@@ -494,8 +486,8 @@ namespace KPISolution.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            var userName = User.Identity?.Name ?? "unknown";
-            _logger.LogInformation("Displaying create dashboard form for user {UserId}", userName);
+            var userName = this.User.Identity?.Name ?? "unknown";
+            this._logger.LogInformation("Displaying create dashboard form for user {UserId}", userName);
             var viewModel = new CustomDashboardViewModel
             {
                 Title = "My Dashboard",
@@ -514,15 +506,15 @@ namespace KPISolution.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CustomDashboardViewModel viewModel)
         {
-            if (!ModelState.IsValid)
+            if (!this.ModelState.IsValid)
             {
                 return View(viewModel);
             }
 
             try
             {
-                var userName = User.Identity?.Name ?? "unknown";
-                _logger.LogInformation("Creating new dashboard for user {UserId}", userName);
+                var userName = this.User.Identity?.Name ?? "unknown";
+                this._logger.LogInformation("Creating new dashboard for user {UserId}", userName);
 
                 var dashboard = new CustomDashboard
                 {
@@ -535,18 +527,18 @@ namespace KPISolution.Controllers
                     LayoutConfiguration = viewModel.LayoutConfiguration ?? string.Empty
                 };
 
-                await _unitOfWork.CustomDashboards.AddAsync(dashboard);
-                await _unitOfWork.SaveChangesAsync();
+                await this._unitOfWork.CustomDashboards.AddAsync(dashboard);
+                await this._unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully created dashboard {DashboardId} for user {UserId}",
+                this._logger.LogInformation("Successfully created dashboard {DashboardId} for user {UserId}",
                     dashboard.Id, userName);
 
-                return RedirectToAction(nameof(Custom), new { id = dashboard.Id });
+                return this.RedirectToAction(nameof(this.Custom), new { id = dashboard.Id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating custom dashboard for user {UserId}", User.Identity?.Name ?? "unknown");
-                ModelState.AddModelError("", "Error creating dashboard. Please try again.");
+                this._logger.LogError(ex, "Error creating custom dashboard for user {UserId}", this.User.Identity?.Name ?? "unknown");
+                this.ModelState.AddModelError("", "Error creating dashboard. Please try again.");
                 return View(viewModel);
             }
         }
@@ -559,42 +551,42 @@ namespace KPISolution.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            _logger.LogInformation("Loading edit form for dashboard {DashboardId}", id);
+            this._logger.LogInformation("Loading edit form for dashboard {DashboardId}", id);
 
-            var dashboard = await _unitOfWork.CustomDashboards.GetByIdAsync(id);
+            var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id);
             if (dashboard == null)
             {
-                _logger.LogWarning("Dashboard not found {DashboardId}", id);
-                return NotFound();
+                this._logger.LogWarning("Dashboard not found {DashboardId}", id);
+                return this.NotFound();
             }
 
-            var userName = User.Identity?.Name ?? "unknown";
+            var userName = this.User.Identity?.Name ?? "unknown";
             if (dashboard.UserId != userName)
             {
-                _logger.LogWarning("User {UserId} attempted to edit unauthorized dashboard {DashboardId}",
+                this._logger.LogWarning("User {UserId} attempted to edit unauthorized dashboard {DashboardId}",
                     userName, id);
-                return Forbid();
+                return this.Forbid();
             }
 
-            var viewModel = MapToViewModel(dashboard);
+            var viewModel = this.MapToViewModel(dashboard);
 
             // Get all KPIs to populate available KPIs
-            var allKpis = new List<KpiBase>();
-            var kris = await _unitOfWork.KRIs.GetAllAsync();
-            var pis = await _unitOfWork.PIs.GetAllAsync();
-            var ris = await _unitOfWork.RIs.GetAllAsync();
+            var allKpis = new List<BaseEntity>();
+            var kris = await this._unitOfWork.ResultIndicators.GetAllAsync(r => r.IsKey); // Use ResultIndicators with filter
+            var pis = await this._unitOfWork.PerformanceIndicators.GetAllAsync();
+            var ris = await this._unitOfWork.ResultIndicators.GetAllAsync(); // Get all RIs
 
-            allKpis.AddRange(kris);
+            allKpis.AddRange(kris); // Add KRIs
             allKpis.AddRange(pis);
-            allKpis.AddRange(ris);
+            allKpis.AddRange(ris.Where(r => !r.IsKey)); // Add only non-key RIs
 
             // Populate available KPIs
-            viewModel.AvailableKpis = allKpis.Select(k => new KpiSummaryViewModel
+            viewModel.AvailableIndicators = allKpis.Select(k => new IndicatorSummaryViewModel
             {
                 Id = k.Id,
-                Name = k.Name ?? string.Empty,
-                Code = k.Code ?? string.Empty,
-                Department = k.Department ?? string.Empty
+                Name = k is PerformanceIndicator pi ? pi.Name : (k is ResultIndicator ri ? ri.Name : "Unknown Indicator"),
+                Code = k is PerformanceIndicator pi_c ? pi_c.Code : (k is ResultIndicator ri_c ? ri_c.Code : string.Empty),
+                Department = (k is PerformanceIndicator pi_d ? pi_d.Department?.Name : (k is ResultIndicator ri_d ? ri_d.SuccessFactor?.Objective?.Department?.Name : string.Empty)) ?? string.Empty // Ensure non-null
             }).ToList();
 
             return View(viewModel);
@@ -612,32 +604,32 @@ namespace KPISolution.Controllers
         {
             if (id != viewModel.Id)
             {
-                return NotFound();
+                return this.NotFound();
             }
 
-            if (!ModelState.IsValid)
+            if (!this.ModelState.IsValid)
             {
                 return View(viewModel);
             }
 
             try
             {
-                var dashboard = await _unitOfWork.CustomDashboards.GetByIdAsync(id);
+                var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id);
                 if (dashboard == null)
                 {
-                    _logger.LogWarning("Dashboard not found {DashboardId}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Dashboard not found {DashboardId}", id);
+                    return this.NotFound();
                 }
 
-                var userName = User.Identity?.Name ?? "unknown";
+                var userName = this.User.Identity?.Name ?? "unknown";
                 if (dashboard.UserId != userName)
                 {
-                    _logger.LogWarning("User {UserId} attempted to update unauthorized dashboard {DashboardId}",
+                    this._logger.LogWarning("User {UserId} attempted to update unauthorized dashboard {DashboardId}",
                         userName, id);
-                    return Forbid();
+                    return this.Forbid();
                 }
 
-                _logger.LogInformation("Updating dashboard {DashboardId}", id);
+                this._logger.LogInformation("Updating dashboard {DashboardId}", id);
 
                 // Update dashboard properties
                 dashboard.Title = viewModel.Title;
@@ -647,15 +639,15 @@ namespace KPISolution.Controllers
                 dashboard.LayoutConfiguration = viewModel.LayoutConfiguration ?? string.Empty;
                 dashboard.LastModified = DateTime.UtcNow;
 
-                await _unitOfWork.SaveChangesAsync();
+                await this._unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully updated dashboard {DashboardId}", id);
-                return RedirectToAction(nameof(Custom), new { id });
+                this._logger.LogInformation("Successfully updated dashboard {DashboardId}", id);
+                return this.RedirectToAction(nameof(this.Custom), new { id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating dashboard {DashboardId}", id);
-                ModelState.AddModelError("", "Error updating dashboard. Please try again.");
+                this._logger.LogError(ex, "Error updating dashboard {DashboardId}", id);
+                this.ModelState.AddModelError("", "Error updating dashboard. Please try again.");
                 return View(viewModel);
             }
         }
@@ -671,33 +663,33 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Attempting to delete dashboard {DashboardId}", id);
+                this._logger.LogInformation("Attempting to delete dashboard {DashboardId}", id);
 
-                var dashboard = await _unitOfWork.CustomDashboards.GetByIdAsync(id);
+                var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id);
                 if (dashboard == null)
                 {
-                    _logger.LogWarning("Dashboard not found {DashboardId}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Dashboard not found {DashboardId}", id);
+                    return this.NotFound();
                 }
 
-                var userName = User.Identity?.Name ?? "unknown";
+                var userName = this.User.Identity?.Name ?? "unknown";
                 if (dashboard.UserId != userName)
                 {
-                    _logger.LogWarning("User {UserId} attempted to delete unauthorized dashboard {DashboardId}",
+                    this._logger.LogWarning("User {UserId} attempted to delete unauthorized dashboard {DashboardId}",
                         userName, id);
-                    return Forbid();
+                    return this.Forbid();
                 }
 
-                await _unitOfWork.CustomDashboards.DeleteAsync(dashboard);
-                await _unitOfWork.SaveChangesAsync();
+                await this._unitOfWork.CustomDashboards.DeleteAsync(dashboard);
+                await this._unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully deleted dashboard {DashboardId}", id);
-                return RedirectToAction(nameof(Custom));
+                this._logger.LogInformation("Successfully deleted dashboard {DashboardId}", id);
+                return this.RedirectToAction(nameof(this.Custom));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting dashboard {DashboardId}", id);
-                return RedirectToAction(nameof(Custom), new { id });
+                this._logger.LogError(ex, "Error deleting dashboard {DashboardId}", id);
+                return this.RedirectToAction(nameof(this.Custom), new { id });
             }
         }
 
@@ -713,35 +705,35 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Saving layout for dashboard {DashboardId}", id);
+                this._logger.LogInformation("Saving layout for dashboard {DashboardId}", id);
 
-                var dashboard = await _unitOfWork.CustomDashboards.GetByIdAsync(id);
+                var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id);
                 if (dashboard == null)
                 {
-                    _logger.LogWarning("Dashboard not found {DashboardId}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Dashboard not found {DashboardId}", id);
+                    return this.NotFound();
                 }
 
-                var userName = User.Identity?.Name ?? "unknown";
+                var userName = this.User.Identity?.Name ?? "unknown";
                 if (dashboard.UserId != userName)
                 {
-                    _logger.LogWarning("User {UserId} attempted to save layout for unauthorized dashboard {DashboardId}",
+                    this._logger.LogWarning("User {UserId} attempted to save layout for unauthorized dashboard {DashboardId}",
                         userName, id);
-                    return Forbid();
+                    return this.Forbid();
                 }
 
                 dashboard.LayoutConfiguration = layout.Configuration;
                 dashboard.LastModified = DateTime.UtcNow;
 
-                await _unitOfWork.SaveChangesAsync();
+                await this._unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully saved layout for dashboard {DashboardId}", id);
-                return Json(new { success = true });
+                this._logger.LogInformation("Successfully saved layout for dashboard {DashboardId}", id);
+                return this.Json(new { success = true });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error saving layout for dashboard {DashboardId}", id);
-                return Json(new { success = false, message = "Error saving layout" });
+                this._logger.LogError(ex, "Error saving layout for dashboard {DashboardId}", id);
+                return this.Json(new { success = false, message = "Error saving layout" });
             }
         }
 
@@ -757,29 +749,29 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Adding item to dashboard {DashboardId}", id);
+                this._logger.LogInformation("Adding item to dashboard {DashboardId}", id);
 
-                var dashboard = await _unitOfWork.CustomDashboards.GetByIdAsync(id);
+                var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id);
                 if (dashboard == null)
                 {
-                    _logger.LogWarning("Dashboard not found {DashboardId}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Dashboard not found {DashboardId}", id);
+                    return this.NotFound();
                 }
 
-                var userName = User.Identity?.Name ?? "unknown";
+                var userName = this.User.Identity?.Name ?? "unknown";
                 if (dashboard.UserId != userName)
                 {
-                    _logger.LogWarning("User {UserId} attempted to add item to unauthorized dashboard {DashboardId}",
+                    this._logger.LogWarning("User {UserId} attempted to add item to unauthorized dashboard {DashboardId}",
                         userName, id);
-                    return Forbid();
+                    return this.Forbid();
                 }
 
                 var dashboardItem = new DashboardItem
                 {
                     DashboardId = id,
-                    KpiId = item.KpiId,
-                    CsfId = item.CsfId,
-                    ChartType = (Models.Enums.ChartType)(int)item.ChartType,
+                    IndicatorId = item.IndicatorId,
+                    SuccessFactorId = item.SuccessFactorId,
+                    ChartType = (ChartType)(int)item.ChartType,
                     Title = item.Title,
                     Width = item.Width,
                     Height = item.Height,
@@ -787,22 +779,22 @@ namespace KPISolution.Controllers
                     Y = item.Y,
                     DataConfiguration = item.DataConfiguration,
                     Order = item.Order,
-                    ItemType = (Models.Enums.DashboardItemType)(int)item.ItemType,
+                    ItemType = (DashboardItemType)(int)item.ItemType,
                     ShowLegend = item.ShowLegend,
-                    TimePeriod = (Models.Enums.TimePeriod)(int)item.TimePeriod
+                    TimePeriod = (DisplayTimePeriod)(int)item.TimePeriod
                 };
 
-                await _unitOfWork.DashboardItems.AddAsync(dashboardItem);
-                await _unitOfWork.SaveChangesAsync();
+                await this._unitOfWork.DashboardItems.AddAsync(dashboardItem);
+                await this._unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully added item {ItemId} to dashboard {DashboardId}",
+                this._logger.LogInformation("Successfully added item {ItemId} to dashboard {DashboardId}",
                     dashboardItem.Id, id);
-                return Json(new { success = true, itemId = dashboardItem.Id });
+                return this.Json(new { success = true, itemId = dashboardItem.Id });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding item to dashboard {DashboardId}", id);
-                return Json(new { success = false, message = "Error adding item" });
+                this._logger.LogError(ex, "Error adding item to dashboard {DashboardId}", id);
+                return this.Json(new { success = false, message = "Error adding item" });
             }
         }
 
@@ -818,40 +810,40 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Removing item {ItemId} from dashboard {DashboardId}", itemId, id);
+                this._logger.LogInformation("Removing item {ItemId} from dashboard {DashboardId}", itemId, id);
 
-                var dashboard = await _unitOfWork.CustomDashboards.GetByIdAsync(id);
+                var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id);
                 if (dashboard == null)
                 {
-                    _logger.LogWarning("Dashboard not found {DashboardId}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Dashboard not found {DashboardId}", id);
+                    return this.NotFound();
                 }
 
-                var userName = User.Identity?.Name ?? "unknown";
+                var userName = this.User.Identity?.Name ?? "unknown";
                 if (dashboard.UserId != userName)
                 {
-                    _logger.LogWarning("User {UserId} attempted to remove item from unauthorized dashboard {DashboardId}",
+                    this._logger.LogWarning("User {UserId} attempted to remove item from unauthorized dashboard {DashboardId}",
                         userName, id);
-                    return Forbid();
+                    return this.Forbid();
                 }
 
-                var item = await _unitOfWork.DashboardItems.GetByIdAsync(itemId);
+                var item = await this._unitOfWork.DashboardItems.GetByIdAsync(itemId);
                 if (item == null || item.DashboardId != id)
                 {
-                    _logger.LogWarning("Dashboard item not found {ItemId}", itemId);
-                    return NotFound();
+                    this._logger.LogWarning("Dashboard item not found {ItemId}", itemId);
+                    return this.NotFound();
                 }
 
-                await _unitOfWork.DashboardItems.DeleteAsync(item);
-                await _unitOfWork.SaveChangesAsync();
+                await this._unitOfWork.DashboardItems.DeleteAsync(item);
+                await this._unitOfWork.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully removed item {ItemId} from dashboard {DashboardId}", itemId, id);
-                return Json(new { success = true });
+                this._logger.LogInformation("Successfully removed item {ItemId} from dashboard {DashboardId}", itemId, id);
+                return this.Json(new { success = true });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error removing item {ItemId} from dashboard {DashboardId}", itemId, id);
-                return Json(new { success = false, message = "Error removing item" });
+                this._logger.LogError(ex, "Error removing item {ItemId} from dashboard {DashboardId}", itemId, id);
+                return this.Json(new { success = false, message = "Error removing item" });
             }
         }
 
@@ -861,7 +853,7 @@ namespace KPISolution.Controllers
         /// <param name="user">Current user</param>
         /// <param name="departmentId">Department ID</param>
         /// <returns>True if user has access, false otherwise</returns>
-        private async Task<bool> UserHasAccessToDepartment(System.Security.Claims.ClaimsPrincipal user, Guid departmentId)
+        private async Task<bool> UserHasAccessToDepartment(ClaimsPrincipal user, Guid departmentId)
         {
             // In a real implementation, this would check the user's roles and assigned departments
             // For now, allow access to administrators and executives, or if user is in the department
@@ -871,11 +863,13 @@ namespace KPISolution.Controllers
             }
 
             // Implement actual check for user's department assignment
-            var department = await _unitOfWork.Departments.GetByIdAsync(departmentId);
+            var department = await this._unitOfWork.Departments.GetByIdAsync(departmentId);
             if (department != null)
             {
                 // Add logic to check if user belongs to department
-                // For now, return true to allow access
+                // For example:
+                // var userDepartments = await _userService.GetUserDepartmentsAsync(user.Identity.Name);
+                // return userDepartments.Any(d => d.Id == departmentId);
             }
 
             return true; // Temporarily allowing all access
@@ -901,9 +895,9 @@ namespace KPISolution.Controllers
                 DashboardItems = dashboard.DashboardItems?.Select(item => new DashboardItemViewModel
                 {
                     Id = item.Id,
-                    KpiId = item.KpiId,
-                    CsfId = item.CsfId,
-                    ChartType = (Models.ViewModels.Dashboard.ChartType)(int)item.ChartType,
+                    IndicatorId = item.IndicatorId,
+                    SuccessFactorId = item.SuccessFactorId,
+                    ChartType = (KPISolution.Models.Enums.Visualization.ChartType)(int)item.ChartType,
                     Title = item.Title ?? string.Empty,
                     Width = item.Width,
                     Height = item.Height,
@@ -911,10 +905,10 @@ namespace KPISolution.Controllers
                     Y = item.Y,
                     DataConfiguration = item.DataConfiguration,
                     Order = item.Order,
-                    ItemType = (Models.ViewModels.Dashboard.DashboardItemType)(int)item.ItemType,
+                    ItemType = (DashboardItemType)(int)item.ItemType,
                     ShowLegend = item.ShowLegend,
-                    TimePeriod = (Models.ViewModels.Dashboard.TimePeriod)(int)item.TimePeriod
-                }).ToList() ?? new List<DashboardItemViewModel>()
+                    TimePeriod = (TimePeriod)(int)item.TimePeriod
+                }).ToList() ?? []
             };
         }
     }

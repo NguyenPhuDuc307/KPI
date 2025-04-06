@@ -1,10 +1,4 @@
-using System.Security.Claims;
-using System.Threading.Tasks;
-using KPISolution.Models.Entities.Base;
-using KPISolution.Models.Entities.Identity;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
-using Microsoft.AspNetCore.Identity;
 
 namespace KPISolution.Authorization.Handlers
 {
@@ -22,7 +16,7 @@ namespace KPISolution.Authorization.Handlers
         /// <param name="userManager">User Manager</param>
         public ResourceBasedAuthorizationHandler(UserManager<ApplicationUser> userManager)
         {
-            _userManager = userManager;
+            this._userManager = userManager;
         }
 
         /// <summary>
@@ -44,28 +38,28 @@ namespace KPISolution.Authorization.Handlers
             OperationAuthorizationRequirement requirement,
             T resource)
         {
-            var user = await _userManager.GetUserAsync(context.User);
+            var user = await this._userManager.GetUserAsync(context.User);
             if (user == null)
             {
                 return;
             }
 
             // Kiểm tra người dùng có thuộc vai trò Administrator không
-            if (await _userManager.IsInRoleAsync(user, KpiAuthorizationPolicies.RoleNames.Administrator))
+            if (await this._userManager.IsInRoleAsync(user, IndicatorAuthorizationPolicies.RoleNames.Administrator))
             {
                 context.Succeed(requirement);
                 return;
             }
 
             // Kiểm tra các vai trò cụ thể khác
-            var isManager = await _userManager.IsInRoleAsync(user, KpiAuthorizationPolicies.RoleNames.Manager);
-            var isCmo = await _userManager.IsInRoleAsync(user, KpiAuthorizationPolicies.RoleNames.CMO);
+            var isManager = await this._userManager.IsInRoleAsync(user, IndicatorAuthorizationPolicies.RoleNames.Manager);
+            var isCmo = await this._userManager.IsInRoleAsync(user, IndicatorAuthorizationPolicies.RoleNames.CMO);
 
             // Kiểm tra quyền theo loại tài nguyên cụ thể
-            await HandleResourceSpecificAuthorizationAsync(context, requirement, resource, user, isManager, isCmo);
+            await this.HandleResourceSpecificAuthorizationAsync(context, requirement, resource, user, isManager, isCmo);
 
             // Xử lý các trường hợp chung
-            await HandleCommonAuthorizationAsync(context, requirement, resource, user, isManager, isCmo);
+            await this.HandleCommonAuthorizationAsync(context, requirement, resource, user, isManager, isCmo);
         }
 
         /// <summary>

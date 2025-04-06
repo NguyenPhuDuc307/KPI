@@ -1,0 +1,192 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model ObjectiveCreateViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa mục tiêu";
+    ViewData["PageTitle"] = "Chỉnh sửa mục tiêu";
+    ViewData["PageDescription"] = "Cập nhật thông tin cho mục tiêu";
+    ViewData["ActiveMenu"] = "Objective";
+    ViewData["Icon"] = "bi-bullseye";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-transparent">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Thông tin mục tiêu</h5>
+            <div>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary me-1">
+                    <i class="bi bi-arrow-left me-1"></i>Quay lại chi tiết
+                </a>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-list me-1"></i>Danh sách
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label required">Mã mục tiêu</label>
+                        <input asp-for="Code" class="form-control" readonly />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                        <small class="text-muted">Mã mục tiêu không thể thay đổi sau khi tạo</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Tên mục tiêu</label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Mô tả</label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label">Trạng thái</label>
+                        <select asp-for="Status" asp-items="Html.GetEnumSelectList<ObjectiveStatus>()"
+                            class="form-select"></select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ProgressPercentage" class="form-label">Tiến độ (%)</label>
+                        <div class="input-group">
+                            <input asp-for="ProgressPercentage" class="form-control" type="number" min="0" max="100" />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <span asp-validation-for="ProgressPercentage" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="ParentObjectiveId" class="form-label">Mục tiêu cha</label>
+                        <select asp-for="ParentObjectiveId" class="form-select">
+                            <option value="">-- Không có mục tiêu cha --</option>
+                            @foreach (var objective in ViewBag.ParentObjectives)
+                            {
+                                <option value="@objective.Id">@objective.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ParentObjectiveId" class="text-danger"></span>
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle me-1"></i>Lưu ý: Thay đổi mục tiêu cha có thể ảnh hưởng đến cấu
+                            trúc phân cấp.
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="DepartmentId" class="form-label">Phòng ban</label>
+                        <select asp-for="DepartmentId" class="form-select">
+                            <option value="">-- Chọn phòng ban --</option>
+                            @foreach (var department in ViewBag.Departments)
+                            {
+                                <option value="@department.Id">@department.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ResponsiblePersonId" class="form-label required">Người phụ trách</label>
+                        <select asp-for="ResponsiblePersonId" class="form-select" required>
+                            <option value="">-- Chọn người phụ trách --</option>
+                            @if (ViewBag.ResponsiblePersons != null)
+                            {
+                                @foreach (var person in ViewBag.ResponsiblePersons)
+                                {
+                                    <option value="@person.Id">@(person.FirstName + " " + person.LastName)</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="ResponsiblePersonId" class="text-danger"></span>
+                        <div class="invalid-feedback">Vui lòng chọn người phụ trách</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="StartDate" class="form-label">Ngày bắt đầu</label>
+                                <input asp-for="StartDate" class="form-control" type="date" />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="EndDate" class="form-label">Ngày kết thúc</label>
+                                <input asp-for="EndDate" class="form-control" type="date" />
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Timeframe" class="form-label">Khung thời gian</label>
+                                <select asp-for="Timeframe" asp-items="Html.GetEnumSelectList<TimeframeType>()"
+                                    class="form-select"></select>
+                                <span asp-validation-for="Timeframe" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Perspective" class="form-label">Khía cạnh kinh doanh</label>
+                                <select asp-for="Perspective" asp-items="Html.GetEnumSelectList<BusinessPerspective>()"
+                                    class="form-select"></select>
+                                <span asp-validation-for="Perspective" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize select2 for better dropdown experience
+            $('.form-select').select2({
+                theme: 'bootstrap-5'
+            });
+
+            // Auto-update progress when status changes
+            $('#Status').change(function () {
+                var status = $(this).val();
+                if (status == @((int)ObjectiveStatus.Completed)) {
+                    $('#ProgressPercentage').val(100);
+                } else if (status == @((int)ObjectiveStatus.NotStarted)) {
+                    $('#ProgressPercentage').val(0);
+                }
+            });
+
+            // Add validation for date range
+            $('form').submit(function (e) {
+                var startDate = new Date($('#StartDate').val());
+                var endDate = new Date($('#EndDate').val());
+
+                if (endDate < startDate) {
+                    e.preventDefault();
+                    alert("Ngày kết thúc phải sau ngày bắt đầu!");
+                    $('#EndDate').addClass('is-invalid');
+                    return false;
+                }
+            });
+        });
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

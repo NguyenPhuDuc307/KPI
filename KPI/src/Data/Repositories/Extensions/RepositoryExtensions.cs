@@ -1,11 +1,5 @@
-using System;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using KPISolution.Data.Repositories.Interfaces;
-using KPISolution.Models.Entities.Base;
+using System.Reflection;
 
 namespace KPISolution.Data.Repositories.Extensions
 {
@@ -122,7 +116,7 @@ namespace KPISolution.Data.Repositories.Extensions
         private static ApplicationDbContext GetDbContextFromRepository<T>(IRepository<T> repository) where T : BaseEntity
         {
             var dbContext = repository.GetType()
-                .GetField("_context", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .GetField("_context", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.GetValue(repository) as ApplicationDbContext;
 
             if (dbContext == null)
@@ -150,11 +144,27 @@ namespace KPISolution.Data.Repositories.Extensions
         }
 
         /// <summary>
-        /// Executes FirstOrDefaultAsync with predicate on the queryable
+        /// Executes FirstOrDefaultAsync on the queryable with a predicate
         /// </summary>
         public static Task<T?> FirstOrDefaultAsync<T>(this IQueryable<T> queryable, Expression<Func<T, bool>> predicate)
         {
             return EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(queryable, predicate);
+        }
+
+        /// <summary>
+        /// Executes AnyAsync on the queryable
+        /// </summary>
+        public static Task<bool> AnyAsync<T>(this IQueryable<T> queryable)
+        {
+            return EntityFrameworkQueryableExtensions.AnyAsync(queryable);
+        }
+
+        /// <summary>
+        /// Executes AnyAsync on the queryable with a predicate
+        /// </summary>
+        public static Task<bool> AnyAsync<T>(this IQueryable<T> queryable, Expression<Func<T, bool>> predicate)
+        {
+            return EntityFrameworkQueryableExtensions.AnyAsync(queryable, predicate);
         }
 
         /// <summary>
@@ -163,6 +173,57 @@ namespace KPISolution.Data.Repositories.Extensions
         public static Task<int> CountAsync<T>(this IQueryable<T> queryable)
         {
             return EntityFrameworkQueryableExtensions.CountAsync(queryable);
+        }
+
+        /// <summary>
+        /// Executes CountAsync on the queryable with a predicate
+        /// </summary>
+        public static Task<int> CountAsync<T>(this IQueryable<T> queryable, Expression<Func<T, bool>> predicate)
+        {
+            return EntityFrameworkQueryableExtensions.CountAsync(queryable, predicate);
+        }
+
+        /// <summary>
+        /// Gets the paged result
+        /// </summary>
+        public static async Task<(List<T> Items, int TotalCount)> ToPagedListAsync<T>(this IQueryable<T> query, int page, int pageSize) where T : BaseEntity
+        {
+            var totalCount = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        /// <summary>
+        /// Gets the paged result with projection
+        /// </summary>
+        public static async Task<(List<TResult> Items, int TotalCount)> ToPagedListAsync<TEntity, TResult>(
+            this IRepository<TEntity> repository,
+            Expression<Func<TEntity, TResult>> selector,
+            int page,
+            int pageSize) where TEntity : BaseEntity
+        {
+            var query = repository.GetAll();
+            var totalCount = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).Select(selector).ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        /// <summary>
+        /// Projects and paginates a queryable collection
+        /// </summary>
+        public static async Task<(List<TResult> Items, int TotalCount)> ProjectToPagedListAsync<TEntity, TResult>(
+            this IRepository<TEntity> repository,
+            Expression<Func<TEntity, TResult>> selector,
+            int page,
+            int pageSize) where TEntity : BaseEntity
+        {
+            var query = repository.GetAll();
+            var totalCount = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).Select(selector).ToListAsync();
+
+            return (items, totalCount);
         }
     }
 }

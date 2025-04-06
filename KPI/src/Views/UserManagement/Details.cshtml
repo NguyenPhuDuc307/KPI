@@ -1,4 +1,5 @@
-@model KPISolution.Controllers.UserViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model UserViewModel
 
 @{
     ViewData["Title"] = "Chi tiết người dùng";
@@ -21,18 +22,19 @@
             <div class="col-md-4">
                 <div class="text-center mb-4">
                     <div class="avatar-circle mb-3">
-                        <span class="avatar-initials">@(Model.FirstName?.Substring(0, 1))@(Model.LastName?.Substring(0, 1))</span>
+                        <span class="avatar-initials">@(Model.FirstName?.Substring(0, 1))@(Model.LastName?.Substring(0,
+                                                        1))</span>
                     </div>
                     <h4>@Model.FullName</h4>
                     <p class="text-muted">@Model.JobTitle</p>
                     <div>
                         @if (Model.IsActive)
                         {
-                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Hoạt động</span>
                         }
                         else
                         {
-                                <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Tạm khóa</span>
+                            <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Tạm khóa</span>
                         }
                     </div>
                 </div>
@@ -50,11 +52,23 @@
                             <dd class="col-sm-7">
                                 @if (Model.IsKpiOwner)
                                 {
-                                        <span class="text-success"><i class="bi bi-check2"></i> Có</span>
+                                    <span class="text-success"><i class="bi bi-check2"></i> Có</span>
                                 }
                                 else
                                 {
-                                        <span class="text-secondary">Không</span>
+                                    <span class="text-secondary">Không</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-5">Sở hữu Indicator:</dt>
+                            <dd class="col-sm-7">
+                                @if (Model.IsIndicatorOwner)
+                                {
+                                    <span class="text-success"><i class="bi bi-check2"></i> Có</span>
+                                }
+                                else
+                                {
+                                    <span class="text-secondary">Không</span>
                                 }
                             </dd>
 
@@ -62,11 +76,11 @@
                             <dd class="col-sm-7">
                                 @if (Model.IsDepartmentAdmin)
                                 {
-                                        <span class="text-success"><i class="bi bi-check2"></i> Có</span>
+                                    <span class="text-success"><i class="bi bi-check2"></i> Có</span>
                                 }
                                 else
                                 {
-                                        <span class="text-secondary">Không</span>
+                                    <span class="text-secondary">Không</span>
                                 }
                             </dd>
                         </dl>
@@ -127,11 +141,11 @@
                             <dd class="col-sm-9">
                                 @if (Model.LastLoginAt.HasValue)
                                 {
-                                        @Model.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                    @Model.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm")
                                 }
                                 else
                                 {
-                                        <span class="text-muted">Chưa đăng nhập</span>
+                                    <span class="text-muted">Chưa đăng nhập</span>
                                 }
                             </dd>
                         </dl>
@@ -143,22 +157,22 @@
 </div>
 
 @section Styles {
-        <style>
-            .avatar-circle {
-                width: 100px;
-                height: 100px;
-                background-color: #3b82f6;
-                border-radius: 50%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin: 0 auto;
-            }
+    <style>
+        .avatar-circle {
+            width: 100px;
+            height: 100px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+        }
 
-            .avatar-initials {
-                font-size: 36px;
-                color: white;
-                font-weight: bold;
-            }
-        </style>
+        .avatar-initials {
+            font-size: 36px;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
 }

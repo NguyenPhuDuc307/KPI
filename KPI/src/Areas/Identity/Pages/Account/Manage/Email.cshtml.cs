@@ -2,18 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
 using System.Text.Encodings.Web;
-using System.Threading.Tasks;
-using KPISolution.Models.Entities.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
-using KPISolution.Services.Email;
 
 namespace KPISolution.Areas.Identity.Pages.Account.Manage
 {
@@ -22,18 +14,15 @@ namespace KPISolution.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailSender _emailSender;
-        private readonly IEmailSenderExtended _emailSenderExtended;
 
         public EmailModel(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            IEmailSender emailSender,
-            IEmailSenderExtended emailSenderExtended)
+            IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
-            _emailSenderExtended = emailSenderExtended;
         }
 
         /// <summary>
@@ -128,12 +117,12 @@ namespace KPISolution.Areas.Identity.Pages.Account.Manage
                     pageHandler: null,
                     values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
                     protocol: Request.Scheme);
+                await _emailSender.SendEmailAsync(
+                    Input.NewEmail,
+                    "Confirm your email",
+                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                var subject = "Xác nhận địa chỉ email mới";
-                var message = $"Vui lòng xác nhận email mới của bạn bằng cách <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>nhấp vào đây</a>.";
-                await _emailSenderExtended.SendNotificationEmailAsync(Input.NewEmail, subject, message);
-
-                StatusMessage = "Đã gửi liên kết xác nhận để thay đổi email. Vui lòng kiểm tra email của bạn.";
+                StatusMessage = "Confirmation link to change email sent. Please check your email.";
                 return RedirectToPage();
             }
 
@@ -164,10 +153,12 @@ namespace KPISolution.Areas.Identity.Pages.Account.Manage
                 pageHandler: null,
                 values: new { area = "Identity", userId = userId, code = code },
                 protocol: Request.Scheme);
+            await _emailSender.SendEmailAsync(
+                email,
+                "Confirm your email",
+                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-            await _emailSenderExtended.SendConfirmationEmailAsync(email, callbackUrl);
-
-            StatusMessage = "Đã gửi email xác nhận. Vui lòng kiểm tra email của bạn.";
+            StatusMessage = "Verification email sent. Please check your email.";
             return RedirectToPage();
         }
     }

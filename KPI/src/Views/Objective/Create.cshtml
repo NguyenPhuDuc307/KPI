@@ -1,0 +1,287 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model KPISolution.Models.ViewModels.Organization.ObjectiveCreateViewModel
+
+@{
+    ViewData["Title"] = "Tạo mục tiêu mới";
+    ViewData["PageTitle"] = "Tạo mục tiêu mới";
+    ViewData["PageDescription"] = "Thêm mục tiêu mới vào hệ thống";
+    ViewData["ActiveMenu"] = "Objective";
+    ViewData["Icon"] = "bi-bullseye";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-transparent">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Thông tin mục tiêu</h5>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <form asp-action="Create" method="post" id="objectiveForm" class="needs-validation">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Vui lòng sửa các lỗi sau:</h5>
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                </div>
+            }
+            else
+            {
+                <div asp-validation-summary="ModelOnly" class="text-danger alert alert-danger" style="display: none;"></div>
+            }
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label required">Mã mục tiêu</label>
+                        <div class="input-group">
+                            <input asp-for="Code" class="form-control" required maxlength="20" id="objectiveCode" />
+                            <button type="button" class="btn btn-outline-secondary" id="generateCodeBtn">
+                                <i class="bi bi-magic"></i> Tạo mã
+                            </button>
+                        </div>
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                        <div class="invalid-feedback">Vui lòng nhập mã mục tiêu</div>
+                        <div class="text-danger d-none" id="codeExistsError">Mã này đã tồn tại trong hệ thống</div>
+                        <small class="text-muted">Định dạng: OBJ-YYYYMM###</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label required">Tên mục tiêu</label>
+                        <input asp-for="Name" class="form-control" required maxlength="200" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                        <div class="invalid-feedback">Vui lòng nhập tên mục tiêu</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Mô tả</label>
+                        <textarea asp-for="Description" class="form-control" rows="4" maxlength="500"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                        <div class="invalid-feedback">Mô tả không được vượt quá 500 ký tự</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label">Trạng thái</label>
+                        <select asp-for="Status" asp-items="Html.GetEnumSelectList<ObjectiveStatus>()"
+                            class="form-select" required></select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                        <div class="invalid-feedback">Vui lòng chọn trạng thái</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ProgressPercentage" class="form-label">Tiến độ (%)</label>
+                        <div class="input-group">
+                            <input asp-for="ProgressPercentage" class="form-control" type="number" min="0" max="100"
+                                required />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <span asp-validation-for="ProgressPercentage" class="text-danger"></span>
+                        <div class="invalid-feedback">Tiến độ phải từ 0 đến 100%</div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="ParentObjectiveId" class="form-label">Mục tiêu cha</label>
+                        <select asp-for="ParentObjectiveId" class="form-select">
+                            <option value="">-- Không có mục tiêu cha --</option>
+                            @foreach (var objective in ViewBag.ParentObjectives)
+                            {
+                                <option value="@objective.Id">@objective.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ParentObjectiveId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="DepartmentId" class="form-label required">Phòng ban</label>
+                        <select asp-for="DepartmentId" class="form-select" required>
+                            <option value="">-- Chọn phòng ban --</option>
+                            @foreach (var department in ViewBag.Departments)
+                            {
+                                <option value="@department.Id">@department.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="DepartmentId" class="text-danger"></span>
+                        <div class="invalid-feedback">Vui lòng chọn phòng ban</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ResponsiblePersonId" class="form-label required">Người phụ trách</label>
+                        <select asp-for="ResponsiblePersonId" class="form-select" required>
+                            <option value="">-- Chọn người phụ trách --</option>
+                            @if (ViewBag.ResponsiblePersons != null)
+                            {
+                                @foreach (var person in ViewBag.ResponsiblePersons)
+                                {
+                                    <option value="@person.Id">@(person.FirstName + " " + person.LastName)</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="ResponsiblePersonId" class="text-danger"></span>
+                        <div class="invalid-feedback">Vui lòng chọn người phụ trách</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="StartDate" class="form-label required">Ngày bắt đầu</label>
+                                <input asp-for="StartDate" class="form-control" type="date" required />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
+                                <div class="invalid-feedback">Vui lòng chọn ngày bắt đầu</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="EndDate" class="form-label required">Ngày kết thúc</label>
+                                <input asp-for="EndDate" class="form-control" type="date" required />
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                                <div class="invalid-feedback">Vui lòng chọn ngày kết thúc</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Timeframe" class="form-label required">Khung thời gian</label>
+                                <select asp-for="Timeframe" asp-items="Html.GetEnumSelectList<TimeframeType>()"
+                                    class="form-select" required></select>
+                                <span asp-validation-for="Timeframe" class="text-danger"></span>
+                                <div class="invalid-feedback">Vui lòng chọn khung thời gian</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Perspective" class="form-label required">Khía cạnh kinh doanh</label>
+                                <select asp-for="Perspective" asp-items="Html.GetEnumSelectList<BusinessPerspective>()"
+                                    class="form-select" required></select>
+                                <span asp-validation-for="Perspective" class="text-danger"></span>
+                                <div class="invalid-feedback">Vui lòng chọn khía cạnh kinh doanh</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end">
+                <a asp-action="Index" class="btn btn-outline-secondary me-2">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>Lưu mục tiêu
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize select2 for better dropdown experience
+            $('.form-select').select2({
+                theme: 'bootstrap-5'
+            });
+
+            // Auto-update progress when status changes
+            $('#Status').change(function () {
+                var status = $(this).val();
+                if (status == @((int)ObjectiveStatus.Completed)) {
+                    $('#ProgressPercentage').val(100);
+                } else if (status == @((int)ObjectiveStatus.NotStarted)) {
+                    $('#ProgressPercentage').val(0);
+                }
+            });
+
+            // Add custom validation for date range
+            $('#objectiveForm').submit(function (e) {
+                var startDate = new Date($('#StartDate').val());
+                var endDate = new Date($('#EndDate').val());
+
+                if (endDate < startDate) {
+                    e.preventDefault();
+                    alert("Ngày kết thúc phải sau ngày bắt đầu!");
+                    $('#EndDate').addClass('is-invalid');
+                    return false;
+                }
+
+                // Add validation class to form elements
+                var form = $(this);
+                if (form[0].checkValidity() === false) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.addClass('was-validated');
+            });
+
+            // Add character counters for text fields
+            $('#Name').on('input', function () {
+                var maxLength = 200;
+                var currentLength = $(this).val().length;
+                if (!$(this).next('.char-counter').length) {
+                    $(this).after('<small class="char-counter text-muted"></small>');
+                }
+                $(this).next('.char-counter').text(currentLength + '/' + maxLength);
+            });
+
+            $('#Description').on('input', function () {
+                var maxLength = 500;
+                var currentLength = $(this).val().length;
+                if (!$(this).next('.char-counter').length) {
+                    $(this).after('<small class="char-counter text-muted"></small>');
+                }
+                $(this).next('.char-counter').text(currentLength + '/' + maxLength);
+            });
+
+            // Trigger initial character count
+            $('#Name, #Description').trigger('input');
+
+            // Tự động tạo mã mục tiêu
+            $('#generateCodeBtn').click(function () {
+                $.ajax({
+                    url: '@Url.Action("GenerateCode", "Objective")',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            $('#objectiveCode').val(response.code);
+                            $('#codeExistsError').addClass('d-none');
+                            $('#objectiveCode').removeClass('is-invalid').addClass('is-valid');
+                        } else {
+                            alert(response.message || 'Lỗi khi tạo mã mục tiêu');
+                        }
+                    },
+                    error: function () {
+                        alert('Đã xảy ra lỗi khi kết nối đến máy chủ');
+                    }
+                });
+            });
+
+            // Kiểm tra mã mục tiêu đã tồn tại hay chưa
+            $('#objectiveCode').on('change blur', function () {
+                var code = $(this).val();
+                if (code) {
+                    $.ajax({
+                        url: '@Url.Action("CheckCodeExists", "Objective")',
+                        type: 'GET',
+                        data: { code: code },
+                        dataType: 'json',
+                        success: function (response) {
+                            if (response.exists) {
+                                $('#codeExistsError').removeClass('d-none');
+                                $('#objectiveCode').addClass('is-invalid').removeClass('is-valid');
+                            } else {
+                                $('#codeExistsError').addClass('d-none');
+                                $('#objectiveCode').removeClass('is-invalid').addClass('is-valid');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

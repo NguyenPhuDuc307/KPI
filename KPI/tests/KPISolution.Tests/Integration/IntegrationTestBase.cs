@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
-using KPISolution.Data;
-using KPISolution.Models.Entities.KPI;
-using KPISolution.Models.Entities.Organization;
-using KPISolution.Models.Enums;
+.Data;
+.Models.Entities.KPI;
+.Models.Entities.Organization;
+.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

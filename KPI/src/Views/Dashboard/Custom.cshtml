@@ -1,4 +1,5 @@
-@model KPISolution.Models.ViewModels.Dashboard.CustomDashboardViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model CustomDashboardViewModel
 
 @{
     ViewData["Title"] = "Bảng điều khiển tùy chỉnh";
@@ -213,7 +214,7 @@
                                 <label for="kpiSelect" class="form-label">Chọn KPI</label>
                                 <select class="form-select" id="kpiSelect" name="kpiId">
                                     <option value="">-- Chọn KPI --</option>
-                                    @foreach (var kpi in Model.AvailableKpis)
+                                    @foreach (var kpi in Model.AvailableIndicators)
                                     {
                                         <option value="@kpi.Id">@kpi.Code - @kpi.Name</option>
                                     }
@@ -275,7 +276,7 @@
                                 <label for="csfSelect" class="form-label">Chọn CSF</label>
                                 <select class="form-select" id="csfSelect" name="csfId">
                                     <option value="">-- Chọn CSF --</option>
-                                    @foreach (var csf in Model.AvailableCsfs)
+                                    @foreach (var csf in Model.AvailableSuccessFactors)
                                     {
                                         <option value="@csf.Id">@csf.Code - @csf.Name</option>
                                     }

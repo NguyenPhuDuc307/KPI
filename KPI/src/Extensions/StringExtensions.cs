@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace KPISolution.Extensions
@@ -37,7 +38,7 @@ namespace KPISolution.Extensions
             if (string.IsNullOrEmpty(input))
                 return input;
 
-            var textInfo = System.Globalization.CultureInfo.CurrentCulture.TextInfo;
+            var textInfo = CultureInfo.CurrentCulture.TextInfo;
             return textInfo.ToTitleCase(input.ToLower());
         }
 

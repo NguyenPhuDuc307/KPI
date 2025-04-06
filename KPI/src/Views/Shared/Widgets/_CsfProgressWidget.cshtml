@@ -1,0 +1,114 @@
+@model SuccessFactorProgressWidgetData
+
+<div class="csf-progress-widget h-100">
+    <div class="d-flex flex-column h-100">
+        @if (Model.ShowHeader)
+        {
+            <div class="csf-header d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-0">@Model.Name</h5>
+                    <div class="text-muted small">@Model.Code</div>
+                </div>
+                <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+            </div>
+        }
+
+        <div class="progress-info mb-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Tiến độ</span>
+                <span class="progress-percentage fw-bold">@Model.ProgressPercentage%</span>
+            </div>
+        </div>
+
+        <div class="progress mb-3" style="height: 10px;">
+            <div class="progress-bar @GetProgressClass(Model.ProgressPercentage)" role="progressbar"
+                style="width: @Model.ProgressPercentage%" aria-valuenow="@Model.ProgressPercentage" aria-valuemin="0"
+                aria-valuemax="100"></div>
+        </div>
+
+        @if (Model.ShowDetails)
+        {
+            <div class="csf-details flex-grow-1">
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="description mb-3">
+                        <h6 class="text-muted mb-1">Mô tả</h6>
+                        <p class="small">@Model.Description</p>
+                    </div>
+                }
+
+                <div class="row align-items-center mb-3">
+                    <div class="col-6">
+                        <div class="text-muted small">Người phụ trách</div>
+                        <div>@Model.Owner</div>
+                    </div>
+                    <div class="col-6 text-end">
+                        <div class="text-muted small">Thời hạn</div>
+                        <div>@(Model.TargetDate?.ToString("dd/MM/yyyy") ?? "N/A")</div>
+                    </div>
+                </div>
+
+                @if (Model.RecentUpdates != null && Model.RecentUpdates.Any())
+                {
+                    <h6 class="text-muted mb-2">Cập nhật gần đây</h6>
+                    <div class="timeline small">
+                        @foreach (var update in Model.RecentUpdates.Take(3))
+                        {
+                            <div class="timeline-item mb-2">
+                                <div class="d-flex">
+                                    <div class="timeline-icon me-2">
+                                        <i class="bi bi-circle-fill text-primary"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">@update.Title</span>
+                                            <span class="text-muted">@update.Date.ToString("dd/MM")</span>
+                                        </div>
+                                        <p class="mb-0">@update.Description</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Model.ShowActions)
+        {
+            <div class="actions mt-3">
+                <a href="@(Url.Action("Details", "CSF", new { id = Model.Id }))"
+                    class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-eye me-1"></i>Xem chi tiết
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    private string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "completed" => "bg-success",
+            "on track" => "bg-success",
+            "at risk" => "bg-warning",
+            "delayed" => "bg-danger",
+            "not started" => "bg-secondary",
+            _ => "bg-info"
+        };
+    }
+
+    private string GetProgressClass(int percentage)
+    {
+        return percentage switch
+        {
+            100 => "bg-success",
+            >= 75 => "bg-info",
+            >= 50 => "bg-warning",
+            >= 25 => "bg-warning",
+            _ => "bg-danger"
+        };
+    }
+}

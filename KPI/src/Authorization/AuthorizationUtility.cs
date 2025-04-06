@@ -1,8 +1,5 @@
-using System.Threading.Tasks;
-using KPISolution.Models.Entities.Base;
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
-using Microsoft.AspNetCore.Identity;
 
 namespace KPISolution.Authorization
 {
@@ -22,9 +19,9 @@ namespace KPISolution.Authorization
         /// <returns>True nếu được phép, ngược lại là False</returns>
         public static async Task<bool> AuthorizeAsync<T>(
             IAuthorizationService authService,
-            System.Security.Claims.ClaimsPrincipal user,
+            ClaimsPrincipal user,
             T resource,
-            Microsoft.AspNetCore.Authorization.Infrastructure.OperationAuthorizationRequirement operation) where T : BaseEntity
+            OperationAuthorizationRequirement operation) where T : BaseEntity
         {
             var result = await authService.AuthorizeAsync(user, resource, operation);
             return result.Succeeded;
@@ -36,7 +33,7 @@ namespace KPISolution.Authorization
         /// <param name="userManager">User Manager</param>
         /// <param name="userId">ID của người dùng</param>
         /// <returns>True nếu là admin, ngược lại là False</returns>
-        public static async Task<bool> IsAdminAsync(UserManager<Models.Entities.Identity.ApplicationUser> userManager, string userId)
+        public static async Task<bool> IsAdminAsync(UserManager<ApplicationUser> userManager, string userId)
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -44,7 +41,7 @@ namespace KPISolution.Authorization
                 return false;
             }
 
-            return await userManager.IsInRoleAsync(user, KpiAuthorizationPolicies.RoleNames.Administrator);
+            return await userManager.IsInRoleAsync(user, IndicatorAuthorizationPolicies.RoleNames.Administrator);
         }
 
         /// <summary>
@@ -53,7 +50,7 @@ namespace KPISolution.Authorization
         /// <param name="userManager">User Manager</param>
         /// <param name="userId">ID của người dùng</param>
         /// <returns>True nếu là manager, ngược lại là False</returns>
-        public static async Task<bool> IsManagerAsync(UserManager<Models.Entities.Identity.ApplicationUser> userManager, string userId)
+        public static async Task<bool> IsManagerAsync(UserManager<ApplicationUser> userManager, string userId)
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -61,7 +58,7 @@ namespace KPISolution.Authorization
                 return false;
             }
 
-            return await userManager.IsInRoleAsync(user, KpiAuthorizationPolicies.RoleNames.Manager);
+            return await userManager.IsInRoleAsync(user, IndicatorAuthorizationPolicies.RoleNames.Manager);
         }
 
         /// <summary>
@@ -70,7 +67,7 @@ namespace KPISolution.Authorization
         /// <param name="userManager">User Manager</param>
         /// <param name="userId">ID của người dùng</param>
         /// <returns>True nếu là CMO, ngược lại là False</returns>
-        public static async Task<bool> IsCmoAsync(UserManager<Models.Entities.Identity.ApplicationUser> userManager, string userId)
+        public static async Task<bool> IsCmoAsync(UserManager<ApplicationUser> userManager, string userId)
         {
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
@@ -78,7 +75,41 @@ namespace KPISolution.Authorization
                 return false;
             }
 
-            return await userManager.IsInRoleAsync(user, KpiAuthorizationPolicies.RoleNames.CMO);
+            return await userManager.IsInRoleAsync(user, IndicatorAuthorizationPolicies.RoleNames.CMO);
+        }
+
+        public static async Task<bool> CheckPermissionAsync(
+            IAuthorizationService authorizationService,
+            ClaimsPrincipal user,
+            string policyName,
+            object? resource = null)
+        {
+            AuthorizationResult result;
+            if (resource != null)
+            {
+                result = await authorizationService.AuthorizeAsync(user, resource, policyName);
+            }
+            else
+            {
+                result = await authorizationService.AuthorizeAsync(user, policyName);
+            }
+            return result.Succeeded;
+        }
+
+        // Helper methods for common policy checks
+        public static Task<bool> CanViewIndicatorAsync(IAuthorizationService authService, ClaimsPrincipal user, object indicatorResource)
+        {
+            return CheckPermissionAsync(authService, user, IndicatorAuthorizationPolicies.PolicyNames.CanViewIndicators, indicatorResource);
+        }
+
+        public static Task<bool> CanManageIndicatorAsync(IAuthorizationService authService, ClaimsPrincipal user, object indicatorResource)
+        {
+            return CheckPermissionAsync(authService, user, IndicatorAuthorizationPolicies.PolicyNames.CanManageIndicators, indicatorResource);
+        }
+
+        public static Task<bool> CanManageMeasurementsAsync(IAuthorizationService authService, ClaimsPrincipal user)
+        {
+            return CheckPermissionAsync(authService, user, IndicatorAuthorizationPolicies.PolicyNames.CanManageIndicators);
         }
     }
 }

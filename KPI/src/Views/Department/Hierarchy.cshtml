@@ -1,4 +1,5 @@
-@model List<KPISolution.Models.ViewModels.Department.DepartmentHierarchyViewModel>
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model List<DepartmentHierarchyViewModel>
 
 @{
     ViewData["Title"] = "Department Hierarchy";
@@ -22,64 +23,77 @@
 
         @if (Model == null || !Model.Any())
         {
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i> No departments found. Please create departments to view the hierarchy.
-                </div>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No departments found. Please create departments to view the
+                hierarchy.
+            </div>
         }
         else
         {
-                <div class="department-hierarchy">
-                    @foreach (var rootDepartment in Model)
-                    {
-                            <div class="card mb-4">
-                                <div class="card-header bg-primary text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-building me-2"></i>
-                                        @rootDepartment.DepartmentName
-                                    </h5>
+            <div class="department-hierarchy">
+                @foreach (var rootDepartment in Model)
+                {
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-building me-2"></i>
+                                @rootDepartment.DepartmentName
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p><strong>Department Head:</strong> @(string.IsNullOrEmpty(rootDepartment.DepartmentHead) ?
+                                                                        "Not Assigned" : rootDepartment.DepartmentHead)</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Path:</strong> @rootDepartment.DepartmentPath</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(rootDepartment.Description))
+                            {
+                                <div class="mb-3">
+                                    <p><strong>Description:</strong> @rootDepartment.Description</p>
                                 </div>
-                                <div class="card-body">
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <p><strong>Department Head:</strong> @(string.IsNullOrEmpty(rootDepartment.DepartmentHead) ? "Not Assigned" : rootDepartment.DepartmentHead)</p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <p><strong>Path:</strong> @rootDepartment.DepartmentPath</p>
-                                        </div>
+                            }
+
+                            @if (rootDepartment.HasChildren && rootDepartment.ChildDepartments != null &&
+                                                rootDepartment.ChildDepartments.Any())
+                            {
+                                <div class="mt-3">
+                                    <h6 class="mb-3">Child Departments:</h6>
+                                    <div class="ps-4">
+                                        <ul class="list-group">
+                                            @if (rootDepartment.ChildDepartments != null && rootDepartment.ChildDepartments.Any())
+                                            {
+                                                @await Html.PartialAsync("~/Views/Shared/Tree/_DepartmentHierarchyPartial.cshtml",
+                                                rootDepartment.ChildDepartments)
+                                                                }
+                                            else
+                                            {
+                                                <li class="list-group-item text-muted">Không có phòng ban con</li>
+                                            }
+                                        </ul>
                                     </div>
-
-                                    @if (!string.IsNullOrEmpty(rootDepartment.Description))
-                                    {
-                                            <div class="mb-3">
-                                                <p><strong>Description:</strong> @rootDepartment.Description</p>
-                                            </div>
-                                    }
-
-                                    @if (rootDepartment.HasChildren && rootDepartment.ChildDepartments.Any())
-                                    {
-                                            <div class="mt-3">
-                                                <h6 class="mb-3">Child Departments:</h6>
-                                                <div class="ps-4">
-                                                    @await Html.PartialAsync("_DepartmentHierarchyPartial", rootDepartment.ChildDepartments)
-                                                </div>
-                                            </div>
-                                    }
                                 </div>
-                            </div>
-                    }
-                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
         }
     </div>
 </div>
 
 @section Scripts {
-        <script>
-            $(document).ready(function () {
-                // Toggle child departments when clicking on parent
-                $('.department-toggle').click(function () {
-                    $(this).toggleClass('fa-plus-square fa-minus-square');
-                    $(this).closest('.department-item').next('.department-children').toggle();
-                });
+    <script>
+        $(document).ready(function () {
+            // Toggle child departments when clicking on parent
+            $('.department-toggle').click(function () {
+                $(this).toggleClass('fa-plus-square fa-minus-square');
+                $(this).closest('.department-item').next('.department-children').toggle();
             });
-        </script>
+        });
+    </script>
 }

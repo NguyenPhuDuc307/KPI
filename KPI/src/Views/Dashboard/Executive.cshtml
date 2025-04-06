@@ -1,4 +1,5 @@
-@model KPISolution.Models.ViewModels.Dashboard.ExecutiveDashboardViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model ExecutiveDashboardViewModel
 
 @{
     ViewData["Title"] = "Bảng điều khiển điều hành";
@@ -11,81 +12,79 @@
     int totalDepartments = Model.PerformanceByDepartment.Count();
     int totalDeptPages = (int)Math.Ceiling((double)totalDepartments / departmentsPerPage);
     int currentDeptPage = Math.Min(totalDeptPages, Math.Max(1, ViewBag.DepartmentPage ?? 1));
-    
+
     // Calculate which departments to show on current page
     var departmentsToShow = Model.PerformanceByDepartment
-        .OrderBy(d => d.Name) // Thêm sắp xếp để tránh cảnh báo
+        .OrderBy(d => d.DepartmentName) // Thêm sắp xếp để tránh cảnh báo
         .Skip((currentDeptPage - 1) * departmentsPerPage)
         .Take(departmentsPerPage);
 }
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-end mb-3">
-        <div class="small text-muted">
-            Cập nhật lần cuối: @Model.LastUpdated.ToString("dd/MM/yyyy HH:mm")
-        </div>
+<div class="d-flex justify-content-end mb-3">
+    <div class="small text-muted">
+        Cập nhật lần cuối: @Model.LastUpdated.ToString("dd/MM/yyyy HH:mm")
     </div>
+</div>
 
-    <!-- Cấu trúc phân cấp KPI Overview -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white text-primary">
-                    <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Tổng quan cấu trúc phân cấp KPI</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md">
-                            <div class="border border-primary rounded p-3 mb-3 h-100">
-                                <h5 class="text-primary">Objectives</h5>
-                                <h3 class="display-6">@Model.ObjectiveCount</h3>
-                                <p class="text-muted small">Mục tiêu chiến lược</p>
-                                <a asp-controller="BusinessObjective" asp-action="Index"
-                                    class="btn btn-sm btn-outline-primary">Chi tiết</a>
+<!-- Cấu trúc phân cấp KPI Overview -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white text-primary">
+                <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Tổng quan cấu trúc phân cấp KPI</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md">
+                        <div class="border border-primary rounded p-3 mb-3 h-100">
+                            <h5 class="text-primary">Objectives</h5>
+                            <h3 class="display-6">@Model.ObjectiveCount</h3>
+                            <p class="text-muted small">Mục tiêu chiến lược</p>
+                            <a asp-controller="BusinessObjective" asp-action="Index"
+                                class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                        </div>
+                    </div>
+                    <div class="col-md">
+                        <div class="border border-success rounded p-3 mb-3 h-100">
+                            <h5 class="text-success">SFs</h5>
+                            <h3 class="display-6">@Model.SfCount</h3>
+                            <p class="text-muted small">Success Factors</p>
+                            <a asp-controller="SF" asp-action="Index" class="btn btn-sm btn-outline-success">Chi
+                                tiết</a>
+                        </div>
+                    </div>
+                    <div class="col-md">
+                        <div class="border border-info rounded p-3 mb-3 h-100">
+                            <h5 class="text-info">CSFs</h5>
+                            <h3 class="display-6">@Model.SuccessFactorCount</h3>
+                            <p class="text-muted small">Critical Success Factors</p>
+                            <a asp-controller="CSF" asp-action="Index" class="btn btn-sm btn-outline-info">Chi
+                                tiết</a>
+                        </div>
+                    </div>
+                    <div class="col-md">
+                        <div class="border border-warning rounded p-3 mb-3 h-100">
+                            <h5 class="text-warning">RIs/PIs</h5>
+                            <h3 class="display-6">@Model.IndicatorCount</h3>
+                            <p class="text-muted small">Indicators</p>
+                            <div class="btn-group">
+                                <a asp-controller="RI" asp-action="Index"
+                                    class="btn btn-sm btn-outline-warning">RIs</a>
+                                <a asp-controller="PI" asp-action="Index"
+                                    class="btn btn-sm btn-outline-warning">PIs</a>
                             </div>
                         </div>
-                        <div class="col-md">
-                            <div class="border border-success rounded p-3 mb-3 h-100">
-                                <h5 class="text-success">SFs</h5>
-                                <h3 class="display-6">@Model.SfCount</h3>
-                                <p class="text-muted small">Success Factors</p>
-                                <a asp-controller="SF" asp-action="Index" class="btn btn-sm btn-outline-success">Chi
-                                    tiết</a>
-                            </div>
-                        </div>
-                        <div class="col-md">
-                            <div class="border border-info rounded p-3 mb-3 h-100">
-                                <h5 class="text-info">CSFs</h5>
-                                <h3 class="display-6">@Model.CsfCount</h3>
-                                <p class="text-muted small">Critical Success Factors</p>
-                                <a asp-controller="CSF" asp-action="Index" class="btn btn-sm btn-outline-info">Chi
-                                    tiết</a>
-                            </div>
-                        </div>
-                        <div class="col-md">
-                            <div class="border border-warning rounded p-3 mb-3 h-100">
-                                <h5 class="text-warning">RIs/PIs</h5>
-                                <h3 class="display-6">@Model.IndicatorCount</h3>
-                                <p class="text-muted small">Indicators</p>
-                                <div class="btn-group">
-                                    <a asp-controller="RI" asp-action="Index"
-                                        class="btn btn-sm btn-outline-warning">RIs</a>
-                                    <a asp-controller="PI" asp-action="Index"
-                                        class="btn btn-sm btn-outline-warning">PIs</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md">
-                            <div class="border border-danger rounded p-3 mb-3 h-100">
-                                <h5 class="text-danger">KRIs/KPIs</h5>
-                                <h3 class="display-6">@Model.KeyIndicatorCount</h3>
-                                <p class="text-muted small">Key Indicators</p>
-                                <div class="btn-group">
-                                    <a asp-controller="KRI" asp-action="Index"
-                                        class="btn btn-sm btn-outline-danger">KRIs</a>
-                                    <a asp-controller="KPI" asp-action="Index"
-                                        class="btn btn-sm btn-outline-danger">KPIs</a>
-                                </div>
+                    </div>
+                    <div class="col-md">
+                        <div class="border border-danger rounded p-3 mb-3 h-100">
+                            <h5 class="text-danger">KRIs/KPIs</h5>
+                            <h3 class="display-6">@Model.KeyIndicatorCount</h3>
+                            <p class="text-muted small">Key Indicators</p>
+                            <div class="btn-group">
+                                <a asp-controller="KRI" asp-action="Index"
+                                    class="btn btn-sm btn-outline-danger">KRIs</a>
+                                <a asp-controller="KPI" asp-action="Index"
+                                    class="btn btn-sm btn-outline-danger">KPIs</a>
                             </div>
                         </div>
                     </div>
@@ -93,350 +92,350 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- KPI Status Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card border-primary h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Tổng số KPI</h5>
-                    <div class="display-4 text-primary mb-2">@Model.TotalKpiCount</div>
-                    <div class="small text-muted">Tất cả các KPI trong hệ thống</div>
-                </div>
+<!-- KPI Status Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Tổng số KPI</h5>
+                <div class="display-4 text-primary mb-2">@Model.TotalIndicatorCount</div>
+                <div class="small text-muted">Tất cả các KPI trong hệ thống</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-success h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Đạt mục tiêu</h5>
-                    <div class="display-4 text-success mb-2">
-                        @(Model.KpisByStatus.ContainsKey(KPISolution.Models.Enums.KpiStatus.OnTarget) ?
-                                                Model.KpisByStatus[KPISolution.Models.Enums.KpiStatus.OnTarget] : 0)</div>
-                    <div class="small text-muted">@Model.OnTargetPercentage.ToString("F1")% đạt mục tiêu</div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success h-100">
+            <div class="card-body">
+                <h5 class="card-title">Đạt mục tiêu</h5>
+                <div class="display-4 text-success mb-2">
+                    @(Model.IndicatorsByStatus.ContainsKey(IndicatorStatus.OnTarget) ?
+                        Model.IndicatorsByStatus[IndicatorStatus.OnTarget] : 0)
                 </div>
+                <div class="small text-muted">@Model.OnTargetPercentage.ToString("F1")% đạt mục tiêu</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-warning h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Cần chú ý</h5>
-                    <div class="display-4 text-warning mb-2">
-                        @(Model.KpisByStatus.ContainsKey(KPISolution.Models.Enums.KpiStatus.AtRisk) ?
-                                                Model.KpisByStatus[KPISolution.Models.Enums.KpiStatus.AtRisk] : 0)</div>
-                    <div class="small text-muted">Cần theo dõi và kiểm soát</div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning h-100">
+            <div class="card-body">
+                <h5 class="card-title">Cần chú ý</h5>
+                <div class="display-4 text-warning mb-2">
+                    @(Model.IndicatorsByStatus.ContainsKey(IndicatorStatus.AtRisk) ?
+                        Model.IndicatorsByStatus[IndicatorStatus.AtRisk] : 0)
                 </div>
+                <div class="small text-muted">Cần theo dõi và kiểm soát</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-danger h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Không đạt</h5>
-                    <div class="display-4 text-danger mb-2">
-                        @(Model.KpisByStatus.ContainsKey(KPISolution.Models.Enums.KpiStatus.BelowTarget) ?
-                                                Model.KpisByStatus[KPISolution.Models.Enums.KpiStatus.BelowTarget] : 0)</div>
-                    <div class="small text-muted">Yêu cầu hành động khắc phục</div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-danger h-100">
+            <div class="card-body">
+                <h5 class="card-title">Không đạt</h5>
+                <div class="display-4 text-danger mb-2">
+                    @(Model.IndicatorsByStatus.ContainsKey(IndicatorStatus.BelowTarget) ?
+                        Model.IndicatorsByStatus[IndicatorStatus.BelowTarget] : 0)
                 </div>
+                <div class="small text-muted">Yêu cầu hành động khắc phục</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Department Performance -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Hiệu suất theo phòng ban</h5>
+                <button class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Phòng ban</th>
+                                <th class="text-end">Hiệu suất</th>
+                                <th class="text-end">KPIs</th>
+                                <th class="text-end">Không đạt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var dept in departmentsToShow)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="Department" asp-route-id="@dept.DepartmentId">@dept.DepartmentName</a>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar @dept.PerformanceCssClass" role="progressbar"
+                                                style="width: @dept.PerformancePercentage%">
+                                            </div>
+                                        </div>
+                                        <span class="small">@dept.PerformancePercentage%</span>
+                                    </td>
+                                    <td class="text-end">@dept.IndicatorCount</td>
+                                    <td class="text-end">@dept.AtRiskCount</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <span class="small text-muted">
+                    Hiển thị @((currentDeptPage - 1) * departmentsPerPage + 1)-@(Math.Min(currentDeptPage *
+                                            departmentsPerPage, Model.PerformanceByDepartment.Count()))
+                    của @Model.PerformanceByDepartment.Count()
+                </span>
+                @if (Model.PerformanceByDepartment.Count() > departmentsPerPage)
+                {
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(currentDeptPage == 1 ? "disabled" : "")">
+                                <a class="page-link" asp-action="Executive"
+                                    asp-route-departmentPage="@(currentDeptPage - 1)">Trước</a>
+                            </li>
+                            @for (int i = 1; i <= totalDeptPages; i++)
+                            {
+                                <li class="page-item @(i == currentDeptPage ? "active" : "")">
+                                    <a class="page-link" asp-action="Executive" asp-route-departmentPage="@i">@i</a>
+                                </li>
+                            }
+                            <li class="page-item @(currentDeptPage == totalDeptPages ? "disabled" : "")">
+                                <a class="page-link" asp-action="Executive"
+                                    asp-route-departmentPage="@(currentDeptPage + 1)">Sau</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
             </div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <!-- Department Performance -->
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Hiệu suất theo phòng ban</h5>
-                    <button class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-download"></i>
+    <!-- KPI Status Chart -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Phân bố trạng thái KPI</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                        id="chartOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-gear-fill"></i>
                     </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chartOptionsDropdown">
+                        <li><a class="dropdown-item chart-type" href="#" data-type="doughnut">Biểu đồ tròn</a></li>
+                        <li><a class="dropdown-item chart-type" href="#" data-type="bar">Biểu đồ cột</a></li>
+                    </ul>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Phòng ban</th>
-                                    <th class="text-end">Hiệu suất</th>
-                                    <th class="text-end">KPIs</th>
-                                    <th class="text-end">Không đạt</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var dept in departmentsToShow)
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="kpiStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Objectives Progress -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Tiến độ Objectives</h5>
+                <a asp-controller="BusinessObjective" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tên Objective</th>
+                                <th>Phòng ban</th>
+                                <th class="text-center">Tiến độ</th>
+                                <th class="text-center">SFs</th>
+                                <th class="text-center">CSFs</th>
+                                <th class="text-center">KPIs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ObjectiveSummaries.Any())
+                            {
+                                @foreach (var objective in Model.ObjectiveSummaries.Take(5))
                                 {
                                     <tr>
-                                        <td>
-                                            <a asp-action="Department" asp-route-id="@dept.DepartmentId">@dept.Name</a>
-                                        </td>
-                                        <td class="text-end">
+                                        <td>@objective.Name</td>
+                                        <td>@objective.DepartmentName</td>
+                                        <td class="text-center">
                                             <div class="progress" style="height: 8px;">
-                                                <div class="progress-bar @dept.PerformanceCssClass" role="progressbar"
-                                                    style="width: @dept.PerformancePercentage%">
-                                                </div>
+                                                <div class="progress-bar @objective.ProgressCssClass" role="progressbar"
+                                                        style="width: @objective.ProgressPercentage%;"
+                                                        aria-valuenow="@objective.ProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <span class="small">@dept.PerformancePercentage%</span>
+                                            <span class="small">@objective.ProgressPercentage%</span>
                                         </td>
-                                        <td class="text-end">@dept.KpiCount</td>
-                                        <td class="text-end">@dept.AtRiskCount</td>
+                                        <td class="text-center">@objective.SuccessFactorCount</td>
+                                        <td class="text-center">@objective.CriticalSuccessFactorCount</td>
+                                        <td class="text-center">@objective.IndicatorCount</td>
                                     </tr>
                                 }
-                            </tbody>
-                        </table>
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-3">Chưa có dữ liệu về Objectives</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- KRI Table -->
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Chỉ số KRI quan trọng</h5>
+                <div>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" placeholder="Tìm kiếm...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="card-footer d-flex justify-content-between align-items-center">
-                    <span class="small text-muted">
-                        Hiển thị @((currentDeptPage - 1) * departmentsPerPage + 1)-@(Math.Min(currentDeptPage *
-                                                departmentsPerPage, Model.PerformanceByDepartment.Count()))
-                        của @Model.PerformanceByDepartment.Count()
-                    </span>
-                    @if (Model.PerformanceByDepartment.Count() > departmentsPerPage)
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr class="py-2">
+                                <th class="px-3">Mã</th>
+                                <th class="px-3">Tên chỉ số</th>
+                                <th class="text-end px-3">Hiện tại</th>
+                                <th class="text-end px-3">Mục tiêu</th>
+                                <th class="text-center px-3">Trạng thái</th>
+                                <th class="text-center px-3">Xu hướng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var kpi in Model.KriSummaries.Take(10))
+                            {
+                                <tr class="py-2">
+                                    <td class="px-3">@kpi.Code</td>
+                                    <td class="px-3">@kpi.Name</td>
+                                    <td class="text-end px-3">@kpi.CurrentValue @kpi.MeasurementUnit</td>
+                                    <td class="text-end px-3">@kpi.TargetValue @kpi.MeasurementUnit</td>
+                                    <td class="text-center px-3">
+                                        <span class="badge @kpi.StatusCssClass">@kpi.StatusDisplay</span>
+                                    </td>
+                                    <td class="text-center px-3">
+                                        @if (kpi.Trend == TrendDirection.Up)
+                                        {
+                                            <i class="bi bi-arrow-up-circle-fill text-success"></i>
+                                        }
+                                        else if (kpi.Trend == TrendDirection.Down)
+                                        {
+                                            <i class="bi bi-arrow-down-circle-fill text-danger"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-dash-circle-fill text-secondary"></i>
+                                        }
+                                        <span class="ms-1">@kpi.TrendValueDisplay</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <span class="small text-muted">Hiển thị 1-10 của @Model.KriSummaries.Count</span>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item"><a class="page-link" href="#">Trước</a></li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts and Updates -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Cảnh báo và cập nhật</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @if (Model.AlertsRequiringAttention.Any())
                     {
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination pagination-sm mb-0">
-                                <li class="page-item @(currentDeptPage == 1 ? "disabled" : "")">
-                                    <a class="page-link" asp-action="Executive"
-                                        asp-route-departmentPage="@(currentDeptPage - 1)">Trước</a>
-                                </li>
-                                @for (int i = 1; i <= totalDeptPages; i++)
-                                {
-                                    <li class="page-item @(i == currentDeptPage ? "active" : "")">
-                                        <a class="page-link" asp-action="Executive" asp-route-departmentPage="@i">@i</a>
-                                    </li>
-                                }
-                                <li class="page-item @(currentDeptPage == totalDeptPages ? "disabled" : "")">
-                                    <a class="page-link" asp-action="Executive"
-                                        asp-route-departmentPage="@(currentDeptPage + 1)">Sau</a>
-                                </li>
-                            </ul>
-                        </nav>
+                        @foreach (var alert in Model.AlertsRequiringAttention)
+                        {
+                            <div class="list-group-item list-group-item-action p-3">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@alert.IndicatorName</h6>
+                                    <small class="text-muted">@(alert.CreatedOn.ToString("dd/MM/yyyy"))</small>
+                                </div>
+                                <p class="mb-1 small">@alert.Message</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="@alert.SeverityCssClass">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>@alert.SeverityDisplay
+                                    </small>
+                                    <a asp-controller="Indicator" asp-action="Details" asp-route-id="@alert.IndicatorId" class="btn btn-sm btn-outline-secondary">Xem</a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    @if (Model.RecentUpdates.Any())
+                    {
+                        @foreach (var update in Model.RecentUpdates)
+                        {
+                            <div class="list-group-item list-group-item-action p-3">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@update.IndicatorName</h6>
+                                    <small class="text-muted">@(update.UpdatedAt.ToString("dd/MM/yyyy"))</small>
+                                </div>
+                                <p class="mb-1 small">
+                                    Giá trị thay đổi từ @update.PreviousValue thành @update.NewValue
+                                    <span class="@update.ChangeCssClass">
+                                        (@(update.PercentageChange > 0 ? "+" : "")@update.PercentageChange)
+                                    </span>
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="bi bi-person-fill me-1"></i>@update.UpdatedBy
+                                    </small>
+                                    <a asp-controller="Indicator" asp-action="Details" asp-route-id="@update.IndicatorId" class="btn btn-sm btn-outline-secondary">Xem</a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    @if (!Model.AlertsRequiringAttention.Any() && !Model.RecentUpdates.Any())
+                    {
+                        <div class="list-group-item p-3 text-center">
+                            <p class="mb-0">Không có cảnh báo hoặc cập nhật mới</p>
+                        </div>
                     }
                 </div>
             </div>
-        </div>
-
-        <!-- KPI Status Chart -->
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Phân bố trạng thái KPI</h5>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                            id="chartOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-gear-fill"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chartOptionsDropdown">
-                            <li><a class="dropdown-item chart-type" href="#" data-type="doughnut">Biểu đồ tròn</a></li>
-                            <li><a class="dropdown-item chart-type" href="#" data-type="bar">Biểu đồ cột</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="kpiStatusChart" height="220"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-4">
-        <!-- Objectives Progress -->
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Tiến độ Objectives</h5>
-                    <a asp-controller="BusinessObjective" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Tên Objective</th>
-                                    <th>Phòng ban</th>
-                                    <th class="text-center">Tiến độ</th>
-                                    <th class="text-center">SFs</th>
-                                    <th class="text-center">CSFs</th>
-                                    <th class="text-center">KPIs</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Nâng cao chất lượng sản phẩm</td>
-                                    <td>Sản xuất</td>
-                                    <td class="text-center">
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%;"
-                                                aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <span class="small">75%</span>
-                                    </td>
-                                    <td class="text-center">3</td>
-                                    <td class="text-center">7</td>
-                                    <td class="text-center">4</td>
-                                </tr>
-                                <tr>
-                                    <td>Tăng trưởng thị phần</td>
-                                    <td>Kinh doanh</td>
-                                    <td class="text-center">
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 45%;"
-                                                aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <span class="small">45%</span>
-                                    </td>
-                                    <td class="text-center">2</td>
-                                    <td class="text-center">5</td>
-                                    <td class="text-center">3</td>
-                                </tr>
-                                <tr>
-                                    <td>Phát triển đội ngũ nhân sự</td>
-                                    <td>Nhân sự</td>
-                                    <td class="text-center">
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-info" role="progressbar" style="width: 60%;"
-                                                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                        <span class="small">60%</span>
-                                    </td>
-                                    <td class="text-center">2</td>
-                                    <td class="text-center">4</td>
-                                    <td class="text-center">3</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- KRI Table -->
-        <div class="col-md-8">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Chỉ số KRI quan trọng</h5>
-                    <div>
-                        <div class="input-group input-group-sm">
-                            <input type="text" class="form-control" placeholder="Tìm kiếm...">
-                            <button class="btn btn-outline-secondary" type="button">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="table-light">
-                                <tr class="py-2">
-                                    <th class="px-3">Mã</th>
-                                    <th class="px-3">Tên chỉ số</th>
-                                    <th class="text-end px-3">Hiện tại</th>
-                                    <th class="text-end px-3">Mục tiêu</th>
-                                    <th class="text-center px-3">Trạng thái</th>
-                                    <th class="text-center px-3">Xu hướng</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var kpi in Model.KriSummaries.Take(10))
-                                {
-                                    <tr class="py-2">
-                                        <td class="px-3">@kpi.Code</td>
-                                        <td class="px-3">@kpi.Name</td>
-                                        <td class="text-end px-3">@kpi.CurrentValue @kpi.MeasurementUnit</td>
-                                        <td class="text-end px-3">@kpi.TargetValue @kpi.MeasurementUnit</td>
-                                        <td class="text-center px-3">
-                                            <span class="badge @kpi.StatusCssClass">@kpi.StatusDisplay</span>
-                                        </td>
-                                        <td class="text-center px-3">
-                                            @if (kpi.Trend == KPISolution.Models.Enums.TrendDirection.Up)
-                                            {
-                                                <i class="bi bi-arrow-up-circle-fill text-success"></i>
-                                            }
-                                            else if (kpi.Trend == KPISolution.Models.Enums.TrendDirection.Down)
-                                            {
-                                                <i class="bi bi-arrow-down-circle-fill text-danger"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="bi bi-dash-circle-fill text-secondary"></i>
-                                            }
-                                            <span class="ms-1">@kpi.TrendValueDisplay</span>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="card-footer d-flex justify-content-between align-items-center">
-                    <span class="small text-muted">Hiển thị 1-10 của @Model.KriSummaries.Count</span>
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item"><a class="page-link" href="#">Trước</a></li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" href="#">Sau</a></li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        </div>
-
-        <!-- Alerts and Updates -->
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0">Cảnh báo và cập nhật</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item list-group-item-action p-3">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">KPI-001: Tỷ lệ đơn hàng đúng hạn giảm mạnh</h6>
-                                <small class="text-muted">2 ngày trước</small>
-                            </div>
-                            <p class="mb-1 small">Tỷ lệ đơn hàng đúng hạn giảm xuống dưới 85%, cần kiểm tra ngay</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-danger">
-                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Nghiêm trọng
-                                </small>
-                                <a asp-controller="KPI" asp-action="Details" asp-route-id="1" class="btn btn-sm btn-outline-secondary">Xem</a>
-                            </div>
-                        </div>
-                        <div class="list-group-item list-group-item-action p-3">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">CSF-003: Cải thiện quy trình đánh giá chất lượng</h6>
-                                <small class="text-muted">3 ngày trước</small>
-                            </div>
-                            <p class="mb-1 small">Tiến độ chỉ đạt 45%, cần đẩy nhanh để hoàn thành đúng thời hạn</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-warning">
-                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Cảnh báo
-                                </small>
-                                <a asp-controller="CSF" asp-action="Details" asp-route-id="3" class="btn btn-sm btn-outline-secondary">Xem</a>
-                            </div>
-                        </div>
-                        <div class="list-group-item list-group-item-action p-3">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">KRI-005: Chỉ số hài lòng khách hàng đạt mục tiêu</h6>
-                                <small class="text-muted">1 tuần trước</small>
-                            </div>
-                            <p class="mb-1 small">Chỉ số hài lòng khách hàng đạt 92%, vượt mục tiêu đề ra (90%)</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-success">
-                                    <i class="bi bi-check-circle-fill me-1"></i>Hoàn thành
-                                </small>
-                                <a asp-controller="KRI" asp-action="Details" asp-route-id="5" class="btn btn-sm btn-outline-secondary">Xem</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer text-center p-3">
-                    <a asp-controller="Alert" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả cảnh báo</a>
-                </div>
+            <div class="card-footer text-center p-3">
+                <a asp-controller="Alert" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả cảnh báo</a>
             </div>
         </div>
     </div>
@@ -445,6 +444,11 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
+            // Đảm bảo biểu đồ được khởi tạo đúng kích thước
+            window.addEventListener('resize', function() {
+                kpiStatusChart.resize();
+            });
+
             // KPI Status Chart setup
             var ctx = document.getElementById('kpiStatusChart').getContext('2d');
             var statusColors = {
@@ -453,9 +457,9 @@
                 'BelowTarget': 'rgba(220, 53, 69, 0.7)'  // Danger
             };
 
-            var statusData = @Html.Raw(Json.Serialize(Model.KpisByStatus.Select(kvp => new { 
-                status = kvp.Key.ToString(), 
-                count = kvp.Value 
+            var statusData = @Html.Raw(Json.Serialize(Model.IndicatorsByStatus.Select(kvp => new {
+                status = kvp.Key.ToString(),
+                count = kvp.Value
             }).ToList()));
 
             var kpiStatusChart = new Chart(ctx, {
@@ -477,10 +481,21 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    layout: {
+                        padding: 20
+                    },
                     plugins: {
                         legend: {
-                            position: 'bottom'
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 15,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            enabled: true
                         }
                     }
                 }
@@ -492,6 +507,25 @@
                 var chartType = $(this).data('type');
                 kpiStatusChart.config.type = chartType;
                 kpiStatusChart.update();
+            });
+
+            // Xử lý lỗi zoom vô hạn
+            function resizeChart() {
+                if (kpiStatusChart) {
+                    kpiStatusChart.resize();
+                }
+            }
+
+            // Gọi hàm resize khi cửa sổ thay đổi kích thước
+            var resizeTimer;
+            $(window).on('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(resizeChart, 100);
+            });
+
+            // Gọi hàm resize khi tab được kích hoạt (nếu biểu đồ nằm trong tab)
+            $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                resizeChart();
             });
         });
     </script>

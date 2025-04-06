@@ -1,0 +1,49 @@
+@model List<DepartmentHierarchyViewModel>
+
+@foreach (var dept in Model)
+{
+    <li class="mb-2">
+        <div class="department-node">
+            <div class="d-flex align-items-center">
+                @if (dept.HasChildren && dept.ChildDepartments.Any())
+                {
+                    <i class="bi bi-diagram-3 me-2 text-primary"></i>
+                }
+                else
+                {
+                    <i class="bi bi-diagram-2 me-2 text-info"></i>
+                }
+                <strong>@dept.DepartmentName</strong>
+                <span class="badge bg-secondary ms-2">Cấp @dept.HierarchyLevel</span>
+            </div>
+            <div class="department-info mt-2">
+                <div class="row">
+                    <div class="col-md-4">
+                        <small><i class="bi bi-person me-1"></i> Trưởng phòng: @(string.IsNullOrEmpty(dept.DepartmentHead) ?
+                                                    "Chưa phân công" : dept.DepartmentHead)</small>
+                                                                                   </div>
+                                                                                   <div class="col-md-4">
+                                                                                       <small><i class="bi bi-people me-1"></i> Nhân viên: @dept.TotalEmployees</small>
+                                                                                   </div>
+                                                                                   <div class="col-md-4">
+                                                                                       <small><i class="bi bi-diagram-2 me-1"></i> Phòng ban cha:
+                            @(string.IsNullOrEmpty(dept.ParentDepartmentName) ? "Không có" :
+                                                    dept.ParentDepartmentName)</small>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(dept.Description))
+                {
+                    <div class="mt-1">
+                        <small><i class="bi bi-info-circle me-1"></i> @dept.Description</small>
+                    </div>
+                }
+            </div>
+        </div>
+        @if (dept.HasChildren && dept.ChildDepartments.Any())
+        {
+            <ul>
+                @await Html.PartialAsync("~/Views/Shared/Tree/_TreeNodePartial.cshtml", dept.ChildDepartments)
+            </ul>
+        }
+    </li>
+}

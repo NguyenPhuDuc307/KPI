@@ -1,0 +1,427 @@
+@{
+    ViewData["Title"] = "Chào mừng đến với hệ thống quản lý KPI";
+    Layout = "~/Views/Shared/Layout/_LandingLayout.cshtml";
+}
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Nâng cao hiệu suất doanh nghiệp với KPI Management System</h1>
+                <p class="lead mb-4">Hệ thống quản lý KPI giúp doanh nghiệp theo dõi, phân tích và tối ưu hóa hiệu suất
+                    một cách toàn diện và minh bạch.</p>
+                <div class="d-flex gap-3">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">Khám phá ngay</a>
+                    <a href="#features" class="btn btn-outline-secondary btn-lg">Tìm hiểu thêm</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="/img/logo.png" alt="KPI Logo" class="img-fluid"
+                    style="max-width: 350px; margin: 0 auto; display: block;">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5" id="features">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Tính năng nổi bật</h2>
+            <p class="lead">Hệ thống quản lý KPI với đầy đủ công cụ cần thiết</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-circle mb-3">
+                            <i class="bi bi-speedometer2"></i>
+                        </div>
+                        <h3 class="card-title h5">Dashboard trực quan</h3>
+                        <p class="card-text">Theo dõi hiệu suất doanh nghiệp qua các biểu đồ và bảng số liệu trực quan,
+                            dễ dàng nắm bắt xu hướng.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-success bg-gradient text-white rounded-circle mb-3">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h3 class="card-title h5">Quản lý chỉ số KPI</h3>
+                        <p class="card-text">Thiết lập, theo dõi và quản lý các chỉ số KPI theo cấu trúc phân cấp rõ
+                            ràng từ mục tiêu đến kết quả.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-warning bg-gradient text-white rounded-circle mb-3">
+                            <i class="bi bi-rulers"></i>
+                        </div>
+                        <h3 class="card-title h5">Đo lường kết quả</h3>
+                        <p class="card-text">Theo dõi tiến độ và đo lường kết quả thực hiện KPI theo thời gian thực, đối
+                            chiếu với mục tiêu đề ra.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-info bg-gradient text-white rounded-circle mb-3">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h3 class="card-title h5">Quản lý phòng ban</h3>
+                        <p class="card-text">Phân quyền và theo dõi hiệu suất theo từng phòng ban, giúp điều phối công
+                            việc hiệu quả hơn.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-danger bg-gradient text-white rounded-circle mb-3">
+                            <i class="bi bi-file-earmark-bar-graph"></i>
+                        </div>
+                        <h3 class="card-title h5">Báo cáo chi tiết</h3>
+                        <p class="card-text">Tạo báo cáo chi tiết về hiệu suất KPI, giúp ra quyết định dựa trên dữ liệu
+                            thực tế.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon bg-primary bg-gradient text-white rounded-circle mb-3">
+                            <i class="bi bi-bell"></i>
+                        </div>
+                        <h3 class="card-title h5">Cảnh báo tự động</h3>
+                        <p class="card-text">Nhận thông báo khi chỉ số KPI không đạt mục tiêu hoặc khi có sự thay đổi
+                            đáng kể.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Process Section -->
+<section class="process-section py-5 bg-light" id="process">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Quy trình quản lý KPI</h2>
+            <p class="lead">Quy trình đơn giản, hiệu quả</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="process-timeline">
+                    <div class="process-item d-flex">
+                        <div class="process-icon bg-primary text-white">1</div>
+                        <div class="process-content">
+                            <h4>Thiết lập mục tiêu</h4>
+                            <p>Xác định mục tiêu chiến lược (Objectives) cho doanh nghiệp hoặc tổ chức của bạn</p>
+                        </div>
+                    </div>
+
+                    <div class="process-item d-flex">
+                        <div class="process-icon bg-primary text-white">2</div>
+                        <div class="process-content">
+                            <h4>Xác định yếu tố thành công</h4>
+                            <p>Xác định các yếu tố thành công (Success Factors) và các yếu tố cốt lõi (Critical Success
+                                Factors)</p>
+                        </div>
+                    </div>
+
+                    <div class="process-item d-flex">
+                        <div class="process-icon bg-primary text-white">3</div>
+                        <div class="process-content">
+                            <h4>Thiết lập chỉ số</h4>
+                            <p>Thiết lập các chỉ số hiệu suất (KPI, PI) và chỉ số kết quả (KRI, RI) để đo lường tiến độ
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="process-item d-flex">
+                        <div class="process-icon bg-primary text-white">4</div>
+                        <div class="process-content">
+                            <h4>Theo dõi & đo lường</h4>
+                            <p>Theo dõi tiến độ và đo lường kết quả thực hiện các chỉ số theo thời gian</p>
+                        </div>
+                    </div>
+
+                    <div class="process-item d-flex">
+                        <div class="process-icon bg-primary text-white">5</div>
+                        <div class="process-content">
+                            <h4>Phân tích & điều chỉnh</h4>
+                            <p>Phân tích kết quả, đưa ra các điều chỉnh cần thiết để đạt được mục tiêu đề ra</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="display-5 fw-bold mb-4 text-white">Sẵn sàng nâng cao hiệu suất?</h2>
+                <p class="lead mb-4">Hệ thống KPI Management giúp doanh nghiệp của bạn theo dõi, quản lý và cải thiện
+                    hiệu suất một cách hiệu quả.</p>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg me-3">Đăng ký ngay</a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary btn-lg">Khám phá hệ thống</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Styles {
+    <style>
+        /* Hero Section */
+        .hero-section {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-color: rgba(139, 199, 63, 0.1);
+            z-index: 1;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: -30px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: rgba(12, 100, 194, 0.1);
+            z-index: 1;
+        }
+
+        .hero-section h1 {
+            color: #004e9e;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-section img {
+            transition: transform 0.5s;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-section img:hover {
+            transform: translateY(-10px);
+        }
+
+        /* Features Section */
+        .feature-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            font-size: 2.25rem;
+            border-radius: 50%;
+        }
+
+        .hover-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-radius: 10px;
+        }
+
+        .hover-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Process Section */
+        .process-section {
+            background-color: #f8f9fa;
+        }
+
+        .process-timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .process-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 2.5rem;
+            height: 100%;
+            width: 3px;
+            background-color: #0c64c2;
+            opacity: 0.3;
+        }
+
+        .process-item {
+            position: relative;
+            margin-bottom: 2.5rem;
+            z-index: 1;
+            transition: transform 0.3s;
+        }
+
+        .process-item:hover {
+            transform: translateX(5px);
+        }
+
+        .process-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 5rem;
+            height: 5rem;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-right: 2rem;
+            z-index: 2;
+            background-color: #0c64c2;
+            box-shadow: 0 5px 15px rgba(12, 100, 194, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .process-item:hover .process-icon {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(12, 100, 194, 0.4);
+        }
+
+        .process-content {
+            flex: 1;
+            background-color: white;
+            padding: 1.75rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 4px solid #0c64c2;
+        }
+
+        .process-item:hover .process-content {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .process-content h4 {
+            color: #004e9e;
+            margin-bottom: 0.75rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #0c64c2 0%, #004e9e 100%);
+            color: white;
+            padding: 5rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            right: -80px;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .cta-section .btn-outline-primary {
+            color: white;
+            border-color: white;
+            border-width: 2px;
+            font-weight: 600;
+        }
+
+        .cta-section .btn-outline-primary:hover {
+            background-color: white;
+            color: #0c64c2;
+        }
+
+        .cta-section .btn-primary {
+            background-color: white;
+            color: #0c64c2;
+            border-color: white;
+            font-weight: 600;
+        }
+
+        .cta-section .btn-primary:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-color: white;
+        }
+
+        /* Animations */
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Add animation classes to elements as they scroll into view
+            const elements = document.querySelectorAll('.feature-icon, .process-item, .hero-section h1, .hero-section p');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-fade-in-up');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.3
+            });
+
+            elements.forEach(el => {
+                observer.observe(el);
+            });
+        });
+    </script>
+}

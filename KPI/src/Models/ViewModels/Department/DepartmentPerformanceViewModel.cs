@@ -1,110 +1,134 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using KPISolution.Models.ViewModels.KPI;
-
 namespace KPISolution.Models.ViewModels.Department
 {
     /// <summary>
-    /// View model for department performance information.
+    /// Hiển thị thông tin hiệu suất tổng thể của phòng ban
     /// </summary>
     public class DepartmentPerformanceViewModel
     {
         /// <summary>
-        /// Gets or sets the department ID.
+        /// ID của phòng ban
         /// </summary>
         public Guid DepartmentId { get; set; }
 
         /// <summary>
-        /// Gets or sets the department name.
+        /// Tên phòng ban
         /// </summary>
-        [Display(Name = "Department")]
+        [Display(Name = "Phòng ban")]
         public string DepartmentName { get; set; }
 
         /// <summary>
-        /// Gets or sets the overall performance score.
+        /// Điểm hiệu suất tổng thể (0-100)
         /// </summary>
-        [Display(Name = "Overall Performance")]
-        public decimal OverallScore { get; set; }
+        [Display(Name = "Điểm hiệu suất")]
+        public decimal PerformanceScore { get; set; }
 
         /// <summary>
-        /// Gets or sets the KPI achievement rate.
+        /// Tỷ lệ đạt mục tiêu (%)
         /// </summary>
-        [Display(Name = "KPI Achievement Rate")]
-        public decimal KpiAchievementRate { get; set; }
+        [Display(Name = "Tỷ lệ đạt mục tiêu")]
+        public decimal TargetAchievementRate { get; set; }
 
         /// <summary>
-        /// Gets or sets the number of KPIs on track.
+        /// Tỷ lệ hoàn thành (%)
         /// </summary>
-        [Display(Name = "KPIs On Track")]
-        public int KpisOnTrack { get; set; }
+        [Display(Name = "Tỷ lệ hoàn thành")]
+        public decimal CompletionRate { get; set; }
 
         /// <summary>
-        /// Gets or sets the number of KPIs at risk.
+        /// Điểm đạt được theo CSF
         /// </summary>
-        [Display(Name = "KPIs At Risk")]
-        public int KpisAtRisk { get; set; }
+        [Display(Name = "Điểm CSF")]
+        public decimal CsfScore { get; set; }
 
         /// <summary>
-        /// Gets or sets the number of KPIs off track.
+        /// Điểm chất lượng dữ liệu (0-100)
         /// </summary>
-        [Display(Name = "KPIs Off Track")]
-        public int KpisOffTrack { get; set; }
+        [Display(Name = "Chất lượng dữ liệu")]
+        public decimal DataQualityScore { get; set; }
 
         /// <summary>
-        /// Gets or sets the performance trend over time.
+        /// Tổng số Indicator
         /// </summary>
-        [Display(Name = "Performance Trend")]
-        public string PerformanceTrend { get; set; }
+        [Display(Name = "Tổng số Indicator")]
+        public int TotalIndicators { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of top performing KPIs.
+        /// Số Indicator đang đạt mục tiêu
         /// </summary>
-        [Display(Name = "Top Performing KPIs")]
-        public List<KpiViewModel> TopPerformingKpis { get; set; }
+        [Display(Name = "Indicator đạt mục tiêu")]
+        public int IndicatorsOnTarget { get; set; }
 
         /// <summary>
-        /// Gets or sets the list of underperforming KPIs.
+        /// Số Indicator dưới mục tiêu
         /// </summary>
-        [Display(Name = "Underperforming KPIs")]
-        public List<KpiViewModel> UnderperformingKpis { get; set; }
+        [Display(Name = "Indicator dưới mục tiêu")]
+        public int IndicatorsBelowTarget { get; set; }
 
         /// <summary>
-        /// Gets or sets the performance by KPI type breakdown.
+        /// Thời gian đo lường gần nhất
         /// </summary>
-        [Display(Name = "Performance by KPI Type")]
-        public Dictionary<string, decimal> PerformanceByType { get; set; }
-
-        /// <summary>
-        /// Gets or sets the historical performance data.
-        /// </summary>
-        [Display(Name = "Historical Performance")]
-        public Dictionary<DateTime, decimal> HistoricalPerformance { get; set; }
-
-        /// <summary>
-        /// Gets or sets the last updated timestamp.
-        /// </summary>
-        [Display(Name = "Last Updated")]
+        [Display(Name = "Cập nhật gần nhất")]
         public DateTime LastUpdated { get; set; }
 
         /// <summary>
-        /// Gets or sets any performance improvement recommendations.
+        /// Danh sách các Indicator hoạt động tốt nhất
         /// </summary>
-        [Display(Name = "Recommendations")]
-        public List<string> Recommendations { get; set; }
+        [Display(Name = "Indicator hoạt động tốt nhất")]
+        public List<IndicatorViewModel> TopPerformingIndicators { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the DepartmentPerformanceViewModel class.
+        /// Danh sách các Indicator hoạt động kém
+        /// </summary>
+        [Display(Name = "Indicator cần cải thiện")]
+        public List<IndicatorViewModel> UnderperformingIndicators { get; set; }
+
+        /// <summary>
+        /// Hiệu suất theo thời gian
+        /// </summary>
+        [Display(Name = "Hiệu suất theo thời gian")]
+        public Dictionary<string, decimal> PerformanceByPeriod { get; set; }
+
+        /// <summary>
+        /// CSS class cho hiển thị hiệu suất
+        /// </summary>
+        [Display(Name = "CSS Class")]
+        public string PerformanceCssClass { get; set; }
+
+        /// <summary>
+        /// Phần trăm hiệu suất
+        /// </summary>
+        [Display(Name = "Phần trăm hiệu suất")]
+        public int PerformancePercentage { get; set; }
+
+        /// <summary>
+        /// Số lượng Indicator
+        /// </summary>
+        [Display(Name = "Số lượng Indicator")]
+        public int IndicatorCount { get; set; }
+
+        /// <summary>
+        /// Số lượng Indicator cần chú ý
+        /// </summary>
+        [Display(Name = "Số Indicator cần chú ý")]
+        public int AtRiskCount { get; set; }
+
+        /// <summary>
+        /// Tên phòng ban/đơn vị
+        /// </summary>
+        [Display(Name = "Tên")]
+        public string Name => DepartmentName;
+
+        /// <summary>
+        /// Khởi tạo với giá trị mặc định
         /// </summary>
         public DepartmentPerformanceViewModel()
         {
-            DepartmentName = string.Empty;
-            PerformanceTrend = string.Empty;
-            TopPerformingKpis = new List<KpiViewModel>();
-            UnderperformingKpis = new List<KpiViewModel>();
-            PerformanceByType = new Dictionary<string, decimal>();
-            HistoricalPerformance = new Dictionary<DateTime, decimal>();
-            Recommendations = new List<string>();
+            this.DepartmentName = string.Empty;
+            this.PerformanceByPeriod = new Dictionary<string, decimal>();
+            this.TopPerformingIndicators = [];
+            this.UnderperformingIndicators = [];
+            this.LastUpdated = DateTime.UtcNow;
+            this.PerformanceCssClass = string.Empty;
         }
     }
 }

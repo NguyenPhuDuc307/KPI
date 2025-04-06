@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-
 namespace KPISolution.Authorization.Requirements
 {
     /// <summary>
@@ -18,7 +16,7 @@ namespace KPISolution.Authorization.Requirements
         /// <param name="action">Hành động cần ủy quyền (Create, Read, Update, Delete)</param>
         public OwnershipRequirement(string action)
         {
-            Action = action;
+            this.Action = action;
         }
     }
 }

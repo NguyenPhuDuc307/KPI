@@ -1,4 +1,5 @@
-@model KPISolution.Controllers.UserViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model UserViewModel
 
 @{
     ViewData["Title"] = "Xóa người dùng";
@@ -48,11 +49,11 @@
                             <dd class="col-sm-8">
                                 @if (Model.IsActive)
                                 {
-                                        <span class="badge bg-success">Hoạt động</span>
+                                    <span class="badge bg-success">Hoạt động</span>
                                 }
                                 else
                                 {
-                                        <span class="badge bg-secondary">Tạm khóa</span>
+                                    <span class="badge bg-secondary">Tạm khóa</span>
                                 }
                             </dd>
                         </dl>
@@ -73,4 +74,4 @@
             </div>
         </form>
     </div>
-</div> 
+</div>

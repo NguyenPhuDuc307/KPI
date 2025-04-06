@@ -139,8 +139,40 @@ KPI/
 │   ├── Infrastructure/            # Cross-cutting concerns
 │   ├── Models/                    # Domain models and view models
 │   │   ├── Entities/              # Entity classes
+│   │   │   ├── Base/              # Base entity classes
+│   │   │   ├── Identity/          # Identity-related entities
+│   │   │   ├── Indicator/         # Indicator entities (SuccessFactor, ResultIndicator, PerformanceIndicator)
+│   │   │   ├── Measurement/       # Measurement entities
+│   │   │   ├── Organization/      # Organization-related entities
+│   │   │   │   ├── Objective.cs   # Base objective entity
+│   │   │   │   ├── BusinessObjective.cs  # Business-specific objective entity
+│   │   │   │   ├── Department.cs  # Department entity
+│   │   │   │   └── Unit.cs        # Organizational unit entity
+│   │   │   ├── Dashboard/         # Dashboard-related entities
+│   │   │   └── Notification/      # Notification-related entities
 │   │   ├── Enums/                 # Enumeration types
+│   │   │   ├── Indicator/         # Indicator-related enums (consolidated)
+│   │   │   │   ├── BasicIndicatorEnums.cs  # Basic indicator type enums
+│   │   │   │   ├── IndicatorPropertyEnums.cs # Property-related enums
+│   │   │   │   ├── MeasurementEnums.cs     # Measurement-related enums
+│   │   │   │   ├── MeasurementStatusEnum.cs # Measurement status enum
+│   │   │   │   └── SuccessFactorEnums.cs   # Success factor enums (includes CSF categories)
+│   │   │   ├── Organization/      # Organization-related enums
+│   │   │   │   ├── DepartmentEnums.cs      # Department type enums
+│   │   │   │   └── ObjectiveEnums.cs       # Objective status and timeframe enums
+│   │   │   ├── Business/          # Business-related enums
+│   │   │   │   ├── BusinessEnums.cs        # Business perspective enums
+│   │   │   │   └── SuccessFactorCategoryEnum.cs # Success factor category enums
+│   │   │   ├── Relationship/      # Relationship-related enums
+│   │   │   │   └── RelationshipEnums.cs    # Relationship strength and type enums
+│   │   │   └── Notification/      # Notification-related enums
 │   │   └── ViewModels/            # View-specific models
+│   │       ├── BusinessObjective/ # Business objective view models
+│   │       ├── Indicator/         # Indicator view models
+│   │       │   ├── Objective/     # Objective view models
+│   │       │   ├── PerformanceIndicator/ # Performance indicator view models
+│   │       │   └── ResultIndicator/ # Result indicator view models
+│   │       └── SuccessFactor/     # Success factor view models
 │   ├── Services/                  # Business logic services
 │   ├── Views/                     # Razor views
 │   └── wwwroot/                   # Static files (CSS, JS, images)
@@ -156,11 +188,31 @@ The database follows a relational model with the following key tables:
 - **AspNetUsers/AspNetRoles**: Identity tables for authentication
 - **Department/Unit**: Organizational structure
 - **Employee/Position**: Personnel management
-- **KPI**: Key Performance Indicators
-- **CSF**: Critical Success Factors
-- **KpiMeasurement**: Actual measurements for KPIs
-- **KpiTarget**: Target values for KPIs
+- **Objective**: Strategic objectives of the organization
+- **SuccessFactor**: Combined table for Success Factors (SF) and Critical Success Factors (CSF)
+  - Uses IsCritical flag to distinguish between SF and CSF
+  - Self-referencing relationship for parent-child structure
+- **ResultIndicator**: Combined table for Result Indicators (RI) and Key Result Indicators (KRI)
+  - Uses IsKey flag to distinguish between RI and KRI
+- **PerformanceIndicator**: Combined table for Performance Indicators (PI) and Key Performance Indicators (KPI)
+  - Uses IsKey flag to distinguish between PI and KPI
+- **Measurement**: Unified measurement table for all indicator types
+  - TypeDiscriminator to distinguish between result and performance measurements
 - **Dashboard/Report**: Dashboard and reporting configurations
+
+### Database Relationship Overview
+
+```
+Objective 1:n SuccessFactor
+SuccessFactor 1:n SuccessFactor (self-reference for SF:CSF)
+SuccessFactor 1:n ResultIndicator
+SuccessFactor 1:n PerformanceIndicator
+ResultIndicator 1:n Measurement
+PerformanceIndicator 1:n Measurement
+Department 1:n Objective
+Employee 1:n ResultIndicator (responsible person)
+Employee 1:n PerformanceIndicator (responsible person)
+```
 
 ## Deployment Considerations
 

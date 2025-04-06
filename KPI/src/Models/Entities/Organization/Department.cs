@@ -1,7 +1,4 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using KPISolution.Models.Entities.Base;
-using KPISolution.Models.Entities.Identity;
 
 namespace KPISolution.Models.Entities.Organization
 {
@@ -43,12 +40,12 @@ namespace KPISolution.Models.Entities.Organization
         /// Navigation property to the parent department
         /// </summary>
         [ForeignKey("ParentDepartmentId")]
-        public Department? ParentDepartment { get; set; }
+        public Department? ParentDepartment { get; init; }
 
         /// <summary>
         /// Collection of child departments
         /// </summary>
-        public virtual ICollection<Department>? ChildDepartments { get; set; }
+        public virtual ICollection<Department>? ChildDepartments { get; init; }
 
         /// <summary>
         /// ID of the department head or manager
@@ -61,12 +58,12 @@ namespace KPISolution.Models.Entities.Organization
         /// Navigation property to the department head
         /// </summary>
         [ForeignKey("DepartmentHeadId")]
-        public virtual ApplicationUser? DepartmentHead { get; set; }
+        public virtual ApplicationUser? DepartmentHead { get; init; }
 
         /// <summary>
         /// Collection of employees in this department
         /// </summary>
-        public virtual ICollection<ApplicationUser>? Employees { get; set; }
+        public virtual ICollection<ApplicationUser>? Employees { get; init; }
 
         /// <summary>
         /// Email address of the department
@@ -74,7 +71,7 @@ namespace KPISolution.Models.Entities.Organization
         [StringLength(100)]
         [EmailAddress]
         [Display(Name = "Department Email")]
-        public string? Email { get; set; }
+        public string? Email { get; init; }
 
         /// <summary>
         /// Phone number of the department
@@ -82,28 +79,28 @@ namespace KPISolution.Models.Entities.Organization
         [StringLength(30)]
         [Phone]
         [Display(Name = "Phone Number")]
-        public string? PhoneNumber { get; set; }
+        public string? PhoneNumber { get; init; }
 
         /// <summary>
         /// Location of the department
         /// </summary>
         [StringLength(200)]
         [Display(Name = "Location")]
-        public string? Location { get; set; }
+        public string? Location { get; init; }
 
         /// <summary>
         /// Budget allocated to the department
         /// </summary>
         [Column(TypeName = "decimal(18,2)")]
         [Display(Name = "Budget")]
-        public decimal? Budget { get; set; }
+        public decimal? Budget { get; init; }
 
         /// <summary>
         /// Date when the department was established
         /// </summary>
         [DataType(DataType.Date)]
         [Display(Name = "Established Date")]
-        public DateTime? EstablishedDate { get; set; }
+        public DateTime? EstablishedDate { get; init; }
 
         /// <summary>
         /// Department hierarchy level (0 for top level)
@@ -116,6 +113,6 @@ namespace KPISolution.Models.Entities.Organization
         /// </summary>
         [Range(1, 5)]
         [Display(Name = "Priority")]
-        public int? Priority { get; set; }
+        public int? Priority { get; init; }
     }
 }

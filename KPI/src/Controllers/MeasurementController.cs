@@ -1,27 +1,9 @@
-using System;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using KPISolution.Models.ViewModels.KPI;
-using KPISolution.Authorization;
-using KPISolution.Models.Enums;
-using KPISolution.Models.Entities.KPI;
-using KPISolution.Models.Entities.Base;
-using KPISolution.Data;
-using KPISolution.Data.Repositories.Interfaces;
-using KPISolution.Data.Repositories.Extensions;
-using AutoMapper;
-using KPISolution.Extensions;
 
 namespace KPISolution.Controllers
 {
     /// <summary>
-    /// Controller for managing KPI measurements
+    /// Controller for managing indicator measurements
     /// </summary>
     [Authorize]
     public class MeasurementController : Controller
@@ -41,168 +23,649 @@ namespace KPISolution.Controllers
             IUnitOfWork unitOfWork,
             IMapper mapper)
         {
-            _logger = logger;
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            this._mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         /// <summary>
         /// Displays the list of all measurements with filtering and pagination
         /// </summary>
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanViewKpis)]
-        public async Task<IActionResult> Index(MeasurementFilterViewModel filter, int page = 1)
+        [Authorize(Policy = IndicatorAuthorizationPolicies.PolicyNames.CanViewIndicators)]
+        [HttpGet]
+        public async Task<IActionResult> Index(MeasurementSearchViewModel? searchModel = null)
         {
             try
             {
-                var pageSize = 10;
+                this._logger.LogInformation("Getting measurements");
 
-                // Tạo truy vấn cơ bản với bộ lọc
-                var query = BuildFilteredQuery(filter);
+                searchModel ??= new MeasurementSearchViewModel();
 
-                // Đếm tổng số bản ghi (truy vấn COUNT hiệu quả hơn)
-                var totalCount = await query.CountAsync();
-
-                // Áp dụng sắp xếp và phân trang ở cấp cơ sở dữ liệu
-                var pagedData = await query
-                    .OrderByDescending(m => m.MeasurementDate)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Include(m => m.Kpi) // Đảm bảo load dữ liệu KPI
-                    .ToListAsync();
-
-                // Chuyển đổi thành viewmodels
-                var items = pagedData.Select(value =>
+                // Tạo MeasurementListViewModel thay vì MeasurementIndexViewModel
+                var model = new MeasurementListViewModel
                 {
-                    var viewModel = _mapper.Map<KpiValueViewModel>(value);
-
-                    // Bổ sung thông tin từ KPI
-                    if (value.Kpi != null)
+                    // Ánh xạ từ MeasurementSearchViewModel sang IndicatorMeasurementFilterViewModel
+                    Filter = new IndicatorMeasurementFilterViewModel
                     {
-                        viewModel.TargetValue = value.Kpi.TargetValue;
-                        viewModel.KpiType = value.Kpi.GetType().Name;
-                        viewModel.KpiCode = value.Kpi.Code;
-                        viewModel.KpiName = value.Kpi.Name;
-
-                        // Tính toán phần trăm đạt được
-                        if (value.Kpi.TargetValue.HasValue && value.Kpi.TargetValue > 0)
-                        {
-                            viewModel.AchievementPercentage = Math.Round((value.ActualValue / value.Kpi.TargetValue.Value) * 100, 2);
-                            viewModel.Variance = value.ActualValue - value.Kpi.TargetValue.Value;
-
-                            // Thiết lập trạng thái dựa trên phần trăm đạt được
-                            if (viewModel.AchievementPercentage >= 100)
-                            {
-                                viewModel.Status = "Đạt mục tiêu";
-                                viewModel.StatusCssClass = "badge bg-success";
-                            }
-                            else if (viewModel.AchievementPercentage >= 80)
-                            {
-                                viewModel.Status = "Có rủi ro";
-                                viewModel.StatusCssClass = "badge bg-warning text-dark";
-                            }
-                            else
-                            {
-                                viewModel.Status = "Không đạt";
-                                viewModel.StatusCssClass = "badge bg-danger";
-                            }
-                        }
-
-                        // Thiết lập kỳ dựa trên ngày đo lường
-                        viewModel.Period = value.MeasurementDate.ToString("MMM yyyy");
-                    }
-
-                    return viewModel;
-                }).ToList();
-
-                // Tạo viewmodel với dữ liệu đã phân trang
-                var viewModel = new MeasurementListViewModel
-                {
-                    Filter = filter ?? new MeasurementFilterViewModel(),
-                    CurrentPage = page,
-                    PageSize = pageSize,
-                    TotalCount = totalCount,
-                    Items = items,
-                    Departments = new SelectList(await GetDepartmentSelectListCached(), "Value", "Text"),
-                    KpiTypes = new SelectList(GetEnumSelectListCached<KpiType>(), "Value", "Text"),
-                    MeasurementFrequencies = new SelectList(GetEnumSelectListCached<MeasurementFrequency>(), "Value", "Text")
+                        // Cần ánh xạ các thuộc tính phù hợp từ searchModel
+                        SearchTerm = searchModel.IndicatorName,
+                        DepartmentId = searchModel.DepartmentId
+                        // Ánh xạ thêm các thuộc tính khác nếu cần
+                    },
+                    CurrentPage = searchModel.CurrentPage,
+                    PageSize = searchModel.PageSize
                 };
 
-                _logger.LogInformation($"Số lượng KPI trong ViewModel: {viewModel.Items.Count}");
+                // Populate dropdown lists
+                model.Departments = await this.GetDepartmentsForDropdown();
+                model.IndicatorTypes = this.GetIndicatorTypesForDropdown();
+                model.MeasurementFrequencies = this.GetMeasurementFrequenciesForDropdown();
+
+                // Get measurements with filters
+                var query = this._unitOfWork.Measurements.GetAll();
+
+                if (searchModel.IndicatorId.HasValue)
+                {
+                    // Look for measurements where PerformanceIndicatorId or ResultIndicatorId matches
+                    query = query.Where(m =>
+                        m.PerformanceIndicatorId == searchModel.IndicatorId ||
+                        m.ResultIndicatorId == searchModel.IndicatorId);
+                }
+
+                if (!string.IsNullOrEmpty(searchModel.IndicatorName))
+                {
+                    // Fetch the indicators with matching names
+                    var piIndicators = this._unitOfWork.PerformanceIndicators
+                        .GetAll()
+                        .Where(i => i.Name.Contains(searchModel.IndicatorName))
+                        .Select(i => i.Id);
+
+                    var riIndicators = this._unitOfWork.ResultIndicators
+                        .GetAll()
+                        .Where(i => i.Name.Contains(searchModel.IndicatorName))
+                        .Select(i => i.Id);
+
+                    query = query.Where(m =>
+                        (m.PerformanceIndicatorId.HasValue && piIndicators.Contains(m.PerformanceIndicatorId.Value)) ||
+                        (m.ResultIndicatorId.HasValue && riIndicators.Contains(m.ResultIndicatorId.Value)));
+                }
+
+                if (searchModel.DepartmentId.HasValue)
+                {
+                    // Find all indicators belonging to the department
+                    var departmentPIs = this._unitOfWork.PerformanceIndicators
+                        .GetAll()
+                        .Where(i => i.DepartmentId == searchModel.DepartmentId)
+                        .Select(i => i.Id);
+
+                    var departmentRIs = this._unitOfWork.ResultIndicators
+                        .GetAll()
+                        .Where(i => i.DepartmentId == searchModel.DepartmentId)
+                        .Select(i => i.Id);
+
+                    query = query.Where(m =>
+                        (m.PerformanceIndicatorId.HasValue && departmentPIs.Contains(m.PerformanceIndicatorId.Value)) ||
+                        (m.ResultIndicatorId.HasValue && departmentRIs.Contains(m.ResultIndicatorId.Value)));
+                }
+
+                if (searchModel.FromDate.HasValue)
+                {
+                    query = query.Where(m => m.MeasurementDate >= searchModel.FromDate.Value);
+                }
+
+                if (searchModel.ToDate.HasValue)
+                {
+                    query = query.Where(m => m.MeasurementDate <= searchModel.ToDate.Value);
+                }
+
+                // Apply sorting
+                query = query.OrderByDescending(m => m.MeasurementDate);
+
+                // Get total count for pagination
+                model.TotalCount = await query.CountAsync();
+
+                // Apply pagination
+                query = query.Skip((searchModel.CurrentPage - 1) * searchModel.PageSize)
+                             .Take(searchModel.PageSize);
+
+                // Execute query and load related data
+                var measurements = await query.ToListAsync();
+
+                // Map measurements to IndicatorValueViewModel instead of MeasurementViewModel
+                model.Items = await this.MapToIndicatorValueViewModels(measurements);
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error getting measurements");
+                return View("Error");
+            }
+        }
+
+        /// <summary>
+        /// Maps measurement entities to IndicatorValueViewModel for display
+        /// </summary>
+        private async Task<List<IndicatorValueViewModel>> MapToIndicatorValueViewModels(List<Measurement> measurements)
+        {
+            var result = new List<IndicatorValueViewModel>();
+
+            foreach (var measurement in measurements)
+            {
+                var item = new IndicatorValueViewModel
+                {
+                    Id = measurement.Id,
+                    MeasurementDate = measurement.MeasurementDate,
+                    ActualValue = measurement.Value,
+                    Status = this.GetStatusDisplayName(measurement.Status),
+                    Notes = measurement.Notes,
+                    CreatedBy = measurement.CreatedBy ?? "System"
+                };
+
+                // Set indicator information based on type
+                if (measurement.PerformanceIndicatorId.HasValue)
+                {
+                    var pi = await this._unitOfWork.PerformanceIndicators.GetByIdAsync(measurement.PerformanceIndicatorId.Value);
+                    if (pi != null)
+                    {
+                        item.IndicatorId = pi.Id;
+                        item.IndicatorCode = pi.Code;
+                        item.IndicatorName = pi.Name;
+                        item.TargetValue = pi.TargetValue;
+                        item.AchievementPercentage = this.CalculateAchievementPercentage(measurement.Value, pi.TargetValue);
+                        item.StatusCssClass = this.GetStatusCssClass(measurement.Status);
+                    }
+                }
+                else if (measurement.ResultIndicatorId.HasValue)
+                {
+                    var ri = await this._unitOfWork.ResultIndicators.GetByIdAsync(measurement.ResultIndicatorId.Value);
+                    if (ri != null)
+                    {
+                        item.IndicatorId = ri.Id;
+                        item.IndicatorCode = ri.Code;
+                        item.IndicatorName = ri.Name;
+                        item.TargetValue = ri.TargetValue;
+                        item.AchievementPercentage = this.CalculateAchievementPercentage(measurement.Value, ri.TargetValue);
+                        item.StatusCssClass = this.GetStatusCssClass(measurement.Status);
+                    }
+                }
+
+                result.Add(item);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Calculate achievement percentage
+        /// </summary>
+        private decimal CalculateAchievementPercentage(decimal actual, decimal? target)
+        {
+            if (!target.HasValue || target.Value == 0)
+                return 0;
+
+            return Math.Round((actual / target.Value) * 100, 2);
+        }
+
+        /// <summary>
+        /// Get CSS class for status display
+        /// </summary>
+        private string GetStatusCssClass(MeasurementStatus status)
+        {
+            return status switch
+            {
+                MeasurementStatus.Target => "badge bg-success",
+                MeasurementStatus.Expected => "badge bg-warning",
+                MeasurementStatus.Actual => "badge bg-primary",
+                MeasurementStatus.NotSet => "badge bg-secondary",
+                MeasurementStatus.Threshold => "badge bg-danger",
+                _ => "badge bg-secondary"
+            };
+        }
+
+        /// <summary>
+        /// Get friendly display name for MeasurementStatus
+        /// </summary>
+        private string GetStatusDisplayName(MeasurementStatus status)
+        {
+            return status switch
+            {
+                MeasurementStatus.Target => "Mục tiêu",
+                MeasurementStatus.Expected => "Dự kiến",
+                MeasurementStatus.Actual => "Thực tế",
+                MeasurementStatus.NotSet => "Chưa thiết lập",
+                MeasurementStatus.Threshold => "Ngưỡng tối thiểu",
+                _ => status.ToString()
+            };
+        }
+
+        /// <summary>
+        /// Get departments for dropdown
+        /// </summary>
+        private async Task<List<SelectListItem>> GetDepartmentsForDropdown()
+        {
+            var departments = await this._unitOfWork.Departments.GetAll().OrderBy(d => d.Name).ToListAsync();
+            return departments.Select(d => new SelectListItem
+            {
+                Value = d.Id.ToString(),
+                Text = d.Name
+            }).ToList();
+        }
+
+        /// <summary>
+        /// Get indicator types for dropdown
+        /// </summary>
+        private List<SelectListItem> GetIndicatorTypesForDropdown()
+        {
+            return
+            [
+                new SelectListItem { Value = "PI", Text = "Chỉ số thực hiện (PI)" },
+                new SelectListItem { Value = "RI", Text = "Chỉ số kết quả (RI)" },
+                new SelectListItem { Value = "KPI", Text = "Chỉ số KPI" }
+            ];
+        }
+
+        /// <summary>
+        /// Get measurement frequencies for dropdown
+        /// </summary>
+        private List<SelectListItem> GetMeasurementFrequenciesForDropdown()
+        {
+            return
+            [
+                new SelectListItem { Value = "Daily", Text = "Hàng ngày" },
+                new SelectListItem { Value = "Weekly", Text = "Hàng tuần" },
+                new SelectListItem { Value = "Monthly", Text = "Hàng tháng" },
+                new SelectListItem { Value = "Quarterly", Text = "Hàng quý" },
+                new SelectListItem { Value = "Yearly", Text = "Hàng năm" }
+            ];
+        }
+
+        /// <summary>
+        /// Creates a measurement form for a specific indicator
+        /// </summary>
+        [Authorize(Policy = IndicatorAuthorizationPolicies.PolicyNames.CanManageIndicators)]
+        public async Task<IActionResult> AddMeasurement(Guid indicatorId, IndicatorType type)
+        {
+            try
+            {
+                this._logger.LogInformation("Displaying create measurement form for indicator ID: {Id}, type: {Type}",
+                    indicatorId, type);
+
+                // Default to current month
+                var currentDate = DateTime.Now;
+                var viewModel = new MeasurementCreateViewModel
+                {
+                    MeasurementDate = currentDate,
+                    Type = this.GetIndicatorMeasurementType(type)
+                };
+
+                // Set details based on indicator type
+                switch (type)
+                {
+                    case IndicatorType.KPI:
+                    case IndicatorType.PI:
+                        var pi = await this._unitOfWork.PerformanceIndicators.GetByIdAsync(indicatorId);
+                        if (pi != null)
+                        {
+                            viewModel.PerformanceIndicatorId = indicatorId;
+                            viewModel.IndicatorName = pi.Name;
+                            viewModel.IndicatorCode = pi.Code;
+                            viewModel.Unit = pi.Unit;
+                            viewModel.TargetValue = pi.TargetValue;
+                            viewModel.Frequency = pi.MeasurementFrequency;
+                        }
+                        break;
+
+                    case IndicatorType.RI:
+                        var ri = await this._unitOfWork.ResultIndicators.GetByIdAsync(indicatorId);
+                        if (ri != null)
+                        {
+                            viewModel.ResultIndicatorId = indicatorId;
+                            viewModel.IndicatorName = ri.Name;
+                            viewModel.IndicatorCode = ri.Code;
+                            viewModel.Unit = ri.Unit;
+                            viewModel.TargetValue = ri.TargetValue;
+                            viewModel.Frequency = ri.MeasurementFrequency;
+                        }
+                        break;
+
+                    case IndicatorType.SF:
+                    case IndicatorType.CSF:
+                        var sf = await this._unitOfWork.SuccessFactors.GetByIdAsync(indicatorId);
+                        if (sf != null)
+                        {
+                            viewModel.SuccessFactorId = indicatorId;
+                            viewModel.IndicatorName = sf.Name;
+                            viewModel.IndicatorCode = sf.Code;
+                            viewModel.Unit = sf.Unit;
+                            viewModel.TargetValue = sf.TargetValue;
+                            viewModel.Frequency = sf.MeasurementFrequency;
+                        }
+                        break;
+                }
+
+                if (string.IsNullOrEmpty(viewModel.IndicatorName))
+                {
+                    this._logger.LogWarning("Indicator with ID {Id} of type {Type} not found", indicatorId, type);
+                    return this.NotFound();
+                }
 
                 return View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi xảy ra khi truy xuất danh sách đo lường");
-                return RedirectToAction("Error", "Home");
+                this._logger.LogError(ex, "Error occurred while displaying measurement creation form for indicator ID: {Id}, type: {Type}",
+                    indicatorId, type);
+                return View("Error", new ErrorViewModel { Message = "An error occurred while preparing the measurement form." });
             }
         }
 
         /// <summary>
-        /// Tạo truy vấn lọc cơ bản cho KpiValues
+        /// Processes the creation of a new measurement
         /// </summary>
-        private IQueryable<KpiValue> BuildFilteredQuery(MeasurementFilterViewModel? filter)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = IndicatorAuthorizationPolicies.PolicyNames.CanManageIndicators)]
+        public async Task<IActionResult> AddMeasurement(MeasurementCreateViewModel viewModel)
         {
-            // Bắt đầu với một IQueryable đơn giản và không theo dõi cho hiệu suất tối ưu
-            var dbContext = GetDbContextFromUnitOfWork();
-            IQueryable<KpiValue> query = dbContext.KpiValues.AsNoTracking();
+            try
+            {
+                if (!this.ModelState.IsValid)
+                {
+                    this._logger.LogWarning("Invalid model state when creating measurement");
+                    return View(viewModel);
+                }
 
-            // Áp dụng các bộ lọc
+                this._logger.LogInformation("Creating new measurement for indicator: {Name}", viewModel.IndicatorName);
+
+                // Tạo đối tượng Measurement từ ViewModel
+                var measurement = new Measurement
+                {
+                    Value = viewModel.ActualValue,
+                    MeasurementDate = viewModel.MeasurementDate,
+                    Notes = viewModel.Notes,
+                    Status = viewModel.Status
+                };
+
+                // Thiết lập ID chỉ số tương ứng dựa vào loại
+                switch (viewModel.Type)
+                {
+                    case IndicatorMeasurementType.PerformanceIndicator:
+                        measurement.PerformanceIndicatorId = viewModel.PerformanceIndicatorId;
+                        break;
+                    case IndicatorMeasurementType.ResultIndicator:
+                        measurement.ResultIndicatorId = viewModel.ResultIndicatorId;
+                        break;
+                    case IndicatorMeasurementType.SuccessFactor:
+                        measurement.SuccessFactorId = viewModel.SuccessFactorId;
+                        break;
+                    default:
+                        this._logger.LogError("Unknown indicator type: {Type}", viewModel.Type);
+                        this.ModelState.AddModelError("", "Unknown indicator type.");
+                        return View(viewModel);
+                }
+
+                // Lưu đo lường mới vào cơ sở dữ liệu
+                await this._unitOfWork.Measurements.AddAsync(measurement);
+                await this._unitOfWork.SaveChangesAsync();
+
+                // Cập nhật trạng thái của chỉ số tương ứng
+                await this.UpdateIndicatorStatusAsync(measurement);
+
+                this._logger.LogInformation("Successfully created measurement with ID: {Id}", measurement.Id);
+
+                this.TempData["SuccessMessage"] = "Đã thêm giá trị đo lường mới thành công.";
+
+                return this.RedirectToAction(nameof(this.Index));
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error occurred while creating measurement");
+                this.ModelState.AddModelError("", "An unexpected error occurred while saving the measurement.");
+                return View(viewModel);
+            }
+        }
+
+        /// <summary>
+        /// Displays the measurement history for a specific indicator
+        /// </summary>
+        [Authorize(Policy = IndicatorAuthorizationPolicies.PolicyNames.CanViewIndicators)]
+        public async Task<IActionResult> History(Guid indicatorId, IndicatorType type)
+        {
+            try
+            {
+                this._logger.LogInformation("Viewing measurement history for indicator ID: {Id}, type: {Type}",
+                    indicatorId, type);
+
+                // Chuẩn bị ViewModel để hiển thị lịch sử
+                var viewModel = new MeasurementHistoryViewModel
+                {
+                    IndicatorId = indicatorId,
+                    IndicatorType = type
+                };
+
+                IQueryable<Measurement> query = this._unitOfWork.Measurements.GetAll();
+
+                // Lọc các phép đo phù hợp với loại chỉ số
+                switch (type)
+                {
+                    case IndicatorType.KPI:
+                    case IndicatorType.PI:
+                        query = query.Where(m => m.PerformanceIndicatorId == indicatorId);
+                        var pi = await this._unitOfWork.PerformanceIndicators.GetByIdAsync(indicatorId);
+                        if (pi != null)
+                        {
+                            viewModel.IndicatorName = pi.Name;
+                            viewModel.IndicatorCode = pi.Code;
+                            viewModel.Unit = pi.Unit;
+                            viewModel.TargetValue = pi.TargetValue;
+                            if (pi.Department != null)
+                            {
+                                viewModel.Department = pi.Department.Name;
+                            }
+                        }
+                        break;
+
+                    case IndicatorType.RI:
+                        query = query.Where(m => m.ResultIndicatorId == indicatorId);
+                        var ri = await this._unitOfWork.ResultIndicators.GetByIdAsync(indicatorId);
+                        if (ri != null)
+                        {
+                            viewModel.IndicatorName = ri.Name;
+                            viewModel.IndicatorCode = ri.Code;
+                            viewModel.Unit = ri.Unit;
+                            viewModel.TargetValue = ri.TargetValue;
+                            if (ri.Department != null)
+                            {
+                                viewModel.Department = ri.Department.Name;
+                            }
+                        }
+                        break;
+
+                    case IndicatorType.SF:
+                    case IndicatorType.CSF:
+                        query = query.Where(m => m.SuccessFactorId == indicatorId);
+                        var sf = await this._unitOfWork.SuccessFactors.GetByIdAsync(indicatorId);
+                        if (sf != null)
+                        {
+                            viewModel.IndicatorName = sf.Name;
+                            viewModel.IndicatorCode = sf.Code;
+                            viewModel.Unit = sf.Unit;
+                            viewModel.TargetValue = sf.TargetValue;
+                            if (sf.Department != null)
+                            {
+                                viewModel.Department = sf.Department.Name;
+                            }
+                        }
+                        break;
+
+                    default:
+                        this._logger.LogWarning("Unsupported indicator type: {Type}", type);
+                        return this.NotFound();
+                }
+
+                // Kiểm tra chỉ số tồn tại
+                if (string.IsNullOrEmpty(viewModel.IndicatorName))
+                {
+                    this._logger.LogWarning("Indicator with ID {Id} of type {Type} not found", indicatorId, type);
+                    return this.NotFound();
+                }
+
+                // Lấy dữ liệu đo lường và sắp xếp theo thời gian
+                var measurements = await query
+                    .OrderByDescending(m => m.MeasurementDate)
+                    .ToListAsync();
+
+                // Chuyển đổi sang MeasurementItemViewModel
+                var items = measurements.Select(m => new MeasurementItemViewModel
+                {
+                    Id = m.Id,
+                    Value = m.Value,
+                    MeasurementDate = m.MeasurementDate,
+                    Status = m.Status,
+                    Notes = m.Notes,
+                    CreatedDate = m.CreatedAt,
+                    Period = m.MeasurementDate.ToString("MMM yyyy")
+                }).ToList();
+
+                // Tính toán thêm thông tin chi tiết cho từng mục
+                if (viewModel.TargetValue.HasValue)
+                {
+                    foreach (var item in items)
+                    {
+                        item.AchievementPercentage = Math.Round((item.Value / viewModel.TargetValue.Value) * 100, 2);
+                        item.Variance = item.Value - viewModel.TargetValue.Value;
+                    }
+                }
+
+                viewModel.Measurements = items;
+
+                this._logger.LogInformation("Retrieved {0} measurements for indicator {1}", items.Count, viewModel.IndicatorName);
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error occurred while retrieving measurement history for indicator ID: {Id}, type: {Type}",
+                    indicatorId, type);
+                return View("Error", new ErrorViewModel { Message = "An error occurred while retrieving measurement history." });
+            }
+        }
+
+        /// <summary>
+        /// Builds a query with applied filters
+        /// </summary>
+        private IQueryable<Measurement> BuildFilteredQuery(IndicatorMeasurementFilterViewModel filter)
+        {
+            this._logger.LogInformation("Building filtered query for measurements");
+            var query = this._unitOfWork.Measurements.GetAll();
+
             if (filter != null)
             {
+                // Filter by search term (Indicator Code or Notes)
                 if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
                 {
+                    var searchTerm = filter.SearchTerm.Trim().ToLower();
+                    // Lấy ID của các Indicator có Code khớp
+                    var piIds = this._unitOfWork.PerformanceIndicators.GetAll()
+                        .Where(i => i.Code.ToLower().Contains(searchTerm))
+                        .Select(i => i.Id)
+                        .ToList();
+                    var riIds = this._unitOfWork.ResultIndicators.GetAll()
+                        .Where(i => i.Code.ToLower().Contains(searchTerm))
+                        .Select(i => i.Id)
+                        .ToList();
+                    // Hoặc ghi chú chứa searchTerm
                     query = query.Where(m =>
-                        (m.Notes != null && m.Notes.Contains(filter.SearchTerm)) ||
-                        (m.Kpi != null && (m.Kpi.Name.Contains(filter.SearchTerm) || m.Kpi.Code.Contains(filter.SearchTerm)))
-                    );
+                        (m.PerformanceIndicatorId.HasValue && piIds.Contains(m.PerformanceIndicatorId.Value)) ||
+                        (m.ResultIndicatorId.HasValue && riIds.Contains(m.ResultIndicatorId.Value)) ||
+                        (m.Notes != null && m.Notes.ToLower().Contains(searchTerm)));
                 }
 
-                if (filter.StartDate.HasValue)
-                {
-                    query = query.Where(m => m.MeasurementDate >= filter.StartDate.Value);
-                }
-
-                if (filter.EndDate.HasValue)
-                {
-                    query = query.Where(m => m.MeasurementDate <= filter.EndDate.Value);
-                }
-
-                if (filter.KpiType.HasValue)
-                {
-                    string typeName = filter.KpiType switch
-                    {
-                        KpiType.KeyResultIndicator => nameof(KRI),
-                        KpiType.ResultIndicator => nameof(RI),
-                        KpiType.PerformanceIndicator => nameof(PI),
-                        KpiType.StandaloneKPI => nameof(Models.Entities.KPI.KPI),
-                        _ => ""
-                    };
-
-                    if (!string.IsNullOrEmpty(typeName))
-                    {
-                        // Sử dụng tên loại để lọc
-                        query = query.Where(m => m.Kpi != null && EF.Property<string>(m.Kpi, "Discriminator") == typeName);
-                    }
-                }
-
+                // Filter by department
                 if (filter.DepartmentId.HasValue)
                 {
-                    // Truy vấn phụ lấy tên phòng ban theo ID
-                    var department = dbContext.Departments
-                        .Where(d => d.Id == filter.DepartmentId.Value)
-                        .Select(d => d.Name)
-                        .FirstOrDefault();
+                    // Requires joining with indicators to filter by department
+                    var departmentId = filter.DepartmentId.Value;
+                    var piIds = this._unitOfWork.PerformanceIndicators.GetAll()
+                        .Where(i => i.DepartmentId == departmentId)
+                        .Select(i => i.Id)
+                        .ToList();
 
-                    if (!string.IsNullOrEmpty(department))
+                    var riIds = this._unitOfWork.ResultIndicators.GetAll()
+                        .Where(i => i.DepartmentId == departmentId)
+                        .Select(i => i.Id)
+                        .ToList();
+
+                    query = query.Where(m =>
+                        (m.PerformanceIndicatorId.HasValue && piIds.Contains(m.PerformanceIndicatorId.Value)) ||
+                        (m.ResultIndicatorId.HasValue && riIds.Contains(m.ResultIndicatorId.Value)));
+                }
+
+                // Filter by indicator type (Sửa lại logic này)
+                if (filter.IndicatorType.HasValue)
+                {
+                    var indicatorType = filter.IndicatorType.Value;
+                    switch (indicatorType)
                     {
-                        query = query.Where(m => m.Kpi != null && m.Kpi.Department == department);
+                        case IndicatorType.KPI:
+                            // KPI = PerformanceIndicator where IsKey = true
+                            var kpiIds = this._unitOfWork.PerformanceIndicators.GetAll()
+                                .Where(pi => pi.IsKey)
+                                .Select(pi => pi.Id)
+                                .ToList();
+                            query = query.Where(m => m.PerformanceIndicatorId.HasValue && kpiIds.Contains(m.PerformanceIndicatorId.Value));
+                            break;
+                        case IndicatorType.PI:
+                            // PI = PerformanceIndicator where IsKey = false
+                            var piIds = this._unitOfWork.PerformanceIndicators.GetAll()
+                                .Where(pi => !pi.IsKey)
+                                .Select(pi => pi.Id)
+                                .ToList();
+                            query = query.Where(m => m.PerformanceIndicatorId.HasValue && piIds.Contains(m.PerformanceIndicatorId.Value));
+                            break;
+                        case IndicatorType.KRI:
+                            // KRI = ResultIndicator where IsKey = true
+                            var kriIds = this._unitOfWork.ResultIndicators.GetAll()
+                                .Where(ri => ri.IsKey)
+                                .Select(ri => ri.Id)
+                                .ToList();
+                            query = query.Where(m => m.ResultIndicatorId.HasValue && kriIds.Contains(m.ResultIndicatorId.Value));
+                            break;
+                        case IndicatorType.RI:
+                            // RI = ResultIndicator where IsKey = false
+                            var riIds = this._unitOfWork.ResultIndicators.GetAll()
+                                .Where(ri => !ri.IsKey)
+                                .Select(ri => ri.Id)
+                                .ToList();
+                            query = query.Where(m => m.ResultIndicatorId.HasValue && riIds.Contains(m.ResultIndicatorId.Value));
+                            break;
+                            // Thêm trường hợp cho SuccessFactor/CSF nếu cần thiết
+                            // case IndicatorType.SF:
+                            // case IndicatorType.CSF:
+                            //     var sfIds = _unitOfWork.SuccessFactors.GetAll().Select(sf => sf.Id).ToList();
+                            //     query = query.Where(m => m.SuccessFactorId.HasValue && sfIds.Contains(m.SuccessFactorId.Value));
+                            //     break;
                     }
                 }
 
-                if (filter.Frequency.HasValue)
+                // Filter by date range (support both old and new property names)
+                if (filter.StartDate.HasValue || filter.FromDate.HasValue)
                 {
-                    query = query.Where(m => m.Kpi != null && m.Kpi.Frequency == filter.Frequency.Value);
+                    var startDate = filter.StartDate ?? filter.FromDate;
+                    if (startDate.HasValue)
+                    {
+                        query = query.Where(m => m.MeasurementDate >= startDate.Value);
+                    }
+                }
+
+                if (filter.EndDate.HasValue || filter.ToDate.HasValue)
+                {
+                    var endDate = filter.EndDate ?? filter.ToDate;
+                    if (endDate.HasValue)
+                    {
+                        query = query.Where(m => m.MeasurementDate <= endDate.Value);
+                    }
                 }
             }
 
@@ -210,930 +673,215 @@ namespace KPISolution.Controllers
         }
 
         /// <summary>
-        /// Helper để truy cập ApplicationDbContext từ UnitOfWork
+        /// Updates the status of an indicator based on its measurements
         /// </summary>
-        private ApplicationDbContext GetDbContextFromUnitOfWork()
-        {
-            // Truy cập DbContext từ UnitOfWork bằng reflection
-            var dbContext = _unitOfWork.GetType()
-                .GetField("_context", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.GetValue(_unitOfWork) as ApplicationDbContext;
-
-            if (dbContext == null)
-            {
-                throw new InvalidOperationException("Không thể truy cập DbContext từ UnitOfWork");
-            }
-
-            return dbContext;
-        }
-
-        /// <summary>
-        /// Displays the form for adding a new measurement
-        /// </summary>
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Add(Guid kpiId)
+        private async Task UpdateIndicatorStatusAsync(Measurement measurement)
         {
             try
             {
-                var kpi = await FindKpiByIdAsync(kpiId);
-                if (kpi == null)
-                    return NotFound();
+                this._logger.LogInformation("Updating indicator status based on new measurement");
 
-                var viewModel = new AddMeasurementViewModel
+                // Cập nhật trạng thái của chỉ số dựa trên phép đo mới nhất
+                if (measurement.PerformanceIndicatorId.HasValue)
                 {
-                    KpiId = kpiId,
-                    KpiCode = kpi.Code,
-                    KpiName = kpi.Name,
-                    MeasurementUnit = kpi.Unit,
-                    MeasurementDate = DateTime.Now,
-                    TargetValue = kpi.TargetValue
-                };
-
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while preparing add measurement form for KPI: {KpiId}", kpiId);
-                return RedirectToAction("Error", "Home");
-            }
-        }
-
-        /// <summary>
-        /// Processes the form submission for adding a new measurement
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Add(AddMeasurementViewModel viewModel)
-        {
-            if (!ModelState.IsValid)
-                return View(viewModel);
-
-            try
-            {
-                var kpi = await FindKpiByIdAsync(viewModel.KpiId);
-                if (kpi == null)
-                {
-                    ModelState.AddModelError("", "KPI not found");
-                    return View(viewModel);
-                }
-
-                var kpiValue = new KpiValue
-                {
-                    KpiId = viewModel.KpiId,
-                    ActualValue = viewModel.ActualValue,
-                    MeasurementDate = viewModel.MeasurementDate,
-                    Notes = viewModel.Notes,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = User.GetUserId()
-                };
-
-                await _unitOfWork.KpiValues.AddAsync(kpiValue);
-                await _unitOfWork.SaveChangesAsync();
-
-                // Update KPI's current value and status
-                await UpdateKpiStatusAsync(viewModel.KpiId);
-
-                return RedirectToAction("Details", "Kpi", new { id = viewModel.KpiId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while saving measurement for KPI: {KpiId}", viewModel.KpiId);
-                ModelState.AddModelError("", "An error occurred while saving the measurement. Please try again.");
-                return View(viewModel);
-            }
-        }
-
-        /// <summary>
-        /// Displays historical measurements for a specific KPI
-        /// </summary>
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanViewKpis)]
-        public async Task<IActionResult> History(Guid? kpiId, DateTime? startDate, DateTime? endDate, int page = 1)
-        {
-            try
-            {
-                var pageSize = 10;
-                var dbContext = GetDbContextFromUnitOfWork();
-
-                // Xây dựng truy vấn cơ bản
-                var query = dbContext.KpiValues.AsNoTracking();
-
-                // Thêm Include để load Kpi
-                query = query.Include(m => m.Kpi);
-
-                // Lọc theo KPI cụ thể nếu có
-                if (kpiId.HasValue)
-                {
-                    query = query.Where(m => m.KpiId == kpiId.Value);
-                }
-
-                // Lọc theo khoảng thời gian
-                if (startDate.HasValue)
-                {
-                    query = query.Where(m => m.MeasurementDate >= startDate.Value);
-                }
-
-                if (endDate.HasValue)
-                {
-                    query = query.Where(m => m.MeasurementDate <= endDate.Value);
-                }
-
-                // Đếm tổng số bản ghi
-                var totalItems = await query.CountAsync();
-
-                // Áp dụng phân trang
-                var measurements = await query
-                    .OrderByDescending(m => m.MeasurementDate)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
-
-                // Chuyển đổi sang view model
-                var viewModels = measurements.Select(m =>
-                {
-                    var vm = _mapper.Map<KpiValueViewModel>(m);
-
-                    if (m.Kpi != null)
+                    var pi = await this._unitOfWork.PerformanceIndicators.GetByIdAsync(measurement.PerformanceIndicatorId.Value);
+                    if (pi != null && pi.TargetValue.HasValue)
                     {
-                        vm.KpiName = m.Kpi.Name;
-                        vm.KpiCode = m.Kpi.Code;
-                        vm.TargetValue = m.Kpi.TargetValue.HasValue ? m.Kpi.TargetValue.Value : null;
-                        vm.KpiType = m.Kpi.GetType().Name;
-                        vm.Period = m.MeasurementDate.ToString("MMM yyyy");
+                        var achievementPercentage = (measurement.Value / pi.TargetValue.Value) * 100;
 
-                        // Tính phần trăm đạt được
-                        if (m.Kpi.TargetValue.HasValue && m.Kpi.TargetValue.Value > 0)
+                        // Cập nhật trạng thái dựa trên phần trăm đạt được
+                        pi.CurrentValue = measurement.Value;
+                        pi.LastUpdated = DateTime.UtcNow;
+
+                        // TODO: Cập nhật IndicatorStatus khi xác định được enum phù hợp
+                        /*
+                        if (achievementPercentage >= 100)
                         {
-                            var actualValueDecimal = m.ActualValue;
-                            var targetValueDecimal = m.Kpi.TargetValue.Value;
-                            vm.AchievementPercentage = Math.Round((actualValueDecimal / targetValueDecimal) * 100, 2);
-
-                            // Thiết lập trạng thái và màu sắc
-                            if (vm.AchievementPercentage >= 100)
-                            {
-                                vm.Status = "Đạt mục tiêu";
-                                vm.StatusCssClass = "bg-success";
-                            }
-                            else if (vm.AchievementPercentage >= 80)
-                            {
-                                vm.Status = "Có rủi ro";
-                                vm.StatusCssClass = "bg-warning text-dark";
-                            }
-                            else
-                            {
-                                vm.Status = "Không đạt";
-                                vm.StatusCssClass = "bg-danger";
-                            }
+                            pi.Status = IndicatorStatus.OnTarget;
                         }
-                    }
-
-                    return vm;
-                }).ToList();
-
-                // Tạo danh sách KPI cho dropdown
-                var kpiList = await dbContext.Set<KpiBase>()
-                    .AsNoTracking()
-                    .OrderBy(k => k.Code)
-                    .Select(k => new SelectListItem
-                    {
-                        Value = k.Id.ToString(),
-                        Text = $"{k.Code} - {k.Name}"
-                    })
-                    .ToListAsync();
-
-                // Tạo view model cho lịch sử đo lường
-                var model = new MeasurementHistoryViewModel
-                {
-                    Measurements = viewModels,
-                    KpiList = new SelectList(kpiList, "Value", "Text"),
-                    SelectedKpiId = kpiId,
-                    StartDate = startDate,
-                    EndDate = endDate,
-                    CurrentPage = page,
-                    PageSize = pageSize,
-                    TotalCount = totalItems
-                };
-
-                // Thiết lập thông tin cho trang
-                ViewData["Title"] = "Lịch sử đo lường KPI";
-                ViewData["Icon"] = "bi-clock-history";
-                ViewData["Subtitle"] = "Xem lịch sử các đo lường KPI theo thời gian";
-
-                return View(model);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi hiển thị lịch sử đo lường: {Message}", ex.Message);
-                return RedirectToAction("Error", "Home");
-            }
-        }
-
-        /// <summary>
-        /// Exports measurement data to Excel
-        /// </summary>
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanViewKpis)]
-        public async Task<IActionResult> Export(MeasurementFilterViewModel filter)
-        {
-            try
-            {
-                var measurements = await GetMeasurementsByFilterAsync(filter);
-                // TODO: Implement Excel export logic
-                return File(new byte[] { }, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "measurements.xlsx");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred while exporting measurements");
-                return RedirectToAction("Error", "Home");
-            }
-        }
-
-        /// <summary>
-        /// Xem KPI theo loại KPI: KRI, PI, RI, KPI
-        /// </summary>
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanViewKpis)]
-        public async Task<IActionResult> SeparatedView()
-        {
-            try
-            {
-                var viewModel = new KpiSeparatedViewModel
-                {
-                    KeyPerformanceIndicators = new List<KpiInfoViewModel>(),
-                    PerformanceIndicators = new List<KpiInfoViewModel>(),
-                    KeyResultIndicators = new List<KpiInfoViewModel>(),
-                    ResultIndicators = new List<KpiInfoViewModel>()
-                };
-
-                var dbContext = GetDbContextFromUnitOfWork();
-
-                // Tải tất cả KPI từ cơ sở dữ liệu
-                var kpiList = await dbContext.Set<KpiBase>().AsNoTracking().ToListAsync();
-
-                // Lọc từng loại KPI và thêm vào các danh sách tương ứng
-                var pis = await dbContext.Set<PI>().AsNoTracking().ToListAsync();
-                var kris = await dbContext.Set<KRI>().AsNoTracking().ToListAsync();
-                var ris = await dbContext.Set<RI>().AsNoTracking().ToListAsync();
-                var kpis = await dbContext.Set<Models.Entities.KPI.KPI>().AsNoTracking().ToListAsync();
-
-                _logger.LogInformation($"Tổng số KPI: {kpiList.Count}");
-                _logger.LogInformation($"Số lượng PI: {pis.Count}");
-                _logger.LogInformation($"Số lượng KRI: {kris.Count}");
-                _logger.LogInformation($"Số lượng RI: {ris.Count}");
-                _logger.LogInformation($"Số lượng KPI: {kpis.Count}");
-
-                // Xử lý Performance Indicators (PI)
-                foreach (var pi in pis)
-                {
-                    viewModel.PerformanceIndicators.Add(ConvertToKpiInfoViewModel(pi));
-
-                    // Nếu là Key PI, thêm vào danh sách KPI
-                    if (pi.IsKey)
-                    {
-                        viewModel.KeyPerformanceIndicators.Add(ConvertToKpiInfoViewModel(pi));
-                    }
-                }
-
-                // Xử lý các Result Indicators (RI)
-                foreach (var ri in ris)
-                {
-                    viewModel.ResultIndicators.Add(ConvertToKpiInfoViewModel(ri));
-                }
-
-                // Xử lý các Key Result Indicators (KRI)
-                foreach (var kri in kris)
-                {
-                    viewModel.KeyResultIndicators.Add(ConvertToKpiInfoViewModel(kri));
-                }
-
-                // Xử lý các KPI độc lập (không thuộc loại nào ở trên)
-                foreach (var kpi in kpis)
-                {
-                    viewModel.KeyPerformanceIndicators.Add(ConvertToKpiInfoViewModel(kpi));
-                }
-
-                // Ghi log số lượng KPI trong từng danh sách
-                _logger.LogInformation($"KeyPerformanceIndicators: {viewModel.KeyPerformanceIndicators.Count}");
-                _logger.LogInformation($"PerformanceIndicators: {viewModel.PerformanceIndicators.Count}");
-                _logger.LogInformation($"KeyResultIndicators: {viewModel.KeyResultIndicators.Count}");
-                _logger.LogInformation($"ResultIndicators: {viewModel.ResultIndicators.Count}");
-
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi xảy ra khi tải dữ liệu KPI theo loại");
-                return RedirectToAction("Error", "Home");
-            }
-        }
-
-        /// <summary>
-        /// Key Performance Indicators page - redirects to KPI controller with KPI filter
-        /// Shows Performance Indicators that have IsKey = true
-        /// </summary>
-        /// <param name="filter">KPI filter for search and filtering</param>
-        /// <param name="page">Page number for pagination</param>
-        /// <returns>Redirects to KPI controller's Measurement action with KPI filter</returns>
-        public IActionResult KeyPerformanceIndicators(KpiFilterViewModel filter, int page = 1)
-        {
-            _logger.LogInformation("Redirecting to Key Performance Indicators measurement page");
-
-            if (filter == null)
-                filter = new KpiFilterViewModel();
-
-            filter.KpiType = KpiType.PerformanceIndicator;
-            filter.IsKey = true;
-
-            // Set view data for title
-            TempData["MeasurementTitle"] = "Chỉ số hiệu suất chính (KPI)";
-            TempData["MeasurementIcon"] = "bi-graph-up-arrow";
-            TempData["MeasurementSubtitle"] = "Đo lường và theo dõi các chỉ số hiệu suất chính của tổ chức";
-
-            return RedirectToAction("Measurement", "Kpi", new { filter, page });
-        }
-
-        /// <summary>
-        /// Performance Indicators page - redirects to KPI controller with PI filter
-        /// </summary>
-        /// <param name="filter">KPI filter for search and filtering</param>
-        /// <param name="page">Page number for pagination</param>
-        /// <returns>Redirects to KPI controller's Measurement action with PI filter</returns>
-        public IActionResult PerformanceIndicators(KpiFilterViewModel filter, int page = 1)
-        {
-            _logger.LogInformation("Redirecting to Performance Indicators measurement page");
-
-            if (filter == null)
-                filter = new KpiFilterViewModel();
-
-            filter.KpiType = KpiType.PerformanceIndicator;
-            filter.IsKey = false;
-
-            // Set view data for title
-            TempData["MeasurementTitle"] = "Chỉ số hiệu suất (PI)";
-            TempData["MeasurementIcon"] = "bi-bar-chart";
-            TempData["MeasurementSubtitle"] = "Đo lường và theo dõi các chỉ số hiệu suất của tổ chức";
-
-            return RedirectToAction("Measurement", "Kpi", new { filter, page });
-        }
-
-        /// <summary>
-        /// Result Indicators page - redirects to KPI controller with RI filter
-        /// </summary>
-        /// <param name="filter">KPI filter for search and filtering</param>
-        /// <param name="page">Page number for pagination</param>
-        /// <returns>Redirects to KPI controller's Measurement action with RI filter</returns>
-        public IActionResult ResultIndicators(KpiFilterViewModel filter, int page = 1)
-        {
-            _logger.LogInformation("Redirecting to Result Indicators measurement page");
-
-            if (filter == null)
-                filter = new KpiFilterViewModel();
-
-            filter.KpiType = KpiType.ResultIndicator;
-            filter.IsKey = false;
-
-            // Set view data for title
-            TempData["MeasurementTitle"] = "Chỉ số kết quả (RI)";
-            TempData["MeasurementIcon"] = "bi-pie-chart";
-            TempData["MeasurementSubtitle"] = "Đo lường và theo dõi các chỉ số kết quả của tổ chức";
-
-            return RedirectToAction("Measurement", "Kpi", new { filter, page });
-        }
-
-        /// <summary>
-        /// Key Result Indicators page - redirects to KPI controller with KRI filter
-        /// </summary>
-        /// <param name="filter">KPI filter for search and filtering</param>
-        /// <param name="page">Page number for pagination</param>
-        /// <returns>Redirects to KPI controller's Measurement action with KRI filter</returns>
-        public IActionResult KeyResultIndicators(KpiFilterViewModel filter, int page = 1)
-        {
-            _logger.LogInformation("Redirecting to Key Result Indicators measurement page");
-
-            if (filter == null)
-                filter = new KpiFilterViewModel();
-
-            filter.KpiType = KpiType.KeyResultIndicator;
-
-            // Set view data for title
-            TempData["MeasurementTitle"] = "Chỉ số kết quả then chốt (KRI)";
-            TempData["MeasurementIcon"] = "bi-graph-up";
-            TempData["MeasurementSubtitle"] = "Đo lường và theo dõi các chỉ số kết quả then chốt của tổ chức";
-
-            return RedirectToAction("Measurement", "Kpi", new { filter, page });
-        }
-
-        /// <summary>
-        /// Add measurement for a KPI
-        /// </summary>
-        /// <param name="kpiId">ID of the KPI to add measurement for</param>
-        /// <returns>View for adding measurement</returns>
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public IActionResult AddMeasurement(Guid kpiId)
-        {
-            // For now, just redirect to the KPI controller's Add Measurement page
-            return RedirectToAction("AddMeasurement", "Kpi", new { kpiId });
-        }
-
-        /// <summary>
-        /// View measurements for a specific KPI
-        /// </summary>
-        /// <param name="id">ID of the KPI to view measurements for</param>
-        /// <returns>View with KPI measurements</returns>
-        public IActionResult KpiMeasurement(Guid id)
-        {
-            // Redirect to the KPI details page which includes measurements
-            return RedirectToAction("Details", "Kpi", new { id });
-        }
-
-        /// <summary>
-        /// Displays form for creating a new measurement
-        /// </summary>
-        [HttpGet]
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Create(Guid kpiId)
-        {
-            try
-            {
-                var kpi = await FindKpiByIdAsync(kpiId);
-
-                if (kpi == null)
-                {
-                    return NotFound();
-                }
-
-                var viewModel = new KpiValueCreateViewModel
-                {
-                    KpiId = kpiId,
-                    KpiName = kpi.Name,
-                    KpiCode = kpi.Code,
-                    TargetValue = kpi.TargetValue.HasValue ? (double)kpi.TargetValue.Value : null,
-                    Unit = kpi.Unit,
-                    MeasurementDate = DateTime.Today,
-                    Frequency = kpi.Frequency
-                };
-
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Lỗi xảy ra khi chuẩn bị tạo đo lường mới cho KPI {kpiId}");
-                return RedirectToAction("Error", "Home");
-            }
-        }
-
-        /// <summary>
-        /// Handles form submission for creating a new measurement
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanManageKpis)]
-        public async Task<IActionResult> Create(KpiValueCreateViewModel viewModel)
-        {
-            if (!ModelState.IsValid)
-            {
-                var kpi = await FindKpiByIdAsync(viewModel.KpiId);
-
-                if (kpi != null)
-                {
-                    viewModel.KpiName = kpi.Name;
-                    viewModel.KpiCode = kpi.Code;
-                    viewModel.TargetValue = kpi.TargetValue.HasValue ? (double)kpi.TargetValue.Value : null;
-                    viewModel.Unit = kpi.Unit;
-                }
-
-                return View(viewModel);
-            }
-
-            try
-            {
-                var kpiValue = new KpiValue
-                {
-                    KpiId = viewModel.KpiId,
-                    ActualValue = (decimal)viewModel.ActualValue,
-                    MeasurementDate = viewModel.MeasurementDate,
-                    Notes = viewModel.Notes
-                };
-
-                await _unitOfWork.KpiValues.AddAsync(kpiValue);
-                await _unitOfWork.SaveChangesAsync();
-
-                // Update KPI's current value and status
-                await UpdateKpiStatusAsync(viewModel.KpiId);
-
-                return RedirectToAction("Details", "Kpi", new { id = viewModel.KpiId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Lỗi xảy ra khi tạo đo lường mới cho KPI {viewModel.KpiId}: {ex.Message}");
-                ModelState.AddModelError("", "Đã xảy ra lỗi khi lưu đo lường. Vui lòng thử lại sau.");
-                return View(viewModel);
-            }
-        }
-
-        /// <summary>
-        /// Extracts the EntityKpi from the Entity
-        /// </summary>
-        public async Task<IActionResult> ExtractEntityKpiAsync<TEntity>(Guid id) where TEntity : BaseEntity
-        {
-            try
-            {
-                var dbContext = GetDbContextFromUnitOfWork();
-
-                // Sử dụng FindAsync với primary key
-                var entity = await dbContext.Set<TEntity>().FindAsync(id);
-
-                if (entity == null)
-                {
-                    return NotFound();
-                }
-
-                // BaseEntity đã có thuộc tính Id, truy cập trực tiếp
-                var entityId = entity.Id;
-
-                // Log the entity type and ID
-                _logger.LogInformation($"Extracting KPI from entity: {typeof(TEntity).Name} with ID: {entityId}");
-
-                return RedirectToAction("Create", "Kpi", new { entityType = typeof(TEntity).Name, entityId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error extracting KPI from entity: {ex.Message}");
-                return RedirectToAction("Error", "Home");
-            }
-        }
-
-        /// <summary>
-        /// Returns a view with details about a specific measurement
-        /// </summary>
-        [Authorize(Policy = KpiAuthorizationPolicies.PolicyNames.CanViewKpis)]
-        public async Task<IActionResult> Details(Guid id)
-        {
-            try
-            {
-                var dbContext = GetDbContextFromUnitOfWork();
-                // Retrieve the KPI value with its KPI
-                var kpiValue = await dbContext.KpiValues
-                    .AsNoTracking()
-                    .Include(v => v.Kpi)
-                    .FirstOrDefaultAsync(v => v.Id == id);
-
-                if (kpiValue == null)
-                {
-                    return NotFound();
-                }
-
-                var viewModel = _mapper.Map<KpiValueViewModel>(kpiValue);
-
-                // Add additional information
-                if (kpiValue.Kpi != null)
-                {
-                    viewModel.KpiType = kpiValue.Kpi.GetType().Name;
-                    viewModel.Period = kpiValue.MeasurementDate.ToString("MMM yyyy");
-                }
-
-                _logger.LogInformation($"Hiển thị thông tin chi tiết cho đo lường ID: {id}");
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Lỗi xảy ra khi hiển thị chi tiết đo lường {id}: {ex.Message}");
-                return RedirectToAction("Error", "Home");
-            }
-        }
-
-        #region Helper Methods
-
-        // Bộ nhớ cache cho các KPI đã truy vấn
-        private static readonly Dictionary<Guid, KpiBase> _kpiCache = new Dictionary<Guid, KpiBase>();
-
-        /// <summary>
-        /// Tìm KPI theo ID từ cơ sở dữ liệu
-        /// </summary>
-        private async Task<KpiBase?> FindKpiByIdAsync(Guid id)
-        {
-            var dbContext = GetDbContextFromUnitOfWork();
-            return await dbContext.Set<KpiBase>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(k => k.Id == id);
-        }
-
-        private async Task<List<KpiValueViewModel>> GetMeasurementsByFilterAsync(MeasurementFilterViewModel? filter)
-        {
-            var dbContext = GetDbContextFromUnitOfWork();
-
-            // Bắt đầu với một IQueryable đơn giản
-            IQueryable<KpiValue> query = dbContext.KpiValues.AsNoTracking();
-
-            // Thêm Include để eager load liên kết KPI
-            query = query.Include(m => m.Kpi);
-
-            // Áp dụng các bộ lọc
-            if (filter != null)
-            {
-                if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
-                {
-                    query = query.Where(m =>
-                        (m.Notes != null && m.Notes.Contains(filter.SearchTerm)) ||
-                        (m.Kpi != null && (m.Kpi.Name.Contains(filter.SearchTerm) || m.Kpi.Code.Contains(filter.SearchTerm)))
-                    );
-                }
-
-                if (filter.StartDate.HasValue)
-                {
-                    query = query.Where(m => m.MeasurementDate >= filter.StartDate.Value);
-                }
-
-                if (filter.EndDate.HasValue)
-                {
-                    query = query.Where(m => m.MeasurementDate <= filter.EndDate.Value);
-                }
-
-                if (filter.KpiType.HasValue)
-                {
-                    // Bộ lọc theo loại KPI dựa trên các giá trị discriminator
-                    switch (filter.KpiType)
-                    {
-                        case KpiType.KeyResultIndicator:
-                            query = query.Where(m => m.Kpi != null && m.Kpi.GetType().Name == nameof(KRI));
-                            break;
-                        case KpiType.ResultIndicator:
-                            query = query.Where(m => m.Kpi != null && m.Kpi.GetType().Name == nameof(RI));
-                            break;
-                        case KpiType.PerformanceIndicator:
-                            query = query.Where(m => m.Kpi != null && m.Kpi.GetType().Name == nameof(PI));
-                            break;
-                        case KpiType.StandaloneKPI:
-                            query = query.Where(m => m.Kpi != null && m.Kpi.GetType().Name == nameof(Models.Entities.KPI.KPI));
-                            break;
-                    }
-                }
-
-                if (filter.DepartmentId.HasValue)
-                {
-                    // Lấy thông tin phòng ban theo ID
-                    var department = await dbContext.Departments
-                        .Where(d => d.Id == filter.DepartmentId.Value)
-                        .Select(d => d.Name)
-                        .FirstOrDefaultAsync();
-
-                    if (!string.IsNullOrEmpty(department))
-                    {
-                        query = query.Where(m => m.Kpi != null && m.Kpi.Department == department);
-                    }
-                }
-
-                if (filter.Frequency.HasValue)
-                {
-                    query = query.Where(m => m.Kpi != null && m.Kpi.Frequency == filter.Frequency.Value);
-                }
-            }
-
-            // Sắp xếp kết quả
-            query = query.OrderByDescending(m => m.MeasurementDate);
-
-            // Thực thi truy vấn chính chỉ một lần để cải thiện hiệu suất
-            var kpiValues = await query.ToListAsync();
-
-            // Ánh xạ sang view models
-            var viewModels = new List<KpiValueViewModel>();
-
-            foreach (var value in kpiValues)
-            {
-                var viewModel = _mapper.Map<KpiValueViewModel>(value);
-
-                // Sử dụng entity KPI đã được load để thiết lập các thuộc tính liên quan
-                if (value.Kpi != null)
-                {
-                    viewModel.TargetValue = value.Kpi.TargetValue;
-                    viewModel.KpiType = value.Kpi.GetType().Name;
-                    viewModel.KpiCode = value.Kpi.Code;
-                    viewModel.KpiName = value.Kpi.Name;
-
-                    // Tính toán phần trăm đạt được
-                    if (value.Kpi.TargetValue.HasValue && value.Kpi.TargetValue > 0)
-                    {
-                        viewModel.AchievementPercentage = Math.Round((value.ActualValue / value.Kpi.TargetValue.Value) * 100, 2);
-                        viewModel.Variance = value.ActualValue - value.Kpi.TargetValue.Value;
-
-                        // Thiết lập trạng thái dựa trên phần trăm đạt được
-                        if (viewModel.AchievementPercentage >= 100)
+                        else if (achievementPercentage >= 80)
                         {
-                            viewModel.Status = "Đạt mục tiêu";
-                            viewModel.StatusCssClass = "badge bg-success";
-                        }
-                        else if (viewModel.AchievementPercentage >= 80)
-                        {
-                            viewModel.Status = "Có rủi ro";
-                            viewModel.StatusCssClass = "badge bg-warning text-dark";
-                        }
-                        else
-                        {
-                            viewModel.Status = "Không đạt";
-                            viewModel.StatusCssClass = "badge bg-danger";
-                        }
-                    }
-
-                    // Thiết lập kỳ dựa trên ngày đo lường
-                    viewModel.Period = value.MeasurementDate.ToString("MMM yyyy");
+                            pi.Status = IndicatorStatus.AtRisk;
                 }
+                else
+                {
+                            pi.Status = IndicatorStatus.BelowTarget;
+                        }
+                        */
 
-                viewModels.Add(viewModel);
+                        await this._unitOfWork.SaveChangesAsync();
+                    }
+                }
+                else if (measurement.ResultIndicatorId.HasValue)
+                {
+                    var ri = await this._unitOfWork.ResultIndicators.GetByIdAsync(measurement.ResultIndicatorId.Value);
+                    if (ri != null && ri.TargetValue.HasValue)
+                    {
+                        var achievementPercentage = (measurement.Value / ri.TargetValue.Value) * 100;
+
+                        // Cập nhật trạng thái
+                        ri.CurrentValue = measurement.Value;
+                        ri.LastUpdated = DateTime.UtcNow;
+
+                        // TODO: Cập nhật IndicatorStatus khi xác định được enum phù hợp
+
+                        await this._unitOfWork.SaveChangesAsync();
+                    }
+                }
+                else if (measurement.SuccessFactorId.HasValue)
+                {
+                    var sf = await this._unitOfWork.SuccessFactors.GetByIdAsync(measurement.SuccessFactorId.Value);
+                    if (sf != null && sf.TargetValue.HasValue)
+                    {
+                        var achievementPercentage = (measurement.Value / sf.TargetValue.Value) * 100;
+
+                        // Cập nhật trạng thái
+                        sf.CurrentValue = measurement.Value;
+                        sf.LastUpdated = DateTime.UtcNow;
+
+                        // TODO: Cập nhật SuccessFactorStatus khi xác định được enum phù hợp
+
+                        await this._unitOfWork.SaveChangesAsync();
+                    }
+                }
             }
-
-            return viewModels;
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error updating indicator status");
+                throw;
+            }
         }
 
-        // Dictionary to cache SelectLists
-        private static readonly Dictionary<string, SelectList> _selectListCache = new Dictionary<string, SelectList>();
-
-        private async Task<IEnumerable<SelectListItem>> GetDepartmentSelectListCached()
+        /// <summary>
+        /// Maps IndicatorType to IndicatorMeasurementType
+        /// </summary>
+        private IndicatorMeasurementType GetIndicatorMeasurementType(IndicatorType type)
         {
-            // Lấy danh sách phòng ban từ cơ sở dữ liệu
-            var departments = await _unitOfWork.Departments.GetAllAsync();
+            return type switch
+            {
+                IndicatorType.KPI or IndicatorType.PI => IndicatorMeasurementType.PerformanceIndicator,
+                IndicatorType.RI => IndicatorMeasurementType.ResultIndicator,
+                IndicatorType.SF or IndicatorType.CSF => IndicatorMeasurementType.SuccessFactor,
+                _ => throw new ArgumentException($"Unsupported indicator type: {type}")
+            };
+        }
 
-            // Chuyển đổi thành SelectListItem cho dropdown
+        /// <summary>
+        /// Gets cached department select list
+        /// </summary>
+        private async Task<List<SelectListItem>> GetDepartmentSelectListCached()
+        {
+            var departments = await this._unitOfWork.Departments.GetAllAsync();
             return departments
                 .OrderBy(d => d.Name)
                 .Select(d => new SelectListItem
                 {
                     Value = d.Id.ToString(),
                     Text = d.Name
-                });
+                }).ToList();
         }
 
         /// <summary>
-        /// Lấy danh sách enum cho dropdown (sử dụng bộ nhớ đệm)
+        /// Gets cached enum select list
         /// </summary>
-        private IEnumerable<SelectListItem> GetEnumSelectListCached<TEnum>() where TEnum : struct, Enum
+        private List<SelectListItem> GetEnumSelectListCached<TEnum>() where TEnum : Enum
         {
-            return Enum.GetValues<TEnum>()
+            return Enum.GetValues(typeof(TEnum))
+                .Cast<TEnum>()
                 .Select(e => new SelectListItem
                 {
-                    Value = ((int)(object)e).ToString(),
+                    Value = Convert.ToInt32(e).ToString(),
                     Text = e.GetDisplayName()
-                });
+                }).ToList();
         }
 
-        /// <summary>
-        /// Cập nhật trạng thái KPI
-        /// </summary>
-        public async Task<bool> UpdateKpiStatusAsync(Guid kpiId)
+        private async Task<List<MeasurementViewModel>> EnrichMeasurements(List<Measurement> measurements)
         {
-            try
+            var result = new List<MeasurementViewModel>();
+
+            foreach (var measurement in measurements)
             {
-                var dbContext = GetDbContextFromUnitOfWork();
-
-                // Tìm KPI cần cập nhật
-                var kpi = await dbContext.Set<KpiBase>().FirstOrDefaultAsync(k => k.Id == kpiId);
-
-                if (kpi == null)
+                var viewModel = new MeasurementViewModel
                 {
-                    _logger.LogWarning($"Không tìm thấy KPI với ID: {kpiId}");
-                    return false;
+                    Id = measurement.Id,
+                    MeasurementDate = measurement.MeasurementDate,
+                    Value = measurement.Value,
+                    Status = measurement.Status,
+                    Notes = measurement.Notes
+                };
+
+                // Check if status should be NotSet
+                if (!measurement.Status.Equals(MeasurementStatus.NotSet) && !viewModel.TargetValue.HasValue)
+                {
+                    viewModel.Status = MeasurementStatus.NotSet;
                 }
 
-                // Tìm giá trị đo lường mới nhất cho KPI này
-                var latestMeasurement = await dbContext.KpiValues
-                    .Where(v => v.KpiId == kpiId)
-                    .OrderByDescending(v => v.MeasurementDate)
-                    .FirstOrDefaultAsync();
-
-                // Cập nhật CurrentValue từ giá trị mới nhất nếu có
-                if (latestMeasurement != null)
+                // Determine indicator type and get details
+                if (measurement.PerformanceIndicatorId.HasValue)
                 {
-                    kpi.CurrentValue = latestMeasurement.ActualValue;
-                    kpi.UpdatedAt = DateTime.UtcNow;
-                    _logger.LogInformation($"Đã cập nhật CurrentValue của KPI {kpi.Code} thành {latestMeasurement.ActualValue}");
-                }
-                else
-                {
-                    _logger.LogWarning($"Không tìm thấy giá trị đo lường nào cho KPI: {kpiId}");
-                    // Nếu không có giá trị đo lường, đặt CurrentValue là null
-                    kpi.CurrentValue = null;
-                    return false;
-                }
+                    var performanceIndicator = await this._unitOfWork.PerformanceIndicators
+                        .GetByIdAsync(measurement.PerformanceIndicatorId.Value);
 
-                // Tính toán trạng thái dựa trên giá trị hiện tại và mục tiêu
-                if (kpi.TargetValue.HasValue && kpi.CurrentValue.HasValue)
-                {
-                    double achievementPercent = (double)(kpi.CurrentValue.Value / kpi.TargetValue.Value) * 100;
-
-                    if (kpi.MeasurementDirection == MeasurementDirection.HigherIsBetter)
+                    if (performanceIndicator != null)
                     {
-                        if (achievementPercent >= 100)
+                        viewModel.IndicatorId = performanceIndicator.Id;
+                        viewModel.IndicatorName = performanceIndicator.Name;
+                        viewModel.IndicatorType = performanceIndicator.IsKey ? "KPI" : "PI";
+                        viewModel.DepartmentName = performanceIndicator.Department?.Name ?? "Unknown";
+                        viewModel.IndicatorUnit = performanceIndicator.Unit;
+                        viewModel.TargetValue = performanceIndicator.TargetValue;
+
+                        // Set status to NotSet if no target value is available
+                        if (!viewModel.TargetValue.HasValue && viewModel.Status != MeasurementStatus.NotSet)
                         {
-                            kpi.Status = KpiStatus.OnTarget; // KPI đạt mục tiêu
+                            viewModel.Status = MeasurementStatus.NotSet;
                         }
-                        else if (achievementPercent >= 80)
-                        {
-                            kpi.Status = KpiStatus.AtRisk;  // KPI có rủi ro
-                        }
-                        else
-                        {
-                            kpi.Status = KpiStatus.BelowTarget; // KPI không đạt
-                        }
-                    }
-                    else if (kpi.MeasurementDirection == MeasurementDirection.LowerIsBetter)
-                    {
-                        if (kpi.CurrentValue <= kpi.TargetValue)
-                        {
-                            kpi.Status = KpiStatus.OnTarget; // KPI đạt mục tiêu
-                        }
-                        else if (kpi.CurrentValue <= kpi.TargetValue * 1.2m)
-                        {
-                            kpi.Status = KpiStatus.AtRisk;  // KPI có rủi ro
-                        }
-                        else
-                        {
-                            kpi.Status = KpiStatus.BelowTarget; // KPI không đạt
-                        }
+
+                        result.Add(viewModel);
                     }
                 }
+                else if (measurement.ResultIndicatorId.HasValue)
+                {
+                    var resultIndicator = await this._unitOfWork.ResultIndicators
+                        .GetByIdAsync(measurement.ResultIndicatorId.Value);
 
-                // Cập nhật KPI và lưu thay đổi
-                dbContext.Update(kpi);
-                await dbContext.SaveChangesAsync();
+                    if (resultIndicator != null)
+                    {
+                        viewModel.IndicatorId = resultIndicator.Id;
+                        viewModel.IndicatorName = resultIndicator.Name;
+                        viewModel.IndicatorType = resultIndicator.IsKey ? "KRI" : "RI";
+                        viewModel.DepartmentName = resultIndicator.Department?.Name ?? "Unknown";
+                        viewModel.IndicatorUnit = resultIndicator.Unit;
+                        viewModel.TargetValue = resultIndicator.TargetValue;
 
-                _logger.LogInformation($"Đã cập nhật trạng thái của KPI {kpi.Code} thành {kpi.Status}");
-                return true;
+                        // Set status to NotSet if no target value is available
+                        if (!viewModel.TargetValue.HasValue && viewModel.Status != MeasurementStatus.NotSet)
+                        {
+                            viewModel.Status = MeasurementStatus.NotSet;
+                        }
+
+                        result.Add(viewModel);
+                    }
+                }
+                else if (measurement.SuccessFactorId.HasValue)
+                {
+                    var successFactor = await this._unitOfWork.SuccessFactors
+                        .GetByIdAsync(measurement.SuccessFactorId.Value);
+
+                    if (successFactor != null)
+                    {
+                        viewModel.IndicatorId = successFactor.Id;
+                        viewModel.IndicatorName = successFactor.Name;
+                        viewModel.IndicatorType = "SF";
+                        viewModel.DepartmentName = successFactor.Department?.Name ?? "Unknown";
+                        viewModel.IndicatorUnit = successFactor.Unit ?? string.Empty;
+                        viewModel.TargetValue = successFactor.TargetValue;
+                        result.Add(viewModel);
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Lỗi khi cập nhật trạng thái KPI {kpiId}: {ex.Message}");
-                return false;
-            }
+
+            return result;
         }
-
-        private KpiType GetIndicatorType(KpiBase indicator)
-        {
-            return indicator switch
-            {
-                KRI => KpiType.KeyResultIndicator,
-                RI => KpiType.ResultIndicator,
-                PI => KpiType.PerformanceIndicator,
-                _ => KpiType.StandaloneKPI
-            };
-        }
-
-        /// <summary>
-        /// Chuyển đổi từ đối tượng KpiBase thành KpiInfoViewModel
-        /// </summary>
-        private KpiInfoViewModel ConvertToKpiInfoViewModel(KpiBase kpi)
-        {
-            return new KpiInfoViewModel
-            {
-                Id = kpi.Id,
-                Name = kpi.Name,
-                Code = kpi.Code,
-                Department = kpi.Department,
-                Frequency = kpi.Frequency,
-                Description = kpi.Description,
-                ActualValue = kpi.CurrentValue.HasValue ? (double)kpi.CurrentValue.Value : null,
-                TargetValue = kpi.TargetValue.HasValue ? (double)kpi.TargetValue.Value : null,
-                Unit = kpi.Unit,
-                Type = kpi.GetType().Name,
-                StatusCssClass = GetStatusCssClass(kpi)
-            };
-        }
-
-        /// <summary>
-        /// Lấy CSS class cho trạng thái KPI
-        /// </summary>
-        private string GetStatusCssClass(KpiBase kpi)
-        {
-            if (kpi.Status == KpiStatus.Active)
-                return "badge bg-success";
-            else if (kpi.Status == KpiStatus.Draft)
-                return "badge bg-warning text-dark";
-            else
-                return "badge bg-danger";
-        }
-
-        #endregion
-    }
-
-    /// <summary>
-    /// View model for displaying separate sections of indicator types
-    /// </summary>
-    public class SeparatedIndicatorsViewModel
-    {
-        /// <summary>
-        /// List of Key Performance Indicators (KPIs)
-        /// </summary>
-        public List<KpiListItemViewModel> KeyPerformanceIndicators { get; set; } = new List<KpiListItemViewModel>();
-
-        /// <summary>
-        /// List of Performance Indicators (PIs)
-        /// </summary>
-        public List<KpiListItemViewModel> PerformanceIndicators { get; set; } = new List<KpiListItemViewModel>();
-
-        /// <summary>
-        /// List of Key Result Indicators (KRIs)
-        /// </summary>
-        public List<KpiListItemViewModel> KeyResultIndicators { get; set; } = new List<KpiListItemViewModel>();
-
-        /// <summary>
-        /// List of Result Indicators (RIs)
-        /// </summary>
-        public List<KpiListItemViewModel> ResultIndicators { get; set; } = new List<KpiListItemViewModel>();
     }
 }

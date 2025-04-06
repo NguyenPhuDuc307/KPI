@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-
 namespace KPISolution.Models.ViewModels.Department
 {
     /// <summary>
@@ -97,12 +93,12 @@ namespace KPISolution.Models.ViewModels.Department
         /// </summary>
         public DepartmentResourceViewModel()
         {
-            DepartmentName = string.Empty;
-            ProjectAllocation = new Dictionary<string, int>();
-            SkillDistribution = new Dictionary<string, int>();
-            WorkloadDistribution = new Dictionary<string, decimal>();
-            ResourceCosts = new Dictionary<string, decimal>();
-            TrainingMetrics = new Dictionary<string, decimal>();
+            this.DepartmentName = string.Empty;
+            this.ProjectAllocation = new Dictionary<string, int>();
+            this.SkillDistribution = new Dictionary<string, int>();
+            this.WorkloadDistribution = new Dictionary<string, decimal>();
+            this.ResourceCosts = new Dictionary<string, decimal>();
+            this.TrainingMetrics = new Dictionary<string, decimal>();
         }
     }
 }

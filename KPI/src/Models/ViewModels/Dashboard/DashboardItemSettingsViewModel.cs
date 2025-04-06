@@ -1,6 +1,3 @@
-using System;
-using System.ComponentModel.DataAnnotations;
-
 namespace KPISolution.Models.ViewModels.Dashboard
 {
     /// <summary>

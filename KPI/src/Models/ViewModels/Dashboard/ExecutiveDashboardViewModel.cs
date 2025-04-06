@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using KPISolution.Models.Enums;
-
 namespace KPISolution.Models.ViewModels.Dashboard
 {
     /// <summary>
-    /// View model for the executive dashboard displaying high-level KPI information
+    /// View model for the executive dashboard displaying high-level Indicator information
     /// </summary>
     public class ExecutiveDashboardViewModel
     {
@@ -15,111 +10,111 @@ namespace KPISolution.Models.ViewModels.Dashboard
         /// </summary>
         public ExecutiveDashboardViewModel()
         {
-            KriSummaries = new List<KpiSummaryViewModel>();
-            CsfSummaries = new List<CsfSummaryViewModel>();
-            PerformanceByDepartment = new List<DepartmentPerformanceViewModel>();
-            KpisByStatus = new Dictionary<KpiStatus, int>();
-            KpisByCategory = new Dictionary<KpiCategory, int>();
-            RecentUpdates = new List<KpiUpdateViewModel>();
-            AlertsRequiringAttention = new List<KpiAlertViewModel>();
+            this.KriSummaries = [];
+            this.SuccessFactorSummaries = [];
+            this.PerformanceByDepartment = [];
+            this.IndicatorsByStatus = new Dictionary<IndicatorStatus, int>();
+            this.IndicatorsByCategory = new Dictionary<string, int>();
+            this.RecentUpdates = [];
+            this.AlertsRequiringAttention = [];
         }
 
         /// <summary>
         /// Title of the dashboard
         /// </summary>
         [Display(Name = "Dashboard Title")]
-        public string Title { get; set; } = "Executive Dashboard";
+        public string Title { get; init; } = "Executive Dashboard";
 
         /// <summary>
         /// Date/time when the dashboard was last refreshed
         /// </summary>
         [Display(Name = "Last Updated")]
-        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+        public DateTime LastUpdated { get; init; } = DateTime.UtcNow;
 
         /// <summary>
         /// Key Result Indicators summaries
         /// </summary>
         [Display(Name = "Key Performance Indicators")]
-        public List<KpiSummaryViewModel> KriSummaries { get; set; } = new List<KpiSummaryViewModel>();
+        public List<ExecutiveIndicatorSummaryViewModel> KriSummaries { get; set; } = [];
 
         /// <summary>
         /// Critical Success Factors summaries
         /// </summary>
         [Display(Name = "Critical Success Factors")]
-        public List<CsfSummaryViewModel> CsfSummaries { get; set; } = new List<CsfSummaryViewModel>();
+        public List<ExecutiveSuccessFactorSummaryViewModel> SuccessFactorSummaries { get; set; } = [];
 
         /// <summary>
         /// Overall organization performance percentage
         /// </summary>
         [Display(Name = "Overall Performance")]
-        public decimal OverallPerformance { get; set; }
+        public decimal OverallPerformance { get; init; }
 
         /// <summary>
         /// CSS class for the overall performance indicator
         /// </summary>
-        public string OverallPerformanceClass { get; set; } = string.Empty;
+        public string OverallPerformanceClass { get; init; } = string.Empty;
 
         /// <summary>
         /// Performance metrics by department
         /// </summary>
         [Display(Name = "Department Performance")]
-        public List<DepartmentPerformanceViewModel> PerformanceByDepartment { get; set; } = new List<DepartmentPerformanceViewModel>();
+        public List<DepartmentPerformanceViewModel> PerformanceByDepartment { get; set; } = [];
 
         /// <summary>
-        /// Counts of KPIs by status
+        /// Counts of Indicators by status
         /// </summary>
-        [Display(Name = "KPIs by Status")]
-        public Dictionary<KpiStatus, int> KpisByStatus { get; set; } = new Dictionary<KpiStatus, int>();
+        [Display(Name = "Indicators by Status")]
+        public Dictionary<IndicatorStatus, int> IndicatorsByStatus { get; init; } = new Dictionary<IndicatorStatus, int>();
 
         /// <summary>
-        /// Counts of KPIs by category
+        /// Counts of Indicators by category
         /// </summary>
-        [Display(Name = "KPIs by Category")]
-        public Dictionary<KpiCategory, int> KpisByCategory { get; set; } = new Dictionary<KpiCategory, int>();
+        [Display(Name = "Indicators by Category")]
+        public Dictionary<string, int> IndicatorsByCategory { get; init; } = new Dictionary<string, int>();
 
         /// <summary>
-        /// Total count of all KPIs
+        /// Total count of all Indicators
         /// </summary>
-        [Display(Name = "Total KPIs")]
-        public int TotalKpiCount { get; set; }
+        [Display(Name = "Total Indicators")]
+        public int TotalIndicatorCount { get; set; }
 
         /// <summary>
-        /// Count of KPIs currently at risk
+        /// Count of Indicators currently at risk
         /// </summary>
-        [Display(Name = "At Risk KPIs")]
-        public int AtRiskKpiCount { get; set; }
+        [Display(Name = "At Risk Indicators")]
+        public int AtRiskIndicatorCount { get; init; }
 
         /// <summary>
-        /// Percentage of KPIs that are on target
+        /// Percentage of Indicators that are on target
         /// </summary>
         [Display(Name = "On Target (%)")]
         public decimal OnTargetPercentage { get; set; }
 
         /// <summary>
-        /// Recent KPI updates for the activity feed
+        /// Recent Indicator updates for the activity feed
         /// </summary>
         [Display(Name = "Recent Updates")]
-        public List<KpiUpdateViewModel> RecentUpdates { get; set; } = new List<KpiUpdateViewModel>();
+        public List<IndicatorUpdateViewModel> RecentUpdates { get; set; } = [];
 
         /// <summary>
-        /// KPI alerts requiring attention
+        /// Indicator alerts requiring attention
         /// </summary>
         [Display(Name = "Alerts")]
-        public List<KpiAlertViewModel> AlertsRequiringAttention { get; set; } = new List<KpiAlertViewModel>();
+        public List<IndicatorAlertViewModel> AlertsRequiringAttention { get; set; } = [];
 
         /// <summary>
         /// Filtering period start date
         /// </summary>
         [Display(Name = "Period Start")]
         [DataType(DataType.Date)]
-        public DateTime? PeriodStart { get; set; }
+        public DateTime? PeriodStart { get; init; }
 
         /// <summary>
         /// Filtering period end date
         /// </summary>
         [Display(Name = "Period End")]
         [DataType(DataType.Date)]
-        public DateTime? PeriodEnd { get; set; }
+        public DateTime? PeriodEnd { get; init; }
 
         /// <summary>
         /// Total count of business objectives
@@ -137,7 +132,7 @@ namespace KPISolution.Models.ViewModels.Dashboard
         /// Total count of critical success factors
         /// </summary>
         [Display(Name = "Critical Success Factors")]
-        public int CsfCount { get; set; }
+        public int SuccessFactorCount { get; set; }
 
         /// <summary>
         /// Total count of result and performance indicators
@@ -150,47 +145,65 @@ namespace KPISolution.Models.ViewModels.Dashboard
         /// </summary>
         [Display(Name = "Key Indicators")]
         public int KeyIndicatorCount { get; set; }
+
+        /// <summary>
+        /// Current page for department listing
+        /// </summary>
+        [Display(Name = "Department Page")]
+        public int DepartmentPage { get; init; } = 1;
+
+        /// <summary>
+        /// Current page for KRI listing
+        /// </summary>
+        [Display(Name = "KRI Page")]
+        public int KriPage { get; init; } = 1;
+
+        /// <summary>
+        /// Summaries of objectives for display in dashboard
+        /// </summary>
+        [Display(Name = "Objectives")]
+        public List<ObjectiveSummaryViewModel> ObjectiveSummaries { get; set; } = [];
     }
 
     /// <summary>
-    /// Summary view model for KPIs in the dashboard
+    /// Summary view model for Indicators in the dashboard
     /// </summary>
-    public class KpiSummaryViewModel
+    public class ExecutiveIndicatorSummaryViewModel
     {
         /// <summary>
-        /// KPI ID
+        /// Indicator ID
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; init; }
 
         /// <summary>
-        /// KPI name
+        /// Indicator name
         /// </summary>
         [Display(Name = "Name")]
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; init; } = string.Empty;
 
         /// <summary>
-        /// KPI code identifier
+        /// Indicator code identifier
         /// </summary>
         [Display(Name = "Code")]
-        public string Code { get; set; } = string.Empty;
+        public string Code { get; init; } = string.Empty;
 
         /// <summary>
-        /// Current value of the KPI
+        /// Current value of the Indicator
         /// </summary>
         [Display(Name = "Current Value")]
-        public decimal? CurrentValue { get; set; }
+        public decimal? CurrentValue { get; init; }
 
         /// <summary>
-        /// Target value for the KPI
+        /// Target value for the Indicator
         /// </summary>
         [Display(Name = "Target")]
-        public decimal? TargetValue { get; set; }
+        public decimal? TargetValue { get; init; }
 
         /// <summary>
         /// Measurement unit
         /// </summary>
         [Display(Name = "Unit")]
-        public string MeasurementUnit { get; set; } = string.Empty;
+        public string MeasurementUnit { get; init; } = string.Empty;
 
         /// <summary>
         /// Percentage of target achieved
@@ -206,21 +219,21 @@ namespace KPISolution.Models.ViewModels.Dashboard
         public DateTime? MeasurementDate { get; set; }
 
         /// <summary>
-        /// Status of the KPI
+        /// Status of the Indicator
         /// </summary>
         [Display(Name = "Status")]
-        public KpiStatus Status { get; set; }
+        public IndicatorStatus Status { get; init; }
 
         /// <summary>
         /// Status as a string
         /// </summary>
         [Display(Name = "Status")]
-        public string StatusDisplay { get; set; } = string.Empty;
+        public string StatusDisplay { get; init; } = string.Empty;
 
         /// <summary>
         /// CSS class for styling based on status
         /// </summary>
-        public string StatusCssClass { get; set; } = string.Empty;
+        public string StatusCssClass { get; init; } = string.Empty;
 
         /// <summary>
         /// Trend direction
@@ -252,44 +265,44 @@ namespace KPISolution.Models.ViewModels.Dashboard
         public string TrendValueDisplay { get; set; } = string.Empty;
 
         /// <summary>
-        /// Department responsible for the KPI
+        /// Department responsible for the Indicator
         /// </summary>
         [Display(Name = "Department")]
         public string Department { get; set; } = string.Empty;
     }
 
     /// <summary>
-    /// Summary view model for CSFs in the dashboard
+    /// Summary of Critical Success Factors for executive dashboard
     /// </summary>
-    public class CsfSummaryViewModel
+    public class ExecutiveSuccessFactorSummaryViewModel
     {
         /// <summary>
-        /// CSF ID
+        /// SuccessFactor ID
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; init; }
 
         /// <summary>
-        /// CSF name
+        /// SuccessFactor name
         /// </summary>
         [Display(Name = "Name")]
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; init; } = string.Empty;
 
         /// <summary>
-        /// CSF code identifier
+        /// SuccessFactor code identifier
         /// </summary>
         [Display(Name = "Code")]
-        public string Code { get; set; } = string.Empty;
+        public string Code { get; init; } = string.Empty;
 
         /// <summary>
         /// Current progress percentage
         /// </summary>
         [Display(Name = "Progress")]
-        public int ProgressPercentage { get; set; }
+        public int ProgressPercentage { get; init; }
 
         /// <summary>
         /// CSS class for progress styling
         /// </summary>
-        public string ProgressCssClass { get; set; } = string.Empty;
+        public string ProgressCssClass { get; init; } = string.Empty;
 
         /// <summary>
         /// Target date for completion
@@ -305,16 +318,16 @@ namespace KPISolution.Models.ViewModels.Dashboard
         public int DaysRemaining { get; set; }
 
         /// <summary>
-        /// Whether the CSF is on track
+        /// Whether the SuccessFactor is on track
         /// </summary>
         [Display(Name = "On Track")]
         public bool IsOnTrack { get; set; }
 
         /// <summary>
-        /// Status of the CSF
+        /// Status of the SuccessFactor
         /// </summary>
         [Display(Name = "Status")]
-        public CSFStatus Status { get; set; }
+        public SuccessFactorStatus Status { get; set; }
 
         /// <summary>
         /// Status as a string
@@ -325,22 +338,16 @@ namespace KPISolution.Models.ViewModels.Dashboard
         /// <summary>
         /// CSS class for styling based on status
         /// </summary>
-        public string StatusCssClass { get; set; } = string.Empty;
+        public string StatusCssClass { get; init; } = string.Empty;
 
         /// <summary>
-        /// Category of the CSF
-        /// </summary>
-        [Display(Name = "Category")]
-        public CSFCategory Category { get; set; }
-
-        /// <summary>
-        /// Category as a string
+        /// Category of the SuccessFactor
         /// </summary>
         [Display(Name = "Category")]
         public string CategoryDisplay { get; set; } = string.Empty;
 
         /// <summary>
-        /// Priority level of the CSF
+        /// Priority level of the SuccessFactor
         /// </summary>
         [Display(Name = "Priority")]
         public PriorityLevel Priority { get; set; }
@@ -352,121 +359,69 @@ namespace KPISolution.Models.ViewModels.Dashboard
         public string PriorityDisplay { get; set; } = string.Empty;
 
         /// <summary>
-        /// Department responsible for the CSF
+        /// Department responsible for the SuccessFactor
         /// </summary>
         [Display(Name = "Department")]
         public string Department { get; set; } = string.Empty;
     }
 
     /// <summary>
-    /// Performance summary for a department
+    /// Recent Indicator update for activity feed
     /// </summary>
-    public class DepartmentPerformanceViewModel
+    public class IndicatorUpdateViewModel
     {
         /// <summary>
-        /// Department ID
+        /// Indicator ID
         /// </summary>
-        public Guid DepartmentId { get; set; }
+        public Guid IndicatorId { get; init; }
 
         /// <summary>
-        /// Department name
+        /// Indicator name
         /// </summary>
-        [Display(Name = "Department")]
-        public string Name { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Performance score as a percentage
-        /// </summary>
-        [Display(Name = "Performance")]
-        public decimal PerformanceScore { get; set; }
-
-        /// <summary>
-        /// Performance percentage for UI display
-        /// </summary>
-        [Display(Name = "Performance")]
-        public decimal PerformancePercentage { get; set; }
-
-        /// <summary>
-        /// CSS class for performance styling
-        /// </summary>
-        public string PerformanceCssClass { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Number of KPIs owned by the department
-        /// </summary>
-        [Display(Name = "KPI Count")]
-        public int KpiCount { get; set; }
-
-        /// <summary>
-        /// Number of KPIs at risk
-        /// </summary>
-        [Display(Name = "At Risk")]
-        public int AtRiskCount { get; set; }
-
-        /// <summary>
-        /// Percentage of KPIs on target
-        /// </summary>
-        [Display(Name = "On Target")]
-        public decimal OnTargetPercentage { get; set; }
-    }
-
-    /// <summary>
-    /// Recent KPI update for activity feed
-    /// </summary>
-    public class KpiUpdateViewModel
-    {
-        /// <summary>
-        /// KPI ID
-        /// </summary>
-        public Guid KpiId { get; set; }
-
-        /// <summary>
-        /// KPI name
-        /// </summary>
-        [Display(Name = "KPI")]
-        public string KpiName { get; set; } = string.Empty;
+        [Display(Name = "Indicator")]
+        public string IndicatorName { get; init; } = string.Empty;
 
         /// <summary>
         /// Previous value
         /// </summary>
         [Display(Name = "Previous Value")]
-        public decimal? PreviousValue { get; set; }
+        public decimal? PreviousValue { get; init; }
 
         /// <summary>
         /// New value
         /// </summary>
         [Display(Name = "New Value")]
-        public decimal? NewValue { get; set; }
+        public decimal? NewValue { get; init; }
 
         /// <summary>
         /// Percentage change
         /// </summary>
         [Display(Name = "Change")]
-        public decimal? PercentageChange { get; set; }
+        public decimal? PercentageChange { get; init; }
 
         /// <summary>
         /// CSS class for change indicator
         /// </summary>
-        public string ChangeCssClass { get; set; } = string.Empty;
+        public string ChangeCssClass { get; init; } = string.Empty;
 
         /// <summary>
         /// Date/time of the update
         /// </summary>
         [Display(Name = "Updated On")]
         [DataType(DataType.DateTime)]
-        public DateTime UpdatedAt { get; set; }
+        public DateTime UpdatedAt { get; init; }
 
         /// <summary>
-        /// User who updated the KPI
+        /// User who updated the Indicator
         /// </summary>
         [Display(Name = "Updated By")]
-        public string UpdatedBy { get; set; } = string.Empty;
+        public string UpdatedBy { get; init; } = string.Empty;
     }
 
     /// <summary>
-    /// KPI alert for dashboard notifications
+    /// Indicator alert for dashboard notifications
     /// </summary>
-    public class KpiAlertViewModel
+    public class IndicatorAlertViewModel
     {
         /// <summary>
         /// Alert ID
@@ -474,21 +429,21 @@ namespace KPISolution.Models.ViewModels.Dashboard
         public Guid Id { get; set; }
 
         /// <summary>
-        /// KPI ID
+        /// Indicator ID
         /// </summary>
-        public Guid KpiId { get; set; }
+        public Guid IndicatorId { get; init; }
 
         /// <summary>
-        /// KPI name
+        /// Indicator name
         /// </summary>
-        [Display(Name = "KPI")]
-        public string KpiName { get; set; } = string.Empty;
+        [Display(Name = "Indicator")]
+        public string IndicatorName { get; init; } = string.Empty;
 
         /// <summary>
         /// Alert message
         /// </summary>
         [Display(Name = "Message")]
-        public string Message { get; set; } = string.Empty;
+        public string Message { get; init; } = string.Empty;
 
         /// <summary>
         /// Alert severity
@@ -500,18 +455,76 @@ namespace KPISolution.Models.ViewModels.Dashboard
         /// Severity as a string
         /// </summary>
         [Display(Name = "Severity")]
-        public string SeverityDisplay { get; set; } = string.Empty;
+        public string SeverityDisplay { get; init; } = string.Empty;
 
         /// <summary>
         /// CSS class for severity styling
         /// </summary>
-        public string SeverityCssClass { get; set; } = string.Empty;
+        public string SeverityCssClass { get; init; } = string.Empty;
 
         /// <summary>
         /// Date/time when the alert was created
         /// </summary>
         [Display(Name = "Created On")]
         [DataType(DataType.DateTime)]
-        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedOn { get; init; } = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Summary view model for objectives in the dashboard
+    /// </summary>
+    public class ObjectiveSummaryViewModel
+    {
+        /// <summary>
+        /// Objective ID
+        /// </summary>
+        public Guid Id { get; set; }
+
+        /// <summary>
+        /// Objective code
+        /// </summary>
+        [Display(Name = "Code")]
+        public string Code { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Objective name
+        /// </summary>
+        [Display(Name = "Name")]
+        public string Name { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Department name
+        /// </summary>
+        [Display(Name = "Department")]
+        public string DepartmentName { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Progress percentage
+        /// </summary>
+        [Display(Name = "Progress")]
+        public int ProgressPercentage { get; init; }
+
+        /// <summary>
+        /// CSS class for the progress bar
+        /// </summary>
+        public string ProgressCssClass { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Count of success factors
+        /// </summary>
+        [Display(Name = "SFs")]
+        public int SuccessFactorCount { get; init; }
+
+        /// <summary>
+        /// Count of critical success factors
+        /// </summary>
+        [Display(Name = "Critical Success Factors")]
+        public int CriticalSuccessFactorCount { get; init; }
+
+        /// <summary>
+        /// Count of Indicators linked to this objective
+        /// </summary>
+        [Display(Name = "Indicators")]
+        public int IndicatorCount { get; init; }
     }
 }
