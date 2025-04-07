@@ -263,21 +263,10 @@
                                 </div>
                             </div>
                         </div>
-                        @{
-                            string badgeClass = "bg-success";
-                            string statusText = "Tốt";
-                            
-                            if (Model.ProgressPercentage < 30)
-                            {
-                                badgeClass = "bg-danger";
-                                statusText = "Chậm tiến độ";
-                            }
-                            else if (Model.ProgressPercentage < 70)
-                            {
-                                badgeClass = "bg-warning text-dark";
-                                statusText = "Đang tiến triển";
-                            }
-                        }
+                        <span class="badge @(Model.ProgressPercentage < 30 ? "bg-danger" : Model.ProgressPercentage < 70 ? "bg-warning text-dark" : "bg-success") px-3 py-2 mb-2">
+                            <i class="fas fa-chart-line me-1"></i> 
+                            @(Model.ProgressPercentage < 30 ? "Chậm tiến độ" : Model.ProgressPercentage < 70 ? "Đang tiến triển" : "Tốt")
+                        </span>
                         <div class="text-muted">
                             Cập nhật: @Model.LastUpdated.ToString("dd/MM/yyyy")
                         </div>
@@ -339,21 +328,19 @@
                         </div>
                     </div>
                     <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
-                        <div class="progress-circle-container mb-3 position-relative">
+                        <div class="progress-circle-container mb-3">
                             <div class="progress-circle @(Model.ProgressPercentage >= 70 ? "success" : Model.ProgressPercentage >= 30 ? "warning" : "")" data-value="@Model.ProgressPercentage">
                                 <div class="progress-circle-inner">
-                                    <div class="progress-percentage fw-bold">@Model.ProgressPercentage%</div>
+                                    <div class="progress-percentage">@Model.ProgressPercentage%</div>
                                 </div>
                             </div>
-                            <div class="position-absolute bottom-0 end-0 translate-middle-y">
-                                <span class="badge @badgeClass p-2 shadow-sm">
-                                    <i class="fas fa-chart-line me-1"></i> @statusText
-                                </span>
-                            </div>
                         </div>
-                        <div class="text-center mt-2">
-                            <small class="text-muted d-block">Cập nhật gần nhất</small>
-                            <span class="fw-medium">@(Model.ProgressHistory?.OrderByDescending(p => p.UpdateDate).FirstOrDefault()?.UpdateDate.ToString("dd/MM/yyyy") ?? Model.LastUpdated.ToString("dd/MM/yyyy"))</span>
+                        <span class="badge @(Model.ProgressPercentage < 30 ? "bg-danger" : Model.ProgressPercentage < 70 ? "bg-warning text-dark" : "bg-success") px-3 py-2 mb-2">
+                            <i class="fas fa-chart-line me-1"></i> 
+                            @(Model.ProgressPercentage < 30 ? "Chậm tiến độ" : Model.ProgressPercentage < 70 ? "Đang tiến triển" : "Tốt")
+                        </span>
+                        <div class="text-muted">
+                            Cập nhật: @(Model.ProgressHistory?.OrderByDescending(p => p.UpdateDate).FirstOrDefault()?.UpdateDate.ToString("dd/MM/yyyy") ?? Model.LastUpdated.ToString("dd/MM/yyyy"))
                         </div>
                     </div>
                 </div>
@@ -623,20 +610,20 @@
             height: 100%;
         }
         
-        .progress-circle {
-            position: relative;
+            .progress-circle {
+                position: relative;
             width: 150px;
             height: 150px;
-            border-radius: 50%;
+                border-radius: 50%;
             background: #f1f1f1;
             overflow: hidden;
-        }
+            }
 
         .progress-circle::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 10px;
+                content: '';
+                position: absolute;
+                top: 10px;
+                left: 10px;
             right: 10px;
             bottom: 10px;
             background: white;
@@ -651,17 +638,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to right, transparent 50%, var(--progress-color, #dc3545) 0);
-            border-radius: 50%;
             transform-origin: center;
+            border-radius: 50%;
+            background: conic-gradient(var(--progress-color, #dc3545) calc(var(--value) * 1%), #f1f1f1 0);
         }
         
-        .progress-circle[data-value]::after {
-            --degree: calc(var(--value) * 3.6deg);
-            transform: rotate(var(--degree));
-        }
-        
-        /* Màu sắc dựa trên giá trị phần trăm */
         .progress-circle[data-value]::after {
             --progress-color: #dc3545; /* Mặc định: Đỏ (chậm) */
         }
@@ -674,27 +655,27 @@
             --progress-color: #198754; /* Xanh lá (tốt) */
         }
         
-        .progress-value,
         .progress-percentage {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 2;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: bold;
+            color: #333;
         }
         
         .progress-circle-inner {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
+                align-items: center;
             z-index: 2;
         }
         
