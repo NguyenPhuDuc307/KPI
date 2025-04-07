@@ -650,22 +650,22 @@
             height: 100%;
         }
         
-            .progress-circle {
-                position: relative;
-            width: 150px;
-            height: 150px;
-                border-radius: 50%;
+        .progress-circle {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
             background: #f1f1f1;
             overflow: hidden;
-            }
+        }
 
         .progress-circle::before {
-                content: '';
-                position: absolute;
-                top: 10px;
-                left: 10px;
-            right: 10px;
-            bottom: 10px;
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
             background: white;
             border-radius: 50%;
             z-index: 1;
@@ -680,7 +680,7 @@
             height: 100%;
             transform-origin: center;
             border-radius: 50%;
-            background: conic-gradient(var(--progress-color, #dc3545) calc(var(--value) * 1%), #f1f1f1 0);
+            background: conic-gradient(var(--progress-color, #dc3545) var(--value, 0%), #f1f1f1 0);
         }
         
         .progress-circle[data-value]::after {
@@ -701,21 +701,21 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 2;
-            font-size: 1.8rem;
+            font-size: 2.2rem;
             font-weight: bold;
             color: #333;
         }
         
         .progress-circle-inner {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                display: flex;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
             flex-direction: column;
             justify-content: center;
-                align-items: center;
+            align-items: center;
             z-index: 2;
         }
         
@@ -900,7 +900,7 @@
             var circles = document.querySelectorAll('.progress-circle');
             circles.forEach(function(circle) {
                 var value = circle.getAttribute('data-value');
-                circle.style.setProperty('--value', value);
+                circle.style.setProperty('--value', value + '%');
             });
             
             // Tooltips
