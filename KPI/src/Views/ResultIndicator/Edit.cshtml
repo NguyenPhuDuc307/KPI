@@ -56,9 +56,16 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label asp-for="Code" class="form-label">Code <span class="text-danger">*</span></label>
-                                <input asp-for="Code" class="form-control" placeholder="RI-001" />
+                                <div class="input-group">
+                                    <input asp-for="Code" class="form-control"
+                                        placeholder="@(Model.IsKey ? "KRI-YYYYMM###" : "RI-YYYYMM###")" />
+                                    <button type="button" id="generateCodeBtn" class="btn btn-outline-secondary">
+                                        <i class="bi bi-magic me-1"></i> Tạo mã
+                                    </button>
+                                </div>
                                 <span asp-validation-for="Code" class="text-danger"></span>
-                                <div class="form-text">A unique code for this indicator (e.g., RI-001)</div>
+                                <div class="form-text">Định dạng: @(Model.IsKey ? "KRI-YYYYMM###" : "RI-YYYYMM###")
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -169,4 +176,39 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Xử lý tạo mã tự động
+            var generateCodeBtn = document.getElementById('generateCodeBtn');
+            var codeInput = document.getElementById('Code');
+            var isKey = @(Model.IsKey.ToString().ToLower());
+
+            if (generateCodeBtn) {
+                generateCodeBtn.addEventListener('click', function () {
+                    // Lấy thời gian hiện tại
+                    var now = new Date();
+                    var year = now.getFullYear();
+                    // Tháng bắt đầu từ 0, nên phải +1 và đảm bảo luôn có 2 chữ số
+                    var month = (now.getMonth() + 1).toString().padStart(2, '0');
+
+                    // Tạo phần ngẫu nhiên cho mã (3 chữ số)
+                    var randomNum = Math.floor(Math.random() * 900) + 100; // 100-999
+
+                    // Tạo mã với định dạng RI-YYYYMM### hoặc KRI-YYYYMM###
+                    var prefix = isKey ? 'KRI-' : 'RI-';
+                    var generatedCode = prefix + year + month + randomNum;
+
+                    // Gán mã vào input
+                    codeInput.value = generatedCode;
+
+                    // Thêm hiệu ứng highlight để người dùng dễ nhận biết
+                    codeInput.classList.add('bg-light');
+                    setTimeout(function () {
+                        codeInput.classList.remove('bg-light');
+                    }, 300);
+                });
+            }
+        });
+    </script>
 }
