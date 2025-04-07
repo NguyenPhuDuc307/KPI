@@ -257,7 +257,7 @@
                     </div>
                     <div class="card-body text-center p-4">
                         <div class="progress-circle-container mb-3">
-                            <div class="progress-circle" data-value="@Model.ProgressPercentage">
+                            <div class="progress-circle @(Model.ProgressPercentage >= 70 ? "success" : Model.ProgressPercentage >= 30 ? "warning" : "")" data-value="@Model.ProgressPercentage">
                                 <div class="progress-circle-inner">
                                     <div class="progress-percentage">@Model.ProgressPercentage%</div>
                                 </div>
@@ -329,7 +329,7 @@
                     </div>
                     <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
                         <div class="progress-circle-container mb-3">
-                            <div class="progress-circle" data-value="@Model.ProgressPercentage">
+                            <div class="progress-circle @(Model.ProgressPercentage >= 70 ? "success" : Model.ProgressPercentage >= 30 ? "warning" : "")" data-value="@Model.ProgressPercentage">
                                 <div class="progress-circle-inner">
                                     <div class="progress-percentage">@Model.ProgressPercentage%</div>
                                 </div>
@@ -617,20 +617,20 @@
             height: 100%;
         }
         
-            .progress-circle {
-                position: relative;
+        .progress-circle {
+            position: relative;
             width: 150px;
             height: 150px;
-                border-radius: 50%;
+            border-radius: 50%;
             background: #f1f1f1;
             overflow: hidden;
-            }
+        }
 
         .progress-circle::before {
-                content: '';
-                position: absolute;
-                top: 10px;
-                left: 10px;
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
             right: 10px;
             bottom: 10px;
             background: white;
@@ -645,29 +645,27 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to right, transparent 50%, var(--progress-color, #198754) 0);
-                border-radius: 50%;
+            background: linear-gradient(to right, transparent 50%, var(--progress-color, #dc3545) 0);
+            border-radius: 50%;
             transform-origin: center;
         }
         
         .progress-circle[data-value]::after {
             --degree: calc(var(--value) * 3.6deg);
             transform: rotate(var(--degree));
-            --progress-color: #dc3545;
         }
         
-        .progress-circle[data-value^="3"]::after,
-        .progress-circle[data-value^="4"]::after,
-        .progress-circle[data-value^="5"]::after,
-        .progress-circle[data-value^="6"]::after {
-            --progress-color: #ffc107;
+        /* Màu sắc dựa trên giá trị phần trăm */
+        .progress-circle[data-value]::after {
+            --progress-color: #dc3545; /* Mặc định: Đỏ (chậm) */
         }
         
-        .progress-circle[data-value^="7"]::after,
-        .progress-circle[data-value^="8"]::after,
-        .progress-circle[data-value^="9"]::after,
-        .progress-circle[data-value="100"]::after {
-            --progress-color: #198754;
+        .progress-circle[data-value].warning::after {
+            --progress-color: #ffc107; /* Vàng (đang tiến triển) */
+        }
+        
+        .progress-circle[data-value].success::after {
+            --progress-color: #198754; /* Xanh lá (tốt) */
         }
         
         .progress-value,
@@ -682,15 +680,15 @@
         }
         
         .progress-circle-inner {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                display: flex;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
             flex-direction: column;
             justify-content: center;
-                align-items: center;
+            align-items: center;
             z-index: 2;
         }
         
