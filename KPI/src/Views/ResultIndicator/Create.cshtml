@@ -59,20 +59,15 @@
                 <div class="col-md-6">
                     <div class="form-group mb-3">
                         <label asp-for="Code" class="form-label">Code <span class="text-danger">*</span></label>
-                        <div class="d-flex">
-                            <div class="position-relative flex-grow-1">
-                                <input asp-for="Code" class="form-control pe-5"
-                                    placeholder="@(isKeyResultIndicator ? "KRI-YYYYMM###" : "RI-YYYYMM###")" />
-                                <div class="position-absolute top-50 end-0 translate-middle-y pe-3 d-none"
-                                    id="codeValidCheck">
-                                    <i class="bi bi-check-circle-fill text-success"></i>
-                                </div>
-                            </div>
-                            <button type="button" id="generateCodeBtn" class="btn btn-outline-secondary ms-2">
+                        <div class="input-group">
+                            <input asp-for="Code" class="form-control" id="codeInput"
+                                placeholder="@(isKeyResultIndicator ? "KRI-YYYYMM###" : "RI-YYYYMM###")" />
+                            <button type="button" id="generateCodeBtn" class="btn btn-outline-secondary">
                                 <i class="bi bi-magic me-1"></i> Tạo mã
                             </button>
                         </div>
                         <span asp-validation-for="Code" class="text-danger"></span>
+                        <div class="text-danger d-none" id="codeExistsError">Mã này đã tồn tại trong hệ thống</div>
                         <div class="form-text">Định dạng: @(isKeyResultIndicator ? "KRI-YYYYMM###" : "RI-YYYYMM###")
                         </div>
                     </div>
@@ -181,8 +176,8 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Xử lý tạo mã tự động
             var generateCodeBtn = document.getElementById('generateCodeBtn');
-            var codeInput = document.getElementById('Code');
-            var codeValidCheck = document.getElementById('codeValidCheck');
+            var codeInput = document.getElementById('codeInput');
+            var codeExistsError = document.getElementById('codeExistsError');
             var isKey = @(isKeyResultIndicator.ToString().ToLower());
 
             // Regular expression để kiểm tra định dạng mã
@@ -194,9 +189,13 @@
             function validateCode() {
                 var code = codeInput.value.trim();
                 if (code && codePattern.test(code)) {
-                    codeValidCheck.classList.remove('d-none');
+                    codeInput.classList.add('is-valid');
+                    codeInput.classList.remove('is-invalid');
                 } else {
-                    codeValidCheck.classList.add('d-none');
+                    codeInput.classList.remove('is-valid');
+                    if (code) {
+                        codeInput.classList.add('is-invalid');
+                    }
                 }
             }
 
@@ -206,6 +205,23 @@
             // Kiểm tra khi người dùng nhập
             codeInput.addEventListener('input', validateCode);
             codeInput.addEventListener('change', validateCode);
+
+            // Kiểm tra mã đã tồn tại
+            codeInput.addEventListener('change', function () {
+                var code = codeInput.value.trim();
+                if (code) {
+                    // Giả lập kiểm tra mã tồn tại
+                    // Trong trường hợp thực tế, bạn sẽ gọi API để kiểm tra
+                    if (false) { // Đổi thành logic kiểm tra thực tế
+                        codeExistsError.classList.remove('d-none');
+                        codeInput.classList.add('is-invalid');
+                        codeInput.classList.remove('is-valid');
+                    } else {
+                        codeExistsError.classList.add('d-none');
+                        validateCode();
+                    }
+                }
+            });
 
             if (generateCodeBtn) {
                 generateCodeBtn.addEventListener('click', function () {
@@ -226,7 +242,9 @@
                     codeInput.value = generatedCode;
 
                     // Kiểm tra và hiển thị dấu tích
-                    validateCode();
+                    codeExistsError.classList.add('d-none');
+                    codeInput.classList.add('is-valid');
+                    codeInput.classList.remove('is-invalid');
 
                     // Thêm hiệu ứng highlight để người dùng dễ nhận biết
                     codeInput.classList.add('bg-light');
