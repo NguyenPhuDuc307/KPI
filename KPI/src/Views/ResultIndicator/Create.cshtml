@@ -62,6 +62,9 @@
                         <div class="input-group">
                             <input asp-for="Code" class="form-control"
                                 placeholder="@(isKeyResultIndicator ? "KRI-YYYYMM###" : "RI-YYYYMM###")" />
+                            <span class="input-group-text bg-transparent border-0 d-none" id="codeValidCheck">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </span>
                             <button type="button" id="generateCodeBtn" class="btn btn-outline-secondary">
                                 <i class="bi bi-magic me-1"></i> Tạo mã
                             </button>
@@ -176,7 +179,30 @@
             // Xử lý tạo mã tự động
             var generateCodeBtn = document.getElementById('generateCodeBtn');
             var codeInput = document.getElementById('Code');
+            var codeValidCheck = document.getElementById('codeValidCheck');
             var isKey = @(isKeyResultIndicator.ToString().ToLower());
+
+            // Regular expression để kiểm tra định dạng mã
+            var codePattern = isKey
+                ? /^KRI-\d{6}\d{3}$/ // KRI-YYYYMM### pattern
+                : /^RI-\d{6}\d{3}$/;  // RI-YYYYMM### pattern
+
+            // Hàm kiểm tra mã
+            function validateCode() {
+                var code = codeInput.value.trim();
+                if (code && codePattern.test(code)) {
+                    codeValidCheck.classList.remove('d-none');
+                } else {
+                    codeValidCheck.classList.add('d-none');
+                }
+            }
+
+            // Kiểm tra ngay khi tải trang
+            validateCode();
+
+            // Kiểm tra khi người dùng nhập
+            codeInput.addEventListener('input', validateCode);
+            codeInput.addEventListener('change', validateCode);
 
             if (generateCodeBtn) {
                 generateCodeBtn.addEventListener('click', function () {
@@ -195,6 +221,9 @@
 
                     // Gán mã vào input
                     codeInput.value = generatedCode;
+
+                    // Kiểm tra và hiển thị dấu tích
+                    validateCode();
 
                     // Thêm hiệu ứng highlight để người dùng dễ nhận biết
                     codeInput.classList.add('bg-light');
