@@ -312,34 +312,6 @@
                             Cập nhật: @Model.LastUpdated.ToString("dd/MM/yyyy")
                         </div>
                     </div>
-                        <span class="badge @(
-                            Model.Status == SuccessFactorStatus.NotStarted ? "bg-secondary" : 
-                            Model.Status == SuccessFactorStatus.InProgress ? "bg-primary" : 
-                            Model.Status == SuccessFactorStatus.OnTrack ? "bg-success" : 
-                            Model.Status == SuccessFactorStatus.AtRisk ? "bg-warning text-dark" : 
-                            Model.Status == SuccessFactorStatus.OffTrack ? "bg-danger" : 
-                            Model.Status == SuccessFactorStatus.Completed ? "bg-info" : 
-                            "bg-secondary") px-3 py-2 mb-2">
-                            <i class="fas @(
-                                Model.Status == SuccessFactorStatus.NotStarted ? "fa-clock" : 
-                                Model.Status == SuccessFactorStatus.InProgress ? "fa-spinner" : 
-                                Model.Status == SuccessFactorStatus.OnTrack ? "fa-check" : 
-                                Model.Status == SuccessFactorStatus.AtRisk ? "fa-exclamation-triangle" : 
-                                Model.Status == SuccessFactorStatus.OffTrack ? "fa-times-circle" : 
-                                Model.Status == SuccessFactorStatus.Completed ? "fa-flag-checkered" : 
-                                "fa-info-circle") me-1"></i> 
-                            @(Model.Status == SuccessFactorStatus.NotStarted ? "Chưa bắt đầu" : 
-                                Model.Status == SuccessFactorStatus.InProgress ? "Đang tiến hành" : 
-                                Model.Status == SuccessFactorStatus.OnTrack ? "Đúng tiến độ" : 
-                                Model.Status == SuccessFactorStatus.AtRisk ? "Có rủi ro" : 
-                                Model.Status == SuccessFactorStatus.OffTrack ? "Chậm tiến độ" : 
-                                Model.Status == SuccessFactorStatus.Completed ? "Hoàn thành" : 
-                                Model.Status.ToString())
-                        </span>
-                        <div class="text-muted">
-                            Cập nhật: @Model.LastUpdated.ToString("dd/MM/yyyy")
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Tổng quan chỉ số -->
@@ -404,32 +376,11 @@
                                 </div>
                             </div>
                         </div>
-                        <span class="badge @(
-                            Model.Status == SuccessFactorStatus.NotStarted ? "bg-secondary" : 
-                            Model.Status == SuccessFactorStatus.InProgress ? "bg-primary" : 
-                            Model.Status == SuccessFactorStatus.OnTrack ? "bg-success" : 
-                            Model.Status == SuccessFactorStatus.AtRisk ? "bg-warning text-dark" : 
-                            Model.Status == SuccessFactorStatus.OffTrack ? "bg-danger" : 
-                            Model.Status == SuccessFactorStatus.Completed ? "bg-info" : 
-                            "bg-secondary") px-3 py-2 mb-2">
-                            <i class="fas @(
-                                Model.Status == SuccessFactorStatus.NotStarted ? "fa-clock" : 
-                                Model.Status == SuccessFactorStatus.InProgress ? "fa-spinner" : 
-                                Model.Status == SuccessFactorStatus.OnTrack ? "fa-check" : 
-                                Model.Status == SuccessFactorStatus.AtRisk ? "fa-exclamation-triangle" : 
-                                Model.Status == SuccessFactorStatus.OffTrack ? "fa-times-circle" : 
-                                Model.Status == SuccessFactorStatus.Completed ? "fa-flag-checkered" : 
-                                "fa-info-circle") me-1"></i> 
-                            @(Model.Status == SuccessFactorStatus.NotStarted ? "Chưa bắt đầu" : 
-                                Model.Status == SuccessFactorStatus.InProgress ? "Đang tiến hành" : 
-                                Model.Status == SuccessFactorStatus.OnTrack ? "Đúng tiến độ" : 
-                                Model.Status == SuccessFactorStatus.AtRisk ? "Có rủi ro" : 
-                                Model.Status == SuccessFactorStatus.OffTrack ? "Chậm tiến độ" : 
-                                Model.Status == SuccessFactorStatus.Completed ? "Hoàn thành" : 
-                                Model.Status.ToString())
+                        <span class="badge @GetStatusBadgeClass(Model.Status) px-3 py-2 mb-2">
+                            <i class="fas @GetStatusIcon(Model.Status) me-1"></i> @GetStatusText(Model.Status)
                         </span>
                         <div class="text-muted">
-                            Cập nhật: @(Model.ProgressHistory?.OrderByDescending(p => p.UpdateDate).FirstOrDefault()?.UpdateDate.ToString("dd/MM/yyyy") ?? Model.LastUpdated.ToString("dd/MM/yyyy"))
+                            Cập nhật: @Model.LastUpdated.ToString("dd/MM/yyyy")
                         </div>
                     </div>
                 </div>
