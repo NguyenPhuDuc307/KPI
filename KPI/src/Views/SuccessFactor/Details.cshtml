@@ -316,9 +316,9 @@
                 <h5 class="card-title mb-0">
                     <i class="fas fa-chart-line me-2 text-success"></i> Tiến độ thực hiện
                 </h5>
-                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateProgressModal">
+                <a asp-action="UpdateProgress" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-plus-circle me-1"></i> Cập nhật tiến độ
-                </button>
+                </a>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -361,48 +361,34 @@
                 
                 <div class="mt-4">
                     <h6 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Lịch sử cập nhật</h6>
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-point bg-success"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-date">12/05/2023</div>
-                                <div class="timeline-title">Đạt 75% tiến độ</div>
-                                <div class="timeline-text text-muted">Hoàn thành cơ bản các mục tiêu đã đề ra. Cần tiếp tục đẩy mạnh công tác kiểm soát chất lượng.</div>
-                            </div>
+                    @if (Model.ProgressHistory != null && Model.ProgressHistory.Any())
+                    {
+                        <div class="timeline">
+                            @foreach (var update in Model.ProgressHistory.OrderByDescending(p => p.UpdateDate))
+                            {
+                                <div class="timeline-item">
+                                    @{
+                                        string pointClass = "bg-secondary";
+                                        if (update.ProgressPercentage >= 70) pointClass = "bg-success";
+                                        else if (update.ProgressPercentage >= 30) pointClass = "bg-warning";
+                                        else pointClass = "bg-danger";
+                                    }
+                                    <div class="timeline-point @pointClass"></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-date">@update.UpdateDate.ToString("dd/MM/yyyy")</div>
+                                        <div class="timeline-title">Đạt @update.ProgressPercentage% tiến độ</div>
+                                        <div class="timeline-text text-muted">@(string.IsNullOrEmpty(update.Comments) ? "Không có ghi chú" : update.Comments)</div>
+                                    </div>
+                                </div>
+                            }
                         </div>
-                        <div class="timeline-item">
-                            <div class="timeline-point bg-warning"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-date">05/05/2023</div>
-                                <div class="timeline-title">Đạt 50% tiến độ</div>
-                                <div class="timeline-text text-muted">Hoàn thành phân tích yêu cầu và thiết kế chi tiết. Bắt đầu triển khai phát triển.</div>
-                            </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Chưa có cập nhật tiến độ nào. Hãy cập nhật tiến độ để bắt đầu theo dõi.
                         </div>
-                        <div class="timeline-item">
-                            <div class="timeline-point bg-warning"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-date">21/04/2023</div>
-                                <div class="timeline-title">Đạt 28% tiến độ</div>
-                                <div class="timeline-text text-muted">Cập nhật tiến độ triển khai các hạng mục của dự án.</div>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-point bg-danger"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-date">10/04/2023</div>
-                                <div class="timeline-title">Đạt 15% tiến độ</div>
-                                <div class="timeline-text text-muted">Gặp một số vấn đề kỹ thuật, cần điều chỉnh kế hoạch triển khai.</div>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-point bg-secondary"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-date">01/04/2023</div>
-                                <div class="timeline-title">Bắt đầu dự án</div>
-                                <div class="timeline-text text-muted">Khởi động dự án và bắt đầu giai đoạn lập kế hoạch.</div>
-                            </div>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>
@@ -748,9 +734,30 @@
             var ctx = document.getElementById('progressChart')?.getContext('2d');
             
             if (ctx) {
-                // Dữ liệu tiến độ thực tế
-                var data = [0, 15, 28, 50, @Model.ProgressPercentage];
-                var labels = ['01/04', '10/04', '21/04', '05/05', '12/05'];
+                // Lấy dữ liệu từ Model
+                @if (Model.ProgressHistory != null && Model.ProgressHistory.Any())
+                {
+                    <text>
+                    var progressData = [];
+                    var progressLabels = [];
+                    
+                    @foreach (var update in Model.ProgressHistory.OrderBy(p => p.UpdateDate))
+                    {
+                        <text>
+                        progressData.push(@update.ProgressPercentage);
+                        progressLabels.push('@update.UpdateDate.ToString("dd/MM")');
+                        </text>
+                    }
+                    </text>
+                }
+                else
+                {
+                    <text>
+                    // Không có dữ liệu cập nhật, chỉ hiển thị trạng thái hiện tại
+                    var progressData = [@Model.ProgressPercentage];
+                    var progressLabels = ['Hiện tại'];
+                    </text>
+                }
                 
                 // Tạo gradient cho chart
                 var gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
@@ -758,7 +765,7 @@
                 gradientFill.addColorStop(1, 'rgba(40, 167, 69, 0.05)');
                 
                 // Tạo màu sắc cho các điểm dữ liệu dựa trên giá trị
-                var pointColors = data.map(function(value) {
+                var pointColors = progressData.map(function(value) {
                     if (value < 30) return '#dc3545'; // danger
                     if (value < 70) return '#ffc107'; // warning
                     return '#28a745'; // success
@@ -767,10 +774,10 @@
                 var progressChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: labels,
+                        labels: progressLabels,
                         datasets: [{
                             label: 'Tiến độ (%)',
-                            data: data,
+                            data: progressData,
                             borderColor: '#28a745',
                             backgroundColor: gradientFill,
                             tension: 0.4,
