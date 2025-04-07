@@ -987,28 +987,6 @@
             var tabElements = document.querySelectorAll('#myTab [data-bs-toggle="tab"]');
             console.log("Số lượng tab buttons:", tabElements.length);
             
-            // Thử kích hoạt tab results và indicators
-            var resultsTab = document.getElementById('results-tab');
-            var indicatorsTab = document.getElementById('indicators-tab');
-            
-            if (resultsTab) {
-                console.log("Results tab exists, clicking manually");
-                setTimeout(function() {
-                    resultsTab.click();
-                    
-                    setTimeout(function() {
-                        var resultsPane = document.getElementById('results');
-                        console.log("Results pane after click:", 
-                            "Display:", window.getComputedStyle(resultsPane).display,
-                            "Class:", resultsPane.className);
-                            
-                        if (indicatorsTab) {
-                            indicatorsTab.click();
-                        }
-                    }, 500);
-                }, 1000);
-            }
-
             // Đoạn code gốc
             var tabElements = document.querySelectorAll('#myTab [data-bs-toggle="tab"]');
             tabElements.forEach(function(tab) {
