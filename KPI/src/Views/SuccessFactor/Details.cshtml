@@ -364,8 +364,10 @@
                     {
                         <div class="timeline">
                             @{
+                                // Sắp xếp theo thời gian, cập nhật mới nhất lên đầu tiên
                                 var orderedUpdates = Model.ProgressHistory
-                                    .OrderByDescending(p => p.UpdateDate)
+                                    .OrderByDescending(p => p.UpdateDate.Date)
+                                    .ThenByDescending(p => p.UpdateDate.TimeOfDay)
                                     .ThenByDescending(p => p.Id)
                                     .ToList();
                             }
@@ -791,7 +793,15 @@
                     var progressData = [];
                     var progressLabels = [];
                     
-                    @foreach (var update in Model.ProgressHistory.OrderBy(p => p.UpdateDate))
+                    // Sắp xếp lịch sử cập nhật theo ngày tăng dần để vẽ biểu đồ từ quá khứ đến hiện tại
+                    @{
+                        var chartData = Model.ProgressHistory
+                            .OrderBy(p => p.UpdateDate)
+                            .ThenBy(p => p.Id)
+                            .ToList();
+                    }
+                    
+                    @foreach (var update in chartData)
                     {
                         <text>
                         progressData.push(@update.ProgressPercentage);
