@@ -364,7 +364,10 @@
                     {
                         <div class="timeline">
                             @{
-                                var orderedUpdates = Model.ProgressHistory.OrderByDescending(p => p.UpdateDate).ToList();
+                                var orderedUpdates = Model.ProgressHistory
+                                    .OrderByDescending(p => p.UpdateDate)
+                                    .ThenByDescending(p => p.Id)
+                                    .ToList();
                             }
                             @for (int i = 0; i < orderedUpdates.Count; i++)
                             {
