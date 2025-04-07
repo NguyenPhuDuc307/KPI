@@ -15,15 +15,15 @@
         <ol class="breadcrumb mb-1">
             <li class="breadcrumb-item">
                 <a asp-controller="SuccessFactor" asp-action="Index" class="text-decoration-none">
-                    <i class="fas fa-list me-1"></i> Danh sách yếu tố
-                </a>
+            <i class="fas fa-list me-1"></i> Danh sách yếu tố
+        </a>
             </li>
             <li class="breadcrumb-item active">@Model.Name</li>
         </ol>
     </nav>
     
     <div class="d-flex justify-content-between align-items-center">
-        <div>
+    <div>
             <h4 class="mb-1 d-flex align-items-center">
                 @if (Model.IsCritical)
                 {
@@ -38,57 +38,57 @@
             </h4>
             
             <div class="d-flex flex-wrap">
-                @if (Model.IsCritical)
-                {
+                            @if (Model.IsCritical)
+                            {
                     <span class="badge bg-warning text-dark me-2 mb-2"><i class="fas fa-star me-1"></i> Yếu tố cốt lõi</span>
-                }
+                            }
                 
-                @switch (Model.Category)
-                {
-                    case SuccessFactorCategory.Financial:
+                            @switch (Model.Category)
+                            {
+                                    case SuccessFactorCategory.Financial:
                         <span class="badge bg-success me-2 mb-2"><i class="fas fa-money-bill me-1"></i> Tài chính</span>
-                        break;
-                    case SuccessFactorCategory.Customer:
+                                            break;
+                                    case SuccessFactorCategory.Customer:
                         <span class="badge bg-primary me-2 mb-2"><i class="fas fa-users me-1"></i> Khách hàng</span>
-                        break;
-                    case SuccessFactorCategory.InternalProcess:
+                                            break;
+                                    case SuccessFactorCategory.InternalProcess:
                         <span class="badge bg-info me-2 mb-2"><i class="fas fa-cogs me-1"></i> Quy trình nội bộ</span>
-                        break;
-                    case SuccessFactorCategory.LearningAndGrowth:
+                                            break;
+                                    case SuccessFactorCategory.LearningAndGrowth:
                         <span class="badge bg-warning text-dark me-2 mb-2"><i class="fas fa-graduation-cap me-1"></i> Học hỏi & Phát triển</span>
-                        break;
-                    default:
+                                            break;
+                                    default:
                         <span class="badge bg-secondary me-2 mb-2">@Model.Category</span>
-                        break;
-                }
+                                            break;
+                            }
                 
-                @switch (Model.Status)
-                {
-                    case SuccessFactorStatus.NotStarted:
+                            @switch (Model.Status)
+                            {
+                                    case SuccessFactorStatus.NotStarted:
                         <span class="badge bg-secondary me-2 mb-2"><i class="fas fa-clock me-1"></i> Chưa bắt đầu</span>
-                        break;
-                    case SuccessFactorStatus.InProgress:
+                                            break;
+                                    case SuccessFactorStatus.InProgress:
                         <span class="badge bg-primary me-2 mb-2"><i class="fas fa-spinner me-1"></i> Đang tiến hành</span>
-                        break;
-                    case SuccessFactorStatus.OnTrack:
+                                            break;
+                                    case SuccessFactorStatus.OnTrack:
                         <span class="badge bg-success me-2 mb-2"><i class="fas fa-check me-1"></i> Đúng tiến độ</span>
-                        break;
-                    case SuccessFactorStatus.AtRisk:
+                                            break;
+                                    case SuccessFactorStatus.AtRisk:
                         <span class="badge bg-warning text-dark me-2 mb-2"><i class="fas fa-exclamation-triangle me-1"></i> Có rủi ro</span>
-                        break;
-                    case SuccessFactorStatus.OffTrack:
+                                            break;
+                                    case SuccessFactorStatus.OffTrack:
                         <span class="badge bg-danger me-2 mb-2"><i class="fas fa-times-circle me-1"></i> Chậm tiến độ</span>
-                        break;
-                    case SuccessFactorStatus.Completed:
+                                            break;
+                                    case SuccessFactorStatus.Completed:
                         <span class="badge bg-info me-2 mb-2"><i class="fas fa-flag-checkered me-1"></i> Hoàn thành</span>
-                        break;
-                    default:
+                                            break;
+                                    default:
                         <span class="badge bg-secondary me-2 mb-2">@Model.Status</span>
-                        break;
-                }
-            </div>
-        </div>
-        
+                                            break;
+                            }
+                    </div>
+                </div>
+
         <div class="d-flex">
             <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary me-2">
                 <i class="fas fa-edit me-1"></i> Chỉnh sửa
@@ -132,7 +132,7 @@
             </div>
         </div>
     </div>
-</div>
+                </div>
 
 <!-- Nav tabs -->
 <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
@@ -176,47 +176,47 @@
                         </p>
                         
                         <div class="row g-4">
-                            <div class="col-md-6">
+                    <div class="col-md-6">
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
                                         <i class="fas fa-building fa-2x text-muted"></i>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-bold">Phòng ban phụ trách:</h6>
-                                        @if (Model.DepartmentId.HasValue)
-                                        {
+                        <h6 class="fw-bold">Phòng ban phụ trách:</h6>
+                            @if (Model.DepartmentId.HasValue)
+                            {
                                             <a asp-controller="Department" asp-action="Details" asp-route-id="@Model.DepartmentId" class="text-decoration-none">
                                                 <i class="fas fa-link me-1"></i> @Model.DepartmentName
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">Chưa chỉ định</span>
-                                        }
+                                    </a>
+                            }
+                            else
+                            {
+                                    <span class="text-muted">Chưa chỉ định</span>
+                            }
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
+                    </div>
+                    <div class="col-md-6">
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
                                         <i class="fas fa-bullseye fa-2x text-muted"></i>
                                     </div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h6 class="fw-bold">Mục tiêu liên quan:</h6>
-                                        @if (Model.ObjectiveId.HasValue)
-                                        {
+                        <h6 class="fw-bold">Mục tiêu liên quan:</h6>
+                            @if (Model.ObjectiveId.HasValue)
+                            {
                                             <a asp-controller="Objective" asp-action="Details" asp-route-id="@Model.ObjectiveId" class="text-decoration-none fw-medium">
                                                 @Model.ObjectiveName
-                                            </a>
+                                    </a>
                                             <div class="d-flex mt-1">
                                                 <span class="badge bg-primary me-1">Mục tiêu</span>
                                                 <span class="badge bg-secondary">Ưu tiên</span>
                                             </div>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">Chưa liên kết với mục tiêu nào</span>
-                                        }
+                            }
+                            else
+                            {
+                                    <span class="text-muted">Chưa liên kết với mục tiêu nào</span>
+                            }
                                     </div>
                                 </div>
                             </div>
@@ -272,7 +272,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Tổng quan chỉ số -->
                 <div class="card mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white">
@@ -364,17 +364,16 @@
                     {
                         <div class="timeline">
                             @{
-                                // Sắp xếp theo thời gian, cập nhật mới nhất lên đầu tiên
-                                var orderedUpdates = Model.ProgressHistory
-                                    .OrderByDescending(p => p.UpdateDate.Date)
-                                    .ThenByDescending(p => p.UpdateDate.TimeOfDay)
+                                // Đảm bảo sắp xếp lịch sử từ mới nhất lên trước
+                                var sortedUpdates = Model.ProgressHistory
+                                    .OrderByDescending(p => p.UpdateDate.Ticks)
                                     .ThenByDescending(p => p.Id)
                                     .ToList();
                             }
-                            @for (int i = 0; i < orderedUpdates.Count; i++)
+                            @for (int i = 0; i < sortedUpdates.Count; i++)
                             {
-                                var update = orderedUpdates[i];
-                                var previousUpdate = i < orderedUpdates.Count - 1 ? orderedUpdates[i + 1] : null;
+                                var update = sortedUpdates[i];
+                                var previousUpdate = i < sortedUpdates.Count - 1 ? sortedUpdates[i + 1] : null;
                                 var percentageDiff = previousUpdate != null ? update.ProgressPercentage - previousUpdate.ProgressPercentage : update.ProgressPercentage;
                                 var diffClass = percentageDiff > 0 ? "text-success" : percentageDiff < 0 ? "text-danger" : "text-muted";
                                 var diffIcon = percentageDiff > 0 ? "fa-arrow-up" : percentageDiff < 0 ? "fa-arrow-down" : "fa-minus";
@@ -421,17 +420,17 @@
                             <i class="fas fa-info-circle me-2"></i> Chưa có cập nhật tiến độ nào. Hãy cập nhật tiến độ để bắt đầu theo dõi.
                         </div>
                     }
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    
+
     <!-- Tab Chỉ số hiệu suất -->
     <div class="tab-pane fade" id="indicators" role="tabpanel" aria-labelledby="indicators-tab">
         @if (Model.Indicators != null && Model.Indicators.Any())
         {
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Chỉ số hiệu suất</h5>
                     <div>
                         <div class="btn-group">
@@ -443,8 +442,8 @@
                             </a>
                         </div>
                     </div>
-                </div>
-                <div class="card-body">
+                    </div>
+                    <div class="card-body">
                     <ul class="nav nav-tabs mb-3" id="indicatorTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="all-indicators-tab" data-bs-toggle="tab" data-bs-target="#all-indicators-content" type="button" role="tab" aria-controls="all-indicators-content" aria-selected="true">
@@ -465,7 +464,7 @@
                     
                     <div class="tab-content" id="indicatorTabContent">
                         <div class="tab-pane fade show active" id="all-indicators-content" role="tabpanel" aria-labelledby="all-indicators-tab">
-                            <div class="table-responsive">
+                        <div class="table-responsive">
                                 <table class="table table-hover table-striped">
                                     <thead class="table-light">
                                         <tr>
@@ -475,11 +474,11 @@
                                             <th style="width: 15%;">Giá trị hiện tại</th>
                                             <th style="width: 15%;">Trạng thái</th>
                                             <th style="width: 10%;">Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var indicator in Model.Indicators)
-                                        {
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var indicator in Model.Indicators)
+                                    {
                                             <tr>
                                                 <td>
                                                     <span class="badge bg-secondary">@indicator.Code</span>
@@ -498,18 +497,18 @@
                                                 <td>
                                                     @switch (indicator.Status)
                                                     {
-                                                        case IndicatorStatus.OnTarget:
-                                                            <span class="badge bg-success">Tốt</span>
-                                                            break;
-                                                        case IndicatorStatus.AtRisk:
-                                                            <span class="badge bg-warning">Cảnh báo</span>
-                                                            break;
-                                                        case IndicatorStatus.BelowTarget:
-                                                            <span class="badge bg-danger">Nguy hiểm</span>
-                                                            break;
-                                                        default:
-                                                            <span class="badge bg-secondary">@indicator.Status</span>
-                                                            break;
+                                                            case IndicatorStatus.OnTarget:
+                                                                    <span class="badge bg-success">Tốt</span>
+                                                                    break;
+                                                            case IndicatorStatus.AtRisk:
+                                                                    <span class="badge bg-warning">Cảnh báo</span>
+                                                                    break;
+                                                            case IndicatorStatus.BelowTarget:
+                                                                    <span class="badge bg-danger">Nguy hiểm</span>
+                                                                    break;
+                                                            default:
+                                                                    <span class="badge bg-secondary">@indicator.Status</span>
+                                                                    break;
                                                     }
                                                 </td>
                                                 <td>
@@ -529,19 +528,19 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                                    }
+                                </tbody>
+                            </table>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>
-            </div>
         }
         else
         {
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Chỉ số hiệu suất</h5>
                     <div>
                         <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" asp-route-isKey="true" class="btn btn-sm btn-success me-2">
@@ -564,7 +563,7 @@
                             <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i> Thêm PI
                             </a>
-                        </div>
+                                            </div>
                     </div>
                 </div>
             </div>
@@ -584,13 +583,13 @@
                         <a asp-controller="ResultIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" class="btn btn-sm btn-secondary">
                             <i class="fas fa-chart-pie me-1"></i> RI
                         </a>
-                    </div>
-                </div>
+            </div>
+        </div>
             </div>
             <div class="card-body">
                 <div class="alert alert-info d-flex align-items-center">
                     <i class="fas fa-info-circle me-3 fa-2x text-info"></i>
-                    <div>
+                                <div>
                         <h6 class="mb-1">Chưa có chỉ số kết quả</h6>
                         <p class="mb-2">Thêm chỉ số kết quả để theo dõi hiệu quả của yếu tố thành công này</p>
                         <div class="btn-group">
@@ -599,9 +598,9 @@
                             </a>
                             <a asp-controller="ResultIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" class="btn btn-sm btn-secondary">
                                 <i class="fas fa-plus me-1"></i> Thêm RI
-                            </a>
-                        </div>
-                    </div>
+                                            </a>
+                                        </div>
+                                    </div>
                 </div>
             </div>
         </div>
@@ -609,7 +608,7 @@
 </div>
 
 @section Styles {
-    <style>
+        <style>
         /* Styles for Progress Circle */
         .progress-circle-container {
             display: flex;
@@ -618,20 +617,20 @@
             height: 100%;
         }
         
-        .progress-circle {
-            position: relative;
+            .progress-circle {
+                position: relative;
             width: 150px;
             height: 150px;
-            border-radius: 50%;
+                border-radius: 50%;
             background: #f1f1f1;
             overflow: hidden;
-        }
-        
+            }
+
         .progress-circle::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 10px;
+                content: '';
+                position: absolute;
+                top: 10px;
+                left: 10px;
             right: 10px;
             bottom: 10px;
             background: white;
@@ -647,7 +646,7 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(to right, transparent 50%, var(--progress-color, #198754) 0);
-            border-radius: 50%;
+                border-radius: 50%;
             transform-origin: center;
         }
         
@@ -683,15 +682,15 @@
         }
         
         .progress-circle-inner {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
+                align-items: center;
             z-index: 2;
         }
         
@@ -776,12 +775,12 @@
         
         .animate-fade-in-up {
             animation: fadeInUp 0.5s ease-out;
-        }
-    </style>
+            }
+        </style>
 }
 
 @section Scripts {
-    <script>
+        <script>
         document.addEventListener('DOMContentLoaded', function () {
             var ctx = document.getElementById('progressChart')?.getContext('2d');
             
@@ -793,15 +792,7 @@
                     var progressData = [];
                     var progressLabels = [];
                     
-                    // Sắp xếp lịch sử cập nhật theo ngày tăng dần để vẽ biểu đồ từ quá khứ đến hiện tại
-                    @{
-                        var chartData = Model.ProgressHistory
-                            .OrderBy(p => p.UpdateDate)
-                            .ThenBy(p => p.Id)
-                            .ToList();
-                    }
-                    
-                    @foreach (var update in chartData)
+                    @foreach (var update in Model.ProgressHistory.OrderBy(p => p.UpdateDate))
                     {
                         <text>
                         progressData.push(@update.ProgressPercentage);
@@ -832,11 +823,11 @@
                 });
                 
                 var progressChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
+                type: 'line',
+                data: {
                         labels: progressLabels,
-                        datasets: [{
-                            label: 'Tiến độ (%)',
+                    datasets: [{
+                        label: 'Tiến độ (%)',
                             data: progressData,
                             borderColor: '#28a745',
                             backgroundColor: gradientFill,
@@ -847,10 +838,10 @@
                             pointBorderWidth: 2,
                             pointRadius: 6,
                             pointHoverRadius: 8
-                        }]
-                    },
-                    options: {
-                        responsive: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
                         maintainAspectRatio: false,
                         animation: {
                             duration: 1000
@@ -876,19 +867,19 @@
                             },
                             legend: {
                                 display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
                                 grid: {
                                     color: 'rgba(0, 0, 0, 0.05)',
                                     drawBorder: false
                                 },
-                                ticks: {
+                            ticks: {
                                     callback: function(value) {
-                                        return value + '%';
+                                    return value + '%';
                                     },
                                     font: {
                                         size: 11
@@ -942,7 +933,7 @@
                     new bootstrap.Tab(tabElem).show();
                 }
             }
-        });
-    </script>
+            });
+        </script>
 }
 
