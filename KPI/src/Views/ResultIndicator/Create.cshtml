@@ -59,13 +59,16 @@
                 <div class="col-md-6">
                     <div class="form-group mb-3">
                         <label asp-for="Code" class="form-label">Code <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <input asp-for="Code" class="form-control"
-                                placeholder="@(isKeyResultIndicator ? "KRI-YYYYMM###" : "RI-YYYYMM###")" />
-                            <span class="input-group-text bg-transparent border-0 d-none" id="codeValidCheck">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                            </span>
-                            <button type="button" id="generateCodeBtn" class="btn btn-outline-secondary">
+                        <div class="d-flex">
+                            <div class="position-relative flex-grow-1">
+                                <input asp-for="Code" class="form-control pe-5"
+                                    placeholder="@(isKeyResultIndicator ? "KRI-YYYYMM###" : "RI-YYYYMM###")" />
+                                <div class="position-absolute top-50 end-0 translate-middle-y pe-3 d-none"
+                                    id="codeValidCheck">
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                </div>
+                            </div>
+                            <button type="button" id="generateCodeBtn" class="btn btn-outline-secondary ms-2">
                                 <i class="bi bi-magic me-1"></i> Tạo mã
                             </button>
                         </div>
