@@ -263,10 +263,21 @@
                                 </div>
                             </div>
                         </div>
-                        <span class="badge @(Model.ProgressPercentage < 30 ? "bg-danger" : Model.ProgressPercentage < 70 ? "bg-warning" : "bg-success") px-3 py-2 mb-2">
-                            <i class="fas fa-chart-line me-1"></i> 
-                            @(Model.ProgressPercentage < 30 ? "Chậm tiến độ" : Model.ProgressPercentage < 70 ? "Đang tiến triển" : "Tốt")
-                        </span>
+                        @{
+                            string badgeClass = "bg-success";
+                            string statusText = "Tốt";
+                            
+                            if (Model.ProgressPercentage < 30)
+                            {
+                                badgeClass = "bg-danger";
+                                statusText = "Chậm tiến độ";
+                            }
+                            else if (Model.ProgressPercentage < 70)
+                            {
+                                badgeClass = "bg-warning text-dark";
+                                statusText = "Đang tiến triển";
+                            }
+                        }
                         <div class="text-muted">
                             Cập nhật: @Model.LastUpdated.ToString("dd/MM/yyyy")
                         </div>
@@ -328,41 +339,35 @@
                         </div>
                     </div>
                     <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
-                        <div class="progress-circle-container mb-3">
+                        <div class="progress-circle-container mb-3 position-relative">
                             <div class="progress-circle @(Model.ProgressPercentage >= 70 ? "success" : Model.ProgressPercentage >= 30 ? "warning" : "")" data-value="@Model.ProgressPercentage">
                                 <div class="progress-circle-inner">
-                                    <div class="progress-percentage">@Model.ProgressPercentage%</div>
+                                    <div class="progress-percentage fw-bold">@Model.ProgressPercentage%</div>
                                 </div>
                             </div>
+                            <div class="position-absolute bottom-0 end-0 translate-middle-y">
+                                <span class="badge @badgeClass p-2 shadow-sm">
+                                    <i class="fas fa-chart-line me-1"></i> @statusText
+                                </span>
+                            </div>
                         </div>
-                        @{
-                            string badgeClass = "bg-success";
-                            string statusText = "Tốt";
-                            
-                            if (Model.ProgressPercentage < 30)
-                            {
-                                badgeClass = "bg-danger";
-                                statusText = "Chậm tiến độ";
-                            }
-                            else if (Model.ProgressPercentage < 70)
-                            {
-                                badgeClass = "bg-warning text-dark";
-                                statusText = "Đang tiến triển";
-                            }
-                        }
-                        <div class="text-center">
-                            <span class="badge @badgeClass p-2">
-                                <i class="fas fa-chart-line me-1"></i> @statusText
-                            </span>
+                        <div class="text-center mt-2">
+                            <small class="text-muted d-block">Cập nhật gần nhất</small>
+                            <span class="fw-medium">@(Model.ProgressHistory?.OrderByDescending(p => p.UpdateDate).FirstOrDefault()?.UpdateDate.ToString("dd/MM/yyyy") ?? Model.LastUpdated.ToString("dd/MM/yyyy"))</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="mt-4">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Lịch sử cập nhật</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0"><i class="fas fa-history me-2"></i>Lịch sử cập nhật</h6>
+                        <a asp-action="UpdateProgress" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-plus-circle me-1"></i> Thêm mới
+                        </a>
+                    </div>
                     @if (Model.ProgressHistory != null && Model.ProgressHistory.Any())
                     {
-                        <div class="timeline">
+                        <div class="timeline timeline-modern">
                             @{
                                 // Đảm bảo sắp xếp lịch sử từ mới nhất lên trước
                                 var sortedUpdates = Model.ProgressHistory
@@ -378,28 +383,27 @@
                                 var diffClass = percentageDiff > 0 ? "text-success" : percentageDiff < 0 ? "text-danger" : "text-muted";
                                 var diffIcon = percentageDiff > 0 ? "fa-arrow-up" : percentageDiff < 0 ? "fa-arrow-down" : "fa-minus";
                                 
-                                <div class="timeline-item">
-                                    @{
-                                        string pointClass = "bg-secondary";
-                                        if (update.ProgressPercentage >= 70) pointClass = "bg-success";
-                                        else if (update.ProgressPercentage >= 30) pointClass = "bg-warning";
-                                        else pointClass = "bg-danger";
-                                    }
-                                    <div class="timeline-point @pointClass"></div>
-                                    <div class="timeline-content">
+                                <div class="timeline-item shadow-sm mb-3 rounded border-start border-4 @(update.ProgressPercentage >= 70 ? "border-success" : update.ProgressPercentage >= 30 ? "border-warning" : "border-danger")">
+                                    <div class="p-3">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div>
-                                                <div class="timeline-date">@update.UpdateDate.ToString("dd/MM/yyyy")</div>
-                                                <div class="timeline-title d-flex align-items-center">
-                                                    Đạt @update.ProgressPercentage% tiến độ 
-                                                    @if (percentageDiff != 0)
-                                                    {
-                                                        <span class="ms-2 @diffClass">
-                                                            <i class="fas @diffIcon"></i> @Math.Abs(percentageDiff)%
-                                                        </span>
-                                                    }
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <div class="badge bg-secondary rounded-pill me-2">
+                                                        @update.UpdateDate.ToString("dd/MM/yyyy")
+                                                    </div>
+                                                    <h6 class="mb-0 d-flex align-items-center fw-bold">
+                                                        <span>@update.ProgressPercentage%</span>
+                                                        @if (percentageDiff != 0)
+                                                        {
+                                                            <span class="ms-2 @diffClass">
+                                                                <i class="fas @diffIcon"></i> @Math.Abs(percentageDiff)%
+                                                            </span>
+                                                        }
+                                                    </h6>
                                                 </div>
-                                                <div class="timeline-text text-muted">@(string.IsNullOrEmpty(update.Comments) ? "Không có ghi chú" : update.Comments)</div>
+                                                <div class="text-muted">
+                                                    @(string.IsNullOrEmpty(update.Comments) ? "Không có ghi chú" : update.Comments)
+                                                </div>
                                             </div>
                                             <div>
                                                 <form asp-action="DeleteProgressUpdate" asp-route-id="@update.Id" asp-route-successFactorId="@Model.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa cập nhật tiến độ này?');">
@@ -420,7 +424,6 @@
                             <i class="fas fa-info-circle me-2"></i> Chưa có cập nhật tiến độ nào. Hãy cập nhật tiến độ để bắt đầu theo dõi.
                         </div>
                     }
-                    </div>
                 </div>
             </div>
         </div>
@@ -698,55 +701,22 @@
             margin-top: 5px;
         }
         
-        /* Timeline styles */
-        .timeline {
+        /* Timeline modern styles */
+        .timeline-modern {
             position: relative;
-            padding-left: 30px;
         }
         
-        .timeline::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 8px;
-            width: 2px;
-            background-color: #e9ecef;
+        .timeline-modern::before {
+            display: none;
         }
         
-        .timeline-item {
-            position: relative;
-            margin-bottom: 20px;
+        .timeline-modern .timeline-item {
+            transition: all 0.3s ease;
         }
         
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -30px;
-            top: 5px;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background-color: #198754;
-            border: 2px solid white;
-            box-shadow: 0 0 0 2px #198754;
-        }
-        
-        .timeline-item-date {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-        
-        .timeline-item-title {
-            font-weight: 600;
-            margin-bottom: 3px;
-        }
-        
-        .timeline-item-desc {
-            color: #6c757d;
-            font-size: 0.9rem;
+        .timeline-modern .timeline-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
         }
         
         /* Card hover animation */
