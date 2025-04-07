@@ -9,183 +9,263 @@
     ViewData["ActiveMenu"] = "SuccessFactor";
 }
 
-<div class="d-flex justify-content-between mb-3">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <a asp-action="Index" class="btn btn-outline-secondary">
-            <i class="fas fa-list me-1"></i> Danh sách yếu tố
-        </a>
+        <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item">
+                <a asp-action="Index" class="text-decoration-none">
+                    <i class="fas fa-list me-1"></i> Danh sách yếu tố
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Chi tiết yếu tố thành công</li>
+        </ol>
+        <h4 class="mb-0 d-flex align-items-center">
+            @if (Model.IsCritical)
+            {
+                <i class="fas fa-star text-warning me-2"></i>
+            }
+            else
+            {
+                <i class="fas fa-check-circle text-primary me-2"></i>
+            }
+            @Model.Name
+            <span class="badge bg-secondary ms-2">@Model.Code</span>
+        </h4>
     </div>
-    <div>
+    <div class="d-flex">
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary me-2">
             <i class="fas fa-edit me-1"></i> Chỉnh sửa
         </a>
         <a asp-action="UpdateProgress" asp-route-id="@Model.Id" class="btn btn-success me-2">
             <i class="fas fa-tasks me-1"></i> Cập nhật tiến độ
         </a>
-        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
-            <i class="fas fa-trash me-1"></i> Xóa
-        </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="actionDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="actionDropdown">
+                <li>
+                    <a asp-controller="ResultIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" class="dropdown-item">
+                        <i class="fas fa-chart-pie me-2"></i> Thêm chỉ số kết quả (RI)
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="ResultIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" asp-route-isKey="true" class="dropdown-item">
+                        <i class="fas fa-chart-line me-2"></i> Thêm chỉ số kết quả chính (KRI)
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" class="dropdown-item">
+                        <i class="fas fa-chart-bar me-2"></i> Thêm chỉ số hiệu suất (PI)
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" asp-route-isKey="true" class="dropdown-item">
+                        <i class="fas fa-tachometer-alt me-2"></i> Thêm chỉ số hiệu suất chính (KPI)
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="dropdown-item text-danger">
+                        <i class="fas fa-trash me-2"></i> Xóa
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
 
 <div class="row">
     <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Thông tin tổng quan</h5>
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Thông tin tổng quan</h5>
+                    <div>
+                        @switch (Model.Status)
+                        {
+                            case SuccessFactorStatus.NotStarted:
+                                <span class="badge bg-secondary">Chưa bắt đầu</span>
+                                break;
+                            case SuccessFactorStatus.InProgress:
+                                <span class="badge bg-primary">Đang tiến hành</span>
+                                break;
+                            case SuccessFactorStatus.OnTrack:
+                                <span class="badge bg-success">Đúng tiến độ</span>
+                                break;
+                            case SuccessFactorStatus.AtRisk:
+                                <span class="badge bg-warning">Có rủi ro</span>
+                                break;
+                            case SuccessFactorStatus.OffTrack:
+                                <span class="badge bg-danger">Chậm tiến độ</span>
+                                break;
+                            case SuccessFactorStatus.Completed:
+                                <span class="badge bg-info">Hoàn thành</span>
+                                break;
+                            default:
+                                <span class="badge bg-secondary">@Model.Status</span>
+                                break;
+                        }
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row align-items-center mb-4">
                     <div class="col-md-8">
-                        <h4 class="mb-1">@Model.Name</h4>
-                        <p class="text-muted mb-1">
-                            <small>Mã: <span class="fw-bold">@Model.Code</span></small>
-                        </p>
-                        <p class="mb-0">
+                        <div class="d-flex flex-wrap mb-3">
                             @if (Model.IsCritical)
                             {
-                                    <span class="badge bg-danger"><i class="fas fa-star me-1"></i> Yếu tố cốt lõi</span>
+                                <span class="badge bg-warning text-dark me-2 mb-2"><i class="fas fa-star me-1"></i> Yếu tố cốt lõi</span>
                             }
                             @switch (Model.Category)
                             {
-                                    case SuccessFactorCategory.Financial:
-                                            <span class="badge bg-success">Tài chính</span>
-                                            break;
-                                    case SuccessFactorCategory.Customer:
-                                            <span class="badge bg-primary">Khách hàng</span>
-                                            break;
-                                    case SuccessFactorCategory.InternalProcess:
-                                            <span class="badge bg-info">Quy trình nội bộ</span>
-                                            break;
-                                    case SuccessFactorCategory.LearningAndGrowth:
-                                            <span class="badge bg-warning">Học hỏi & Phát triển</span>
-                                            break;
-                                    default:
-                                            <span class="badge bg-secondary">@Model.Category</span>
-                                            break;
+                                case SuccessFactorCategory.Financial:
+                                    <span class="badge bg-success me-2 mb-2"><i class="fas fa-money-bill me-1"></i> Tài chính</span>
+                                    break;
+                                case SuccessFactorCategory.Customer:
+                                    <span class="badge bg-primary me-2 mb-2"><i class="fas fa-users me-1"></i> Khách hàng</span>
+                                    break;
+                                case SuccessFactorCategory.InternalProcess:
+                                    <span class="badge bg-info me-2 mb-2"><i class="fas fa-cogs me-1"></i> Quy trình nội bộ</span>
+                                    break;
+                                case SuccessFactorCategory.LearningAndGrowth:
+                                    <span class="badge bg-warning text-dark me-2 mb-2"><i class="fas fa-graduation-cap me-1"></i> Học hỏi & Phát triển</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary me-2 mb-2">@Model.Category</span>
+                                    break;
                             }
                             @switch (Model.Priority)
                             {
-                                    case PriorityLevel.Critical:
-                                            <span class="badge bg-danger">Ưu tiên: Cực cao</span>
-                                            break;
-                                    case PriorityLevel.High:
-                                            <span class="badge bg-warning">Ưu tiên: Cao</span>
-                                            break;
-                                    case PriorityLevel.Medium:
-                                            <span class="badge bg-info">Ưu tiên: Trung bình</span>
-                                            break;
-                                    case PriorityLevel.Low:
-                                            <span class="badge bg-secondary">Ưu tiên: Thấp</span>
-                                            break;
-                                    default:
-                                            <span class="badge bg-secondary">Ưu tiên: @Model.Priority</span>
-                                            break;
+                                case PriorityLevel.Critical:
+                                    <span class="badge bg-danger me-2 mb-2"><i class="fas fa-exclamation-circle me-1"></i> Ưu tiên: Cực cao</span>
+                                    break;
+                                case PriorityLevel.High:
+                                    <span class="badge bg-warning text-dark me-2 mb-2"><i class="fas fa-arrow-up me-1"></i> Ưu tiên: Cao</span>
+                                    break;
+                                case PriorityLevel.Medium:
+                                    <span class="badge bg-info me-2 mb-2"><i class="fas fa-equals me-1"></i> Ưu tiên: Trung bình</span>
+                                    break;
+                                case PriorityLevel.Low:
+                                    <span class="badge bg-secondary me-2 mb-2"><i class="fas fa-arrow-down me-1"></i> Ưu tiên: Thấp</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary me-2 mb-2">Ưu tiên: @Model.Priority</span>
+                                    break;
                             }
                             @switch (Model.RiskLevel)
                             {
-                                    case RiskLevel.High:
-                                            <span class="badge bg-danger">Rủi ro: Cao</span>
-                                            break;
-                                    case RiskLevel.Medium:
-                                            <span class="badge bg-warning">Rủi ro: Trung bình</span>
-                                            break;
-                                    case RiskLevel.Low:
-                                            <span class="badge bg-success">Rủi ro: Thấp</span>
-                                            break;
-                                    case RiskLevel.Negligible:
-                                            <span class="badge bg-info">Rủi ro: Không đáng kể</span>
-                                            break;
-                                    case RiskLevel.None:
-                                            <span class="badge bg-light text-dark">Rủi ro: Không có</span>
-                                            break;
-                                    default:
-                                            <span class="badge bg-secondary">Rủi ro: @Model.RiskLevel</span>
-                                            break;
+                                case RiskLevel.High:
+                                    <span class="badge bg-danger me-2 mb-2"><i class="fas fa-radiation me-1"></i> Rủi ro: Cao</span>
+                                    break;
+                                case RiskLevel.Medium:
+                                    <span class="badge bg-warning text-dark me-2 mb-2"><i class="fas fa-exclamation-triangle me-1"></i> Rủi ro: Trung bình</span>
+                                    break;
+                                case RiskLevel.Low:
+                                    <span class="badge bg-success me-2 mb-2"><i class="fas fa-check-circle me-1"></i> Rủi ro: Thấp</span>
+                                    break;
+                                case RiskLevel.Negligible:
+                                    <span class="badge bg-info me-2 mb-2"><i class="fas fa-info-circle me-1"></i> Rủi ro: Không đáng kể</span>
+                                    break;
+                                case RiskLevel.None:
+                                    <span class="badge bg-light text-dark me-2 mb-2"><i class="fas fa-shield-alt me-1"></i> Rủi ro: Không có</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary me-2 mb-2">Rủi ro: @Model.RiskLevel</span>
+                                    break;
                             }
+                        </div>
+                        <p class="mb-0 text-muted">
+                            @(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả chi tiết" : Model.Description)
                         </p>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 text-center">
                         <div class="progress-circle mx-auto" data-value="@Model.ProgressPercentage">
                             <span class="progress-value fw-bold">
                                 @Model.ProgressPercentage<span>%</span>
                             </span>
                         </div>
-                        <p class="mt-2 mb-0 text-center">
-                            @switch (Model.Status)
-                            {
-                                    case SuccessFactorStatus.NotStarted:
-                                            <span class="badge bg-secondary">Chưa bắt đầu</span>
-                                            break;
-                                    case SuccessFactorStatus.InProgress:
-                                            <span class="badge bg-primary">Đang tiến hành</span>
-                                            break;
-                                    case SuccessFactorStatus.OnTrack:
-                                            <span class="badge bg-success">Đúng tiến độ</span>
-                                            break;
-                                    case SuccessFactorStatus.AtRisk:
-                                            <span class="badge bg-warning">Có rủi ro</span>
-                                            break;
-                                    case SuccessFactorStatus.OffTrack:
-                                            <span class="badge bg-danger">Chậm tiến độ</span>
-                                            break;
-                                    case SuccessFactorStatus.Completed:
-                                            <span class="badge bg-info">Hoàn thành</span>
-                                            break;
-                                    default:
-                                            <span class="badge bg-secondary">@Model.Status</span>
-                                            break;
-                            }
+                        <p class="mt-2 mb-0">
+                            <span class="badge @(Model.ProgressPercentage < 30 ? "bg-danger" : 
+                                               Model.ProgressPercentage < 70 ? "bg-warning" : 
+                                               "bg-success")">
+                                <i class="fas fa-chart-line me-1"></i> Tiến độ
+                            </span>
                         </p>
+                        <small class="text-muted">Cập nhật: @Model.LastUpdated.ToString("dd/MM/yyyy")</small>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <h6 class="fw-bold">Mô tả chi tiết:</h6>
-                    <p>@(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả" : Model.Description)</p>
-                </div>
+                <hr class="my-4">
 
-                <div class="row mb-3">
+                <div class="row g-4">
                     <div class="col-md-6">
-                        <h6 class="fw-bold">Phòng ban phụ trách:</h6>
-                        <p>
-                            @if (Model.DepartmentId.HasValue)
-                            {
-                                    <a asp-controller="Department" asp-action="Details" asp-route-id="@Model.DepartmentId">
-                                        <i class="fas fa-building me-1"></i> @Model.DepartmentName
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-building fa-2x text-muted"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="fw-bold">Phòng ban phụ trách:</h6>
+                                @if (Model.DepartmentId.HasValue)
+                                {
+                                    <a asp-controller="Department" asp-action="Details" asp-route-id="@Model.DepartmentId" class="text-decoration-none">
+                                        <i class="fas fa-link me-1"></i> @Model.DepartmentName
                                     </a>
-                            }
-                            else
-                            {
+                                }
+                                else
+                                {
                                     <span class="text-muted">Chưa chỉ định</span>
-                            }
-                        </p>
+                                }
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="fw-bold">Mục tiêu liên quan:</h6>
-                        <p>
-                            @if (Model.ObjectiveId.HasValue)
-                            {
-                                    <a asp-controller="Objective" asp-action="Details" asp-route-id="@Model.ObjectiveId">
-                                        <i class="fas fa-bullseye me-1"></i> @Model.ObjectiveName
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-bullseye fa-2x text-muted"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="fw-bold">Mục tiêu liên quan:</h6>
+                                @if (Model.ObjectiveId.HasValue)
+                                {
+                                    <a asp-controller="Objective" asp-action="Details" asp-route-id="@Model.ObjectiveId" class="text-decoration-none fw-medium">
+                                        @Model.ObjectiveName
                                     </a>
-                            }
-                            else
-                            {
+                                    <div class="d-flex mt-1">
+                                        <span class="badge bg-primary me-1">Mục tiêu</span>
+                                        <span class="badge bg-secondary">Ưu tiên</span>
+                                    </div>
+                                }
+                                else
+                                {
                                     <span class="text-muted">Chưa liên kết với mục tiêu nào</span>
-                            }
-                        </p>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="fw-bold">Ngày tạo:</h6>
-                        <p>@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</p>
+                                }
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <h6 class="fw-bold">Cập nhật lần cuối:</h6>
-                        <p>@Model.LastUpdated.ToString("dd/MM/yyyy HH:mm")</p>
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-calendar-alt fa-2x text-muted"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="fw-bold">Ngày tạo:</h6>
+                                <p class="mb-0">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</p>
+                                <small class="text-muted">Người tạo: Hệ thống</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-sync-alt fa-2x text-muted"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="fw-bold">Cập nhật lần cuối:</h6>
+                                <p class="mb-0">@Model.LastUpdated.ToString("dd/MM/yyyy HH:mm")</p>
+                                <small class="text-muted">Người cập nhật: Hệ thống</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -195,75 +275,217 @@
         {
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Chỉ số đánh giá (KPIs)</h5>
-                        <a href="#" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus me-1"></i> Thêm chỉ số
-                        </a>
+                        <h5 class="mb-0">Chỉ số đánh giá</h5>
+                        <div>
+                            <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" asp-route-isKey="true" class="btn btn-sm btn-success me-2">
+                                <i class="fas fa-plus-circle me-1"></i> Thêm KPI
+                            </a>
+                            <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> Thêm PI
+                            </a>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Tên chỉ số</th>
-                                        <th>Trạng thái</th>
-                                        <th>Giá trị hiện tại</th>
-                                        <th>Đơn vị</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var indicator in Model.Indicators)
-                                    {
+                        <ul class="nav nav-tabs mb-3" id="indicatorTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="all-indicators-tab" data-bs-toggle="tab" data-bs-target="#all-indicators-content" type="button" role="tab" aria-controls="all-indicators-content" aria-selected="true">
+                                    Tất cả <span class="badge bg-secondary ms-1">@Model.Indicators.Count()</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="kpi-tab" data-bs-toggle="tab" data-bs-target="#kpi-content" type="button" role="tab" aria-controls="kpi-content" aria-selected="false">
+                                    KPI <span class="badge bg-success ms-1">@Model.Indicators.Count(i => i.Status == IndicatorStatus.OnTarget)</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="pi-tab" data-bs-toggle="tab" data-bs-target="#pi-content" type="button" role="tab" aria-controls="pi-content" aria-selected="false">
+                                    PI <span class="badge bg-primary ms-1">@Model.Indicators.Count(i => i.Status != IndicatorStatus.OnTarget)</span>
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="indicatorTabContent">
+                            <div class="tab-pane fade show active" id="all-indicators-content" role="tabpanel" aria-labelledby="all-indicators-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped">
+                                        <thead class="table-light">
                                             <tr>
-                                                <td>
-                                                    <a href="#">@indicator.Name</a>
-                                                    <small class="d-block text-muted">@indicator.Code</small>
-                                                </td>
-                                                <td>
-                                                    @switch (indicator.Status)
-                                                    {
-                                                            case IndicatorStatus.OnTarget:
+                                                <th style="width: 5%;">Mã</th>
+                                                <th style="width: 30%;">Tên chỉ số</th>
+                                                <th style="width: 15%;">Đơn vị</th>
+                                                <th style="width: 15%;">Giá trị hiện tại</th>
+                                                <th style="width: 15%;">Trạng thái</th>
+                                                <th style="width: 10%;">Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var indicator in Model.Indicators)
+                                            {
+                                                    <tr>
+                                                        <td>
+                                                            <span class="badge bg-secondary">@indicator.Code</span>
+                                                        </td>
+                                                        <td>
+                                                            <a asp-controller="PerformanceIndicator" asp-action="Details" asp-route-id="@indicator.Id" class="fw-bold text-decoration-none">
+                                                                @indicator.Name
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-secondary">@indicator.Unit</span>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <span class="fw-bold">@indicator.CurrentValue.ToString("N2")</span>
+                                                        </td>
+                                                        <td>
+                                                            @switch (indicator.Status)
+                                                            {
+                                                                case IndicatorStatus.OnTarget:
                                                                     <span class="badge bg-success">Tốt</span>
                                                                     break;
-                                                            case IndicatorStatus.AtRisk:
+                                                                case IndicatorStatus.AtRisk:
                                                                     <span class="badge bg-warning">Cảnh báo</span>
                                                                     break;
-                                                            case IndicatorStatus.BelowTarget:
+                                                                case IndicatorStatus.BelowTarget:
                                                                     <span class="badge bg-danger">Nguy hiểm</span>
                                                                     break;
-                                                            default:
+                                                                default:
                                                                     <span class="badge bg-secondary">@indicator.Status</span>
                                                                     break;
-                                                    }
-                                                </td>
-                                                <td>@indicator.CurrentValue</td>
-                                                <td>@indicator.Unit</td>
-                                                <td class="text-end">
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                                            data-bs-toggle="dropdown">
-                                                            <i class="fas fa-ellipsis-h"></i>
-                                                        </button>
-                                                        <ul class="dropdown-menu dropdown-menu-end">
-                                                            <li><a class="dropdown-item" href="#"><i class="fas fa-eye me-2"></i> Xem
-                                                                    chi tiết</a></li>
-                                                            <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Chỉnh
-                                                                    sửa</a></li>
-                                                            <li><a class="dropdown-item" href="#"><i class="fas fa-chart-line me-2"></i>
-                                                                    Biểu đồ</a></li>
-                                                            <li>
-                                                                <hr class="dropdown-divider">
-                                                            </li>
-                                                            <li><a class="dropdown-item text-danger" href="#"><i
-                                                                        class="fas fa-trash-alt me-2"></i> Gỡ bỏ liên kết</a></li>
-                                                        </ul>
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group">
+                                                                <a asp-controller="PerformanceIndicator" asp-action="Details" asp-route-id="@indicator.Id" 
+                                                                   class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Chi tiết">
+                                                                    <i class="fas fa-eye"></i>
+                                                                </a>
+                                                                <a asp-controller="PerformanceIndicator" asp-action="Edit" asp-route-id="@indicator.Id" 
+                                                                   class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Chỉnh sửa">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </a>
+                                                                <a asp-controller="Measurement" asp-action="Create" asp-route-indicatorId="@indicator.Id" 
+                                                                   class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Thêm đo lường">
+                                                                    <i class="fas fa-chart-line"></i>
+                                                                </a>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="kpi-content" role="tabpanel" aria-labelledby="kpi-tab">
+                                <!-- Nội dung cho tab KPI -->
+                                <div class="row">
+                                    @foreach (var kpi in Model.Indicators.Where(i => i.Status == IndicatorStatus.OnTarget))
+                                    {
+                                        <div class="col-md-6 col-xl-4 mb-4">
+                                            <div class="card border-0 shadow-sm h-100">
+                                                <div class="card-header bg-success bg-opacity-10 d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0 text-success">
+                                                        <i class="fas fa-star me-1"></i> KPI
+                                                    </h6>
+                                                    <span class="badge bg-secondary">@kpi.Code</span>
+                                                </div>
+                                                <div class="card-body">
+                                                    <h5 class="card-title">
+                                                        <a asp-controller="PerformanceIndicator" asp-action="Details" asp-route-id="@kpi.Id" 
+                                                           class="text-decoration-none text-dark stretched-link">
+                                                            @kpi.Name
+                                                        </a>
+                                                    </h5>
+                                                    
+                                                    <div class="mt-3 mb-2 text-center">
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <span>Hiện tại: <strong>@kpi.CurrentValue.ToString("N2")</strong></span>
+                                                        </div>
+                                                        <div class="mt-2">
+                                                            <span class="badge bg-success">Đạt mục tiêu</span>
+                                                        </div>
                                                     </div>
-                                                </td>
-                                            </tr>
+                                                    
+                                                    <div class="d-flex justify-content-between mt-3">
+                                                        <span class="badge bg-secondary">@kpi.Unit</span>
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer bg-light d-flex justify-content-between">
+                                                    <a asp-controller="PerformanceIndicator" asp-action="Edit" asp-route-id="@kpi.Id" 
+                                                       class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Chỉnh sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a asp-controller="Measurement" asp-action="Create" asp-route-indicatorId="@kpi.Id" 
+                                                       class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Thêm đo lường">
+                                                        <i class="fas fa-chart-line"></i> Đo lường mới
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     }
-                                </tbody>
-                            </table>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="pi-content" role="tabpanel" aria-labelledby="pi-tab">
+                                <!-- Nội dung cho tab PI -->
+                                <div class="row">
+                                    @foreach (var pi in Model.Indicators.Where(i => i.Status != IndicatorStatus.OnTarget))
+                                    {
+                                        <div class="col-md-6 col-xl-4 mb-4">
+                                            <div class="card border-0 shadow-sm h-100">
+                                                <div class="card-header bg-primary bg-opacity-10 d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0 text-primary">
+                                                        <i class="fas fa-chart-bar me-1"></i> PI
+                                                    </h6>
+                                                    <span class="badge bg-secondary">@pi.Code</span>
+                                                </div>
+                                                <div class="card-body">
+                                                    <h5 class="card-title">
+                                                        <a asp-controller="PerformanceIndicator" asp-action="Details" asp-route-id="@pi.Id" 
+                                                           class="text-decoration-none text-dark stretched-link">
+                                                            @pi.Name
+                                                        </a>
+                                                    </h5>
+                                                    
+                                                    <div class="mt-3 mb-2 text-center">
+                                                        <div class="d-flex justify-content-between mb-1">
+                                                            <span>Hiện tại: <strong>@pi.CurrentValue.ToString("N2")</strong></span>
+                                                        </div>
+                                                        <div class="mt-2">
+                                                            @switch (pi.Status)
+                                                            {
+                                                                case IndicatorStatus.AtRisk:
+                                                                    <span class="badge bg-warning">Cảnh báo</span>
+                                                                    break;
+                                                                case IndicatorStatus.BelowTarget:
+                                                                    <span class="badge bg-danger">Nguy hiểm</span>
+                                                                    break;
+                                                                default:
+                                                                    <span class="badge bg-secondary">@pi.Status</span>
+                                                                    break;
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="d-flex justify-content-between mt-3">
+                                                        <span class="badge bg-secondary">@pi.Unit</span>
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer bg-light d-flex justify-content-between">
+                                                    <a asp-controller="PerformanceIndicator" asp-action="Edit" asp-route-id="@pi.Id" 
+                                                       class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Chỉnh sửa">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a asp-controller="Measurement" asp-action="Create" asp-route-indicatorId="@pi.Id" 
+                                                       class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Thêm đo lường">
+                                                        <i class="fas fa-chart-line"></i> Đo lường mới
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -272,356 +494,106 @@
         {
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Chỉ số đánh giá (KPIs)</h5>
-                        <a href="#" class="btn btn-sm btn-primary">
-                            <i class="fas fa-plus me-1"></i> Thêm chỉ số
-                        </a>
+                        <h5 class="mb-0">Chỉ số đánh giá</h5>
+                        <div>
+                            <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" asp-route-isKey="true" class="btn btn-sm btn-success me-2">
+                                <i class="fas fa-plus-circle me-1"></i> Thêm KPI
+                            </a>
+                            <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> Thêm PI
+                            </a>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="alert alert-info mb-0">
-                            <i class="fas fa-info-circle me-2"></i> Chưa có chỉ số đánh giá nào được liên kết với yếu tố thành
-                            công này.
-                            Hãy thêm các KPI để theo dõi và đánh giá hiệu quả của yếu tố thành công.
+                        <div class="text-center py-5">
+                            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                            <h5>Chưa có chỉ số đánh giá</h5>
+                            <p class="text-muted">Thêm các chỉ số đánh giá để theo dõi hiệu suất của yếu tố thành công này</p>
+                            <div class="mt-3">
+                                <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" asp-route-isKey="true" class="btn btn-success me-2">
+                                    <i class="fas fa-plus-circle me-1"></i> Thêm KPI
+                                </a>
+                                <a asp-controller="PerformanceIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i> Thêm PI
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
         }
 
-        @if (Model.ProgressHistory != null && Model.ProgressHistory.Any())
-        {
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Lịch sử cập nhật tiến độ</h5>
-                    <a asp-action="UpdateProgress" asp-route-id="@Model.Id" class="btn btn-sm btn-success">
-                        <i class="fas fa-plus me-1"></i> Cập nhật mới
-                    </a>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Tiến độ</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="progress-circle-container">
+                            <div class="progress-circle" data-progress="62">
+                                <div class="progress-circle-inner">
+                                    <div class="progress-circle-value">62%</div>
+                                    <div class="progress-circle-text">hoàn thành</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Ngày cập nhật</th>
-                                    <th>Tiến độ</th>
-                                    <th>Trạng thái</th>
-                                    <th>Rủi ro</th>
-                                    <th>Người cập nhật</th>
-                                    <th>Nhận xét</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var update in Model.ProgressHistory)
-                                {
-                                    <tr>
-                                        <td>@update.UpdateDate.ToString("dd/MM/yyyy")</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="progress flex-grow-1" style="height: 8px;">
-                                                    <div class="progress-bar @(update.ProgressPercentage < 30 ? "bg-danger" : update.ProgressPercentage < 70 ? "bg-warning" : "bg-success")" 
-                                                         role="progressbar" style="width: @update.ProgressPercentage%" 
-                                                         aria-valuenow="@update.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
-                                                    </div>
-                                                </div>
-                                                <span class="ms-2">@update.ProgressPercentage%</span>
-                                            </div>
-                                            @if (update.ProgressPercentage != update.PreviousPercentage)
-                                            {
-                                                <small class="text-muted d-block">
-                                                    @if (update.ProgressPercentage > update.PreviousPercentage)
-                                                    {
-                                                        <span class="text-success">
-                                                            <i class="fas fa-arrow-up"></i> +@(update.ProgressPercentage - update.PreviousPercentage)%
-                                                        </span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-danger">
-                                                            <i class="fas fa-arrow-down"></i> @(update.ProgressPercentage - update.PreviousPercentage)%
-                                                        </span>
-                                                    }
-                                                </small>
-                                            }
-                                        </td>
-                                        <td>
-                                            <span class="badge @(update.Status switch {
-                                                SuccessFactorStatus.NotStarted => "bg-secondary",
-                                                SuccessFactorStatus.InProgress => "bg-primary",
-                                                SuccessFactorStatus.AtRisk => "bg-warning",
-                                                SuccessFactorStatus.OffTrack => "bg-info",
-                                                SuccessFactorStatus.OnTrack => "bg-success",
-                                                SuccessFactorStatus.Completed => "bg-success",
-                                                SuccessFactorStatus.Cancelled => "bg-danger",
-                                                _ => "bg-secondary"
-                                            })">
-                                                @(update.Status switch {
-                                                    SuccessFactorStatus.NotStarted => "Chưa bắt đầu",
-                                                    SuccessFactorStatus.InProgress => "Đang tiến hành",
-                                                    SuccessFactorStatus.AtRisk => "Có rủi ro",
-                                                    SuccessFactorStatus.OffTrack => "Chậm tiến độ",
-                                                    SuccessFactorStatus.OnTrack => "Đúng tiến độ",
-                                                    SuccessFactorStatus.Completed => "Hoàn thành",
-                                                    SuccessFactorStatus.Cancelled => "Đã hủy",
-                                                    _ => update.Status.ToString()
-                                                })
-                                            </span>
-                                            @if (update.Status != update.PreviousStatus)
-                                            {
-                                                <small class="text-muted d-block">
-                                                    Trước đó: <span class="badge bg-light text-dark">
-                                                        @(update.PreviousStatus switch {
-                                                            SuccessFactorStatus.NotStarted => "Chưa bắt đầu",
-                                                            SuccessFactorStatus.InProgress => "Đang tiến hành",
-                                                            SuccessFactorStatus.AtRisk => "Có rủi ro",
-                                                            SuccessFactorStatus.OffTrack => "Chậm tiến độ",
-                                                            SuccessFactorStatus.OnTrack => "Đúng tiến độ",
-                                                            SuccessFactorStatus.Completed => "Hoàn thành",
-                                                            SuccessFactorStatus.Cancelled => "Đã hủy",
-                                                            _ => update.PreviousStatus.ToString()
-                                                        })
-                                                    </span>
-                                                </small>
-                                            }
-                                        </td>
-                                        <td>
-                                            <span class="badge @(update.RiskLevel switch {
-                                                RiskLevel.None => "bg-light text-dark",
-                                                RiskLevel.Negligible => "bg-info",
-                                                RiskLevel.Low => "bg-success",
-                                                RiskLevel.Medium => "bg-warning",
-                                                RiskLevel.High => "bg-danger",
-                                                RiskLevel.Critical => "bg-danger",
-                                                _ => "bg-secondary"
-                                            })">
-                                                @(update.RiskLevel switch {
-                                                    RiskLevel.None => "Không có",
-                                                    RiskLevel.Negligible => "Không đáng kể",
-                                                    RiskLevel.Low => "Thấp",
-                                                    RiskLevel.Medium => "Trung bình",
-                                                    RiskLevel.High => "Cao",
-                                                    RiskLevel.Critical => "Nghiêm trọng",
-                                                    _ => update.RiskLevel.ToString()
-                                                })
-                                            </span>
-                                        </td>
-                                        <td>@update.CreatedBy</td>
-                                        <td>
-                                            @if (!string.IsNullOrEmpty(update.Comments))
-                                            {
-                                                <span class="text-truncate d-inline-block" style="max-width: 200px;" 
-                                                    data-bs-toggle="tooltip" title="@update.Comments">
-                                                    @update.Comments
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted">-</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            <div class="d-flex">
-                                                <button type="button" class="btn btn-sm btn-outline-primary me-1" 
-                                                        data-bs-toggle="modal" data-bs-target="#detailModal-@update.Id">
-                                                    <i class="bi bi-info-circle me-1"></i> Chi tiết
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                        data-bs-toggle="modal" data-bs-target="#deleteModal-@update.Id">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    
-                                    <!-- Detail modal -->
-                                    <div class="modal fade" id="detailModal-@update.Id" tabindex="-1" aria-labelledby="detailModalLabel-@update.Id" aria-hidden="true">
-                                        <div class="modal-dialog modal-lg">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="detailModalLabel-@update.Id">
-                                                        <i class="bi bi-info-circle me-2"></i>Chi tiết cập nhật tiến độ
-                                                    </h5>
-                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="row mb-4">
-                                                        <div class="col-md-6">
-                                                            <h6 class="border-bottom pb-2 mb-3">Thông tin cơ bản</h6>
-                                                            <div class="mb-2">
-                                                                <div class="d-flex justify-content-between">
-                                                                    <strong>Ngày cập nhật:</strong>
-                                                                    <span>@update.UpdateDate.ToString("dd/MM/yyyy HH:mm")</span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="mb-2">
-                                                                <div class="d-flex justify-content-between">
-                                                                    <strong>Người cập nhật:</strong>
-                                                                    <span>@update.CreatedBy</span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="mb-2">
-                                                                <div class="d-flex justify-content-between">
-                                                                    <strong>Thời gian cập nhật:</strong>
-                                                                    <span>@update.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <h6 class="border-bottom pb-2 mb-3">Trạng thái & Tiến độ</h6>
-                                                            <div class="mb-3">
-                                                                <strong>Tiến độ:</strong>
-                                                                <div class="progress mt-1" style="height: 25px;">
-                                                                    <div class="progress-bar @(update.ProgressPercentage < 30 ? "bg-danger" : update.ProgressPercentage < 70 ? "bg-warning" : "bg-success")" 
-                                                                        role="progressbar" 
-                                                                        style="width: @update.ProgressPercentage%" 
-                                                                        aria-valuenow="@update.ProgressPercentage" 
-                                                                        aria-valuemin="0" 
-                                                                        aria-valuemax="100">
-                                                                        @update.ProgressPercentage%
-                                                                    </div>
-                                                                </div>
-                                                                @if (update.ProgressPercentage != update.PreviousPercentage)
-                                                                {
-                                                                    <small class="d-block mt-1">
-                                                                        Thay đổi: 
-                                                                        @if (update.ProgressPercentage > update.PreviousPercentage)
-                                                                        {
-                                                                            <span class="text-success">
-                                                                                <i class="fas fa-arrow-up"></i> +@(update.ProgressPercentage - update.PreviousPercentage)%
-                                                                            </span>
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <span class="text-danger">
-                                                                                <i class="fas fa-arrow-down"></i> @(update.ProgressPercentage - update.PreviousPercentage)%
-                                                                            </span>
-                                                                        }
-                                                                        <span class="text-muted">(từ @update.PreviousPercentage%)</span>
-                                                                    </small>
-                                                                }
-                                                            </div>
-                                                            <div class="mb-2">
-                                                                <div class="d-flex justify-content-between">
-                                                                    <strong>Trạng thái:</strong>
-                                                                    <span class="badge @(update.Status switch {
-                                                                        SuccessFactorStatus.NotStarted => "bg-secondary",
-                                                                        SuccessFactorStatus.InProgress => "bg-primary",
-                                                                        SuccessFactorStatus.AtRisk => "bg-warning",
-                                                                        SuccessFactorStatus.OffTrack => "bg-danger",
-                                                                        SuccessFactorStatus.OnTrack => "bg-success",
-                                                                        SuccessFactorStatus.Completed => "bg-success",
-                                                                        SuccessFactorStatus.Cancelled => "bg-danger",
-                                                                        _ => "bg-secondary"
-                                                                    })">
-                                                                        @(update.Status switch {
-                                                                            SuccessFactorStatus.NotStarted => "Chưa bắt đầu",
-                                                                            SuccessFactorStatus.InProgress => "Đang tiến hành",
-                                                                            SuccessFactorStatus.AtRisk => "Có rủi ro",
-                                                                            SuccessFactorStatus.OffTrack => "Chậm tiến độ",
-                                                                            SuccessFactorStatus.OnTrack => "Đúng tiến độ",
-                                                                            SuccessFactorStatus.Completed => "Hoàn thành",
-                                                                            SuccessFactorStatus.Cancelled => "Đã hủy",
-                                                                            _ => update.Status.ToString()
-                                                                        })
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="mb-2">
-                                                                <div class="d-flex justify-content-between">
-                                                                    <strong>Mức độ rủi ro:</strong>
-                                                                    <span class="badge @(update.RiskLevel switch {
-                                                                        RiskLevel.None => "bg-light text-dark",
-                                                                        RiskLevel.Negligible => "bg-info",
-                                                                        RiskLevel.Low => "bg-success",
-                                                                        RiskLevel.Medium => "bg-warning",
-                                                                        RiskLevel.High => "bg-danger",
-                                                                        RiskLevel.Critical => "bg-danger",
-                                                                        _ => "bg-secondary"
-                                                                    })">
-                                                                        @(update.RiskLevel switch {
-                                                                            RiskLevel.None => "Không có",
-                                                                            RiskLevel.Negligible => "Không đáng kể",
-                                                                            RiskLevel.Low => "Thấp",
-                                                                            RiskLevel.Medium => "Trung bình",
-                                                                            RiskLevel.High => "Cao",
-                                                                            RiskLevel.Critical => "Nghiêm trọng",
-                                                                            _ => update.RiskLevel.ToString()
-                                                                        })
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
 
-                                                    <h6 class="border-bottom pb-2 mb-3">Ghi chú & Nhận xét</h6>
-                                                    <div class="row">
-                                                        <div class="col-12">
-                                                            <div class="mb-3">
-                                                                <strong>Nhận xét:</strong>
-                                                                <p class="mt-1 mb-0">@(string.IsNullOrEmpty(update.Comments) ? "Không có" : update.Comments)</p>
-                                                            </div>
-                                                            <div class="mb-0">
-                                                                <strong>Các vấn đề gặp phải:</strong>
-                                                                <p class="mt-1 mb-0">@(string.IsNullOrEmpty(update.Issues) ? "Không có" : update.Issues)</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Delete confirmation modal -->
-                                    <div class="modal fade" id="deleteModal-@update.Id" tabindex="-1" aria-labelledby="deleteModalLabel-@update.Id" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="deleteModalLabel-@update.Id">Xác nhận xóa</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body text-start">
-                                                    <p>Bạn có chắc chắn muốn xóa bản ghi cập nhật tiến độ này không?</p>
-                                                    <p class="text-danger">Hành động này không thể hoàn tác.</p>
-                                                    <div class="alert alert-info">
-                                                        <strong>Thông tin cập nhật:</strong>
-                                                        <ul class="mb-0">
-                                                            <li>Ngày: @update.UpdateDate.ToString("dd/MM/yyyy")</li>
-                                                            <li>Tiến độ: @update.ProgressPercentage%</li>
-                                                            <li>Trạng thái: @(update.Status switch {
-                                                                SuccessFactorStatus.NotStarted => "Chưa bắt đầu",
-                                                                SuccessFactorStatus.InProgress => "Đang tiến hành",
-                                                                SuccessFactorStatus.AtRisk => "Có rủi ro",
-                                                                SuccessFactorStatus.OffTrack => "Chậm tiến độ",
-                                                                SuccessFactorStatus.Completed => "Hoàn thành",
-                                                                SuccessFactorStatus.Cancelled => "Đã hủy",
-                                                                _ => update.Status.ToString()
-                                                            })</li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                    <form asp-action="DeleteProgressUpdate" method="post">
-                                                        <input type="hidden" name="id" value="@update.Id" />
-                                                        <input type="hidden" name="successFactorId" value="@Model.Id" />
-                                                        <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                            </tbody>
-                        </table>
+                <div class="mt-4">
+                    <h6>Lịch sử cập nhật</h6>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-item-date">12/05/2023</div>
+                            <div class="timeline-item-content">
+                                <div class="timeline-item-title">Đạt 62% tiến độ</div>
+                                <div class="timeline-item-desc">Hoàn thành phân tích dữ liệu khách hàng</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-item-date">05/05/2023</div>
+                            <div class="timeline-item-content">
+                                <div class="timeline-item-title">Đạt 50% tiến độ</div>
+                                <div class="timeline-item-desc">Thu thập dữ liệu khách hàng hoàn thành</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-item-date">21/04/2023</div>
+                            <div class="timeline-item-content">
+                                <div class="timeline-item-title">Đạt 28% tiến độ</div>
+                                <div class="timeline-item-desc">Bắt đầu thu thập dữ liệu khách hàng</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        }
+        </div>
 
     </div>
     <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Chỉ số kết quả</h5>
+                <div>
+                    <a asp-controller="ResultIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" asp-route-isKey="true" class="btn btn-sm btn-danger">
+                        <i class="fas fa-plus-circle me-1"></i> Thêm KRI
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Chưa có chỉ số kết quả
+                    <a asp-controller="ResultIndicator" asp-action="Create" asp-route-successFactorId="@Model.Id" 
+                        class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="fas fa-plus me-1"></i> Thêm chỉ số kết quả
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">Diễn biến tiến độ</h5>
@@ -636,45 +608,96 @@
                 <h5 class="mb-0">Phụ thuộc & Liên kết</h5>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <h6 class="fw-bold">Mục tiêu liên quan:</h6>
+                <div class="mb-4">
+                    <h6 class="fw-bold border-bottom pb-2 mb-3">
+                        <i class="fas fa-bullseye text-primary me-2"></i>Mục tiêu liên quan
+                    </h6>
                     @if (Model.ObjectiveId.HasValue)
                     {
                             <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-bullseye text-primary me-2"></i>
-                                <div>
-                                    <a asp-controller="Objective" asp-action="Details" asp-route-id="@Model.ObjectiveId">
+                                <div class="flex-grow-1">
+                                    <a asp-controller="Objective" asp-action="Details" asp-route-id="@Model.ObjectiveId" class="text-decoration-none fw-medium">
                                         @Model.ObjectiveName
+                                    </a>
+                                    <div class="d-flex mt-1">
+                                        <span class="badge bg-primary me-1">Mục tiêu</span>
+                                        <span class="badge bg-secondary">Ưu tiên</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <a asp-controller="Objective" asp-action="Details" asp-route-id="@Model.ObjectiveId" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-external-link-alt"></i>
                                     </a>
                                 </div>
                             </div>
                     }
                     else
                     {
-                            <p class="text-muted">Không có mục tiêu liên quan</p>
+                            <div class="alert alert-light mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Không có mục tiêu liên quan
+                                <a asp-controller="SuccessFactor" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-link px-0">
+                                    Thêm liên kết
+                                </a>
+                            </div>
                     }
                 </div>
 
+                <div class="mb-4">
+                    <h6 class="fw-bold border-bottom pb-2 mb-3">
+                        <i class="fas fa-chart-line text-success me-2"></i>Tổng quan chỉ số
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="card bg-success bg-opacity-10 h-100">
+                                <div class="card-body text-center py-3">
+                                    <h4 class="mb-0 fw-bold text-success">@(Model.Indicators?.Count(i => i.Status == IndicatorStatus.OnTarget) ?? 0)</h4>
+                                    <small class="text-muted">KPI</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card bg-primary bg-opacity-10 h-100">
+                                <div class="card-body text-center py-3">
+                                    <h4 class="mb-0 fw-bold text-primary">@(Model.Indicators?.Count(i => i.Status != IndicatorStatus.OnTarget) ?? 0)</h4>
+                                    <small class="text-muted">PI</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <h6 class="fw-bold">Các chỉ số đo lường:</h6>
-                    @if (Model.Indicators != null && Model.Indicators.Any())
-                    {
-                            foreach (var indicator in Model.Indicators)
-                            {
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-chart-line text-success me-2"></i>
-                                        <div>
-                                            <a href="#">
-                                                @indicator.Name
-                                            </a>
-                                        </div>
-                                    </div>
-                            }
-                    }
-                    else
-                    {
-                            <p class="text-muted">Chưa có chỉ số đo lường</p>
-                    }
+                    <h6 class="fw-bold border-bottom pb-2 mb-3">
+                        <i class="fas fa-building text-secondary me-2"></i>Phòng ban liên quan
+                    </h6>
+                    <div class="d-flex align-items-center">
+                        @if (Model.DepartmentId.HasValue)
+                        {
+                                <div class="flex-grow-1">
+                                    <a asp-controller="Department" asp-action="Details" asp-route-id="@Model.DepartmentId" class="text-decoration-none fw-medium">
+                                        @Model.DepartmentName
+                                    </a>
+                                </div>
+                                <div>
+                                    <a asp-controller="Department" asp-action="Details" asp-route-id="@Model.DepartmentId" 
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </div>
+                        }
+                        else
+                        {
+                                <div class="alert alert-light mb-0 w-100">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Chưa chỉ định phòng ban
+                                    <a asp-controller="SuccessFactor" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-link px-0">
+                                        Thêm phòng ban
+                                    </a>
+                                </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -682,181 +705,264 @@
 </div>
 
 @section Styles {
-        <style>
-            .progress-circle {
-                position: relative;
-                width: 80px;
-                height: 80px;
-                border-radius: 50%;
-                background-color: #f0f0f0;
+    <style>
+        /* Styles for Progress Circle */
+        .progress-circle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .progress-circle {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: #f1f1f1;
+            overflow: hidden;
+        }
+        
+        .progress-circle::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: white;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        .progress-circle::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent 50%, var(--progress-color, #198754) 0);
+            border-radius: 50%;
+        }
+        
+        .progress-circle[data-progress="0"]::after {
+            background: #f1f1f1;
+        }
+        
+        .progress-circle[data-progress]::after {
+            --rotation: calc(var(--progress) * 3.6deg);
+            transform: rotate(var(--rotation));
+            --progress-color: #dc3545;
+        }
+        
+        .progress-circle[data-progress^="3"]::after,
+        .progress-circle[data-progress^="4"]::after,
+        .progress-circle[data-progress^="5"]::after {
+            --progress-color: #ffc107;
+        }
+        
+        .progress-circle[data-progress^="6"]::after,
+        .progress-circle[data-progress^="7"]::after,
+        .progress-circle[data-progress^="8"]::after,
+        .progress-circle[data-progress^="9"]::after,
+        .progress-circle[data-progress="100"]::after {
+            --progress-color: #198754;
+        }
+        
+        .progress-circle-inner {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            text-align: center;
+        }
+        
+        .progress-circle-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .progress-circle-text {
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        /* Timeline styles */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 8px;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #198754;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #198754;
+        }
+        
+        .timeline-item-date {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-item-title {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        
+        .timeline-item-desc {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        /* Card hover animation */
+        .card-hover {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Animation for cards */
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
-
-            .progress-circle:after {
-                content: '';
-                position: absolute;
-                top: 10px;
-                left: 10px;
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background-color: white;
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
-
-            .progress-circle .progress-value {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 18px;
-                z-index: 1;
-            }
-            
-            /* Thêm padding cho card chứa bảng lịch sử cập nhật */
-            .card.mb-4 {
-                padding-bottom: 60px;
-            }
-        </style>
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+    </style>
 }
 
 @section Scripts {
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
-            // Set up progress circle
-            document.querySelectorAll('.progress-circle').forEach(function (el) {
-                let percentage = el.getAttribute('data-value');
-                let color;
-
-                if (percentage < 25) color = '#dc3545'; // danger
-                else if (percentage < 50) color = '#ffc107'; // warning
-                else if (percentage < 75) color = '#0dcaf0'; // info
-                else color = '#198754'; // success
-
-                let radius = el.clientWidth / 2;
-                let circumference = 2 * Math.PI * (radius - 10);
-                let dashoffset = circumference * (1 - percentage / 100);
-
-                let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.setAttribute('class', 'progress-ring');
-                svg.setAttribute('width', el.clientWidth);
-                svg.setAttribute('height', el.clientHeight);
-
-                let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                circle.setAttribute('class', 'progress-ring__circle');
-                circle.setAttribute('stroke', color);
-                circle.setAttribute('stroke-width', '8');
-                circle.setAttribute('stroke-linecap', 'round');
-                circle.setAttribute('fill', 'transparent');
-                circle.setAttribute('r', radius - 10);
-                circle.setAttribute('cx', radius);
-                circle.setAttribute('cy', radius);
-                circle.style.strokeDasharray = `${circumference} ${circumference}`;
-                circle.style.strokeDashoffset = dashoffset;
-
-                svg.appendChild(circle);
-                el.appendChild(svg);
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Progress Circle
+            const progressCircles = document.querySelectorAll('.progress-circle');
+            progressCircles.forEach(circle => {
+                const progress = circle.getAttribute('data-progress');
+                circle.style.setProperty('--progress', progress);
             });
-
-            // Progress chart
-            const ctx = document.getElementById('progressChart').getContext('2d');
             
-            @if (Model.ProgressHistory != null && Model.ProgressHistory.Any())
-            {
-                <text>
-                // Lấy dữ liệu từ lịch sử cập nhật tiến độ
-                const progressLabels = [@Html.Raw(string.Join(",", Model.ProgressHistory.Select(p => $"'{p.UpdateDate.ToString("dd/MM/yyyy")}'")))]
-                const progressData = [@string.Join(",", Model.ProgressHistory.Select(p => p.ProgressPercentage.ToString()))]
-                
-                const progressChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: progressLabels,
-                        datasets: [{
-                            label: 'Tiến độ (%)',
-                            data: progressData,
-                            borderColor: '#0d6efd',
-                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                            tension: 0.3,
-                            fill: true
-                        }]
+            // Progress Chart
+            var ctx = document.getElementById('progressChart').getContext('2d');
+            
+            // Dữ liệu mẫu cho biểu đồ tiến độ
+            var labels = ['01/04', '07/04', '14/04', '21/04', '28/04', '05/05', '12/05'];
+            var data = [0, 15, 28, 42, 50, 62, 62];
+            var bgColors = ['#dc3545', '#dc3545', '#ffc107', '#ffc107', '#ffc107', '#198754', '#198754'];
+            
+            var chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tiến độ (%)',
+                        data: data,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: bgColors,
+                        pointBorderColor: bgColors,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutQuart'
                     },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                display: false
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
                             },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
                             }
                         },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100,
-                                ticks: {
-                                    callback: function (value) {
-                                        return value + '%';
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                </text>
-            }
-            else
-            {
-                <text>
-                // Hiển thị biểu đồ trống khi không có dữ liệu
-                const progressChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: [],
-                        datasets: [{
-                            label: 'Tiến độ (%)',
-                            data: [],
-                            borderColor: '#0d6efd',
-                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                            tension: 0.3,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
+                        x: {
+                            grid: {
                                 display: false
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100,
-                                ticks: {
-                                    callback: function (value) {
-                                        return value + '%';
-                                    }
-                                }
                             }
                         }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     }
-                });
-                
-                // Hiển thị thông báo không có dữ liệu
-                const noDataMessage = document.createElement('div');
-                noDataMessage.className = 'text-center text-muted mt-2';
-                noDataMessage.innerHTML = '<i class="bi bi-info-circle me-1"></i>Chưa có dữ liệu cập nhật tiến độ';
-                ctx.canvas.parentNode.appendChild(noDataMessage);
-                </text>
-            }
-        </script>
+                }
+            });
+            
+            // Tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+            
+            // Animation for cards
+            const cards = document.querySelectorAll('.card-hover');
+            cards.forEach((card, index) => {
+                card.classList.add('animate-fade-in-up');
+                card.style.animationDelay = (index * 0.1) + 's';
+            });
+        });
+    </script>
 }
