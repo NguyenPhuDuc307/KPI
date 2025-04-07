@@ -311,60 +311,96 @@
     
     <!-- Tab Tiến độ -->
     <div class="tab-pane fade" id="progress" role="tabpanel" aria-labelledby="progress-tab">
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Tiến độ thực hiện</h5>
-                <a asp-action="UpdateProgress" asp-route-id="@Model.Id" class="btn btn-sm btn-success">
-                    <i class="fas fa-plus-circle me-1"></i> Cập nhật mới
-                </a>
+        <div class="card shadow-sm border mb-4 card-hover animate-fade-in-up">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2 text-success"></i> Tiến độ thực hiện
+                </h5>
+                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateProgressModal">
+                    <i class="fas fa-plus-circle me-1"></i> Cập nhật tiến độ
+                </button>
             </div>
             <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-lg-8 mb-4 mb-lg-0">
-                        <canvas id="progressChart" height="250"></canvas>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="chart-container" style="position: relative; height: 250px;">
+                            <canvas id="progressChart"></canvas>
+                        </div>
                     </div>
-                    <div class="col-lg-4">
-                        <div class="progress-circle-container">
+                    <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
+                        <div class="progress-circle-container mb-3">
                             <div class="progress-circle" data-value="@Model.ProgressPercentage">
-                                <span class="progress-value fw-bold">
-                                    @Model.ProgressPercentage<span>%</span>
-                                </span>
+                                <div class="progress-circle-inner">
+                                    <div class="progress-percentage">@Model.ProgressPercentage%</div>
+                                    <div class="progress-text">Hoàn thành</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-3 text-center">
-                            <span class="badge @(Model.ProgressPercentage < 30 ? "bg-danger" : Model.ProgressPercentage < 70 ? "bg-warning" : "bg-success") px-3 py-2">
-                                <i class="fas fa-chart-line me-1"></i> Trạng thái: 
-                                @(Model.ProgressPercentage < 30 ? "Chậm tiến độ" : Model.ProgressPercentage < 70 ? "Đang tiến triển" : "Tốt")
+                        @{
+                            string badgeClass = "bg-success";
+                            string statusText = "Tốt";
+                            
+                            if (Model.ProgressPercentage < 30)
+                            {
+                                badgeClass = "bg-danger";
+                                statusText = "Chậm tiến độ";
+                            }
+                            else if (Model.ProgressPercentage < 70)
+                            {
+                                badgeClass = "bg-warning text-dark";
+                                statusText = "Đang tiến triển";
+                            }
+                        }
+                        <div class="text-center">
+                            <span class="badge @badgeClass p-2">
+                                <i class="fas fa-chart-line me-1"></i> @statusText
                             </span>
                         </div>
                     </div>
                 </div>
-
-                <hr class="my-4">
-
-                <h6 class="fw-bold mb-3">
-                    <i class="fas fa-history me-1"></i> Lịch sử cập nhật
-                </h6>
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-item-date">12/05/2023</div>
-                        <div class="timeline-item-content">
-                            <div class="timeline-item-title">Đạt @Model.ProgressPercentage% tiến độ</div>
-                            <div class="timeline-item-desc">Hoàn thành phân tích dữ liệu khách hàng</div>
+                
+                <div class="mt-4">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Lịch sử cập nhật</h6>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-point bg-success"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">12/05/2023</div>
+                                <div class="timeline-title">Đạt 75% tiến độ</div>
+                                <div class="timeline-text text-muted">Hoàn thành cơ bản các mục tiêu đã đề ra. Cần tiếp tục đẩy mạnh công tác kiểm soát chất lượng.</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-item-date">05/05/2023</div>
-                        <div class="timeline-item-content">
-                            <div class="timeline-item-title">Đạt 50% tiến độ</div>
-                            <div class="timeline-item-desc">Thu thập dữ liệu khách hàng hoàn thành</div>
+                        <div class="timeline-item">
+                            <div class="timeline-point bg-warning"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">05/05/2023</div>
+                                <div class="timeline-title">Đạt 50% tiến độ</div>
+                                <div class="timeline-text text-muted">Hoàn thành phân tích yêu cầu và thiết kế chi tiết. Bắt đầu triển khai phát triển.</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-item-date">21/04/2023</div>
-                        <div class="timeline-item-content">
-                            <div class="timeline-item-title">Đạt 28% tiến độ</div>
-                            <div class="timeline-item-desc">Bắt đầu thu thập dữ liệu khách hàng</div>
+                        <div class="timeline-item">
+                            <div class="timeline-point bg-warning"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">21/04/2023</div>
+                                <div class="timeline-title">Đạt 28% tiến độ</div>
+                                <div class="timeline-text text-muted">Cập nhật tiến độ triển khai các hạng mục của dự án.</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-point bg-danger"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">10/04/2023</div>
+                                <div class="timeline-title">Đạt 15% tiến độ</div>
+                                <div class="timeline-text text-muted">Gặp một số vấn đề kỹ thuật, cần điều chỉnh kế hoạch triển khai.</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-point bg-secondary"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-date">01/04/2023</div>
+                                <div class="timeline-title">Bắt đầu dự án</div>
+                                <div class="timeline-text text-muted">Khởi động dự án và bắt đầu giai đoạn lập kế hoạch.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -712,20 +748,21 @@
             var ctx = document.getElementById('progressChart')?.getContext('2d');
             
             if (ctx) {
-                // Dữ liệu và màu sắc cho biểu đồ
+                // Dữ liệu tiến độ thực tế
                 var data = [0, 15, 28, 50, @Model.ProgressPercentage];
                 var labels = ['01/04', '10/04', '21/04', '05/05', '12/05'];
                 
-                var bgColors = [];
-                for (var i = 0; i < data.length; i++) {
-                    if (data[i] < 30) {
-                        bgColors.push('#dc3545'); // danger
-                    } else if (data[i] < 70) {
-                        bgColors.push('#ffc107'); // warning
-                    } else {
-                        bgColors.push('#198754'); // success
-                    }
-                }
+                // Tạo gradient cho chart
+                var gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
+                gradientFill.addColorStop(0, 'rgba(40, 167, 69, 0.3)');
+                gradientFill.addColorStop(1, 'rgba(40, 167, 69, 0.05)');
+                
+                // Tạo màu sắc cho các điểm dữ liệu dựa trên giá trị
+                var pointColors = data.map(function(value) {
+                    if (value < 30) return '#dc3545'; // danger
+                    if (value < 70) return '#ffc107'; // warning
+                    return '#28a745'; // success
+                });
                 
                 var progressChart = new Chart(ctx, {
                     type: 'line',
@@ -734,31 +771,36 @@
                         datasets: [{
                             label: 'Tiến độ (%)',
                             data: data,
-                            borderColor: function(context) {
-                                const index = context.dataIndex;
-                                const value = context.dataset.data[index];
-                                if (value < 30) return '#dc3545'; // danger
-                                if (value < 70) return '#ffc107'; // warning
-                                return '#198754'; // success
-                            },
-                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            borderColor: '#28a745',
+                            backgroundColor: gradientFill,
                             tension: 0.4,
                             fill: true,
-                            pointBackgroundColor: bgColors,
-                            pointBorderColor: bgColors,
-                            pointRadius: 5,
-                            pointHoverRadius: 7
+                            pointBackgroundColor: pointColors,
+                            pointBorderColor: 'white',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
                         }]
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         animation: {
                             duration: 1000
                         },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
                         plugins: {
                             tooltip: {
-                                mode: 'index',
-                                intersect: false,
+                                padding: 10,
+                                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                titleColor: 'white',
+                                bodyColor: 'white',
+                                bodyFont: {
+                                    size: 14
+                                },
                                 callbacks: {
                                     label: function(context) {
                                         return context.dataset.label + ': ' + context.parsed.y + '%';
@@ -773,10 +815,30 @@
                             y: {
                                 beginAtZero: true,
                                 max: 100,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)',
+                                    drawBorder: false
+                                },
                                 ticks: {
                                     callback: function(value) {
                                         return value + '%';
-                                    }
+                                    },
+                                    font: {
+                                        size: 11
+                                    },
+                                    padding: 10,
+                                    color: '#666'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 11
+                                    },
+                                    color: '#666'
                                 }
                             }
                         }
@@ -803,6 +865,16 @@
                 card.classList.add('animate-fade-in-up');
                 card.style.animationDelay = (index * 0.1) + 's';
             });
+            
+            // Kích hoạt tab từ URL nếu có
+            var url = window.location.href;
+            if (url.includes('#')) {
+                var activeTab = url.split('#')[1];
+                var tabElem = document.querySelector('#myTab button[data-bs-target="#' + activeTab + '"]');
+                if (tabElem) {
+                    new bootstrap.Tab(tabElem).show();
+                }
+            }
         });
     </script>
 }
