@@ -258,9 +258,10 @@
                     <div class="card-body text-center p-4">
                         <div class="progress-circle-container mb-3">
                             <div class="progress-circle" data-value="@Model.ProgressPercentage">
-                                <span class="progress-value fw-bold">
-                                    @Model.ProgressPercentage<span>%</span>
-                                </span>
+                                <div class="progress-circle-inner">
+                                    <div class="progress-percentage">@Model.ProgressPercentage%</div>
+                                    <div class="progress-text">Hoàn thành</div>
+                                </div>
                             </div>
                         </div>
                         <span class="badge @(Model.ProgressPercentage < 30 ? "bg-danger" : Model.ProgressPercentage < 70 ? "bg-warning" : "bg-success") px-3 py-2 mb-2">
@@ -639,7 +640,8 @@
             --progress-color: #198754;
         }
         
-        .progress-value {
+        .progress-value,
+        .progress-percentage {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -647,6 +649,25 @@
             z-index: 2;
             font-size: 1.5rem;
             font-weight: bold;
+        }
+        
+        .progress-circle-inner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+        
+        .progress-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
         }
         
         /* Timeline styles */
