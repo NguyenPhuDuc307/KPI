@@ -391,15 +391,15 @@
                                                     <div class="badge bg-secondary rounded-pill me-2">
                                                         @update.UpdateDate.ToString("dd/MM/yyyy")
                                                     </div>
-                                                    <h6 class="mb-0 d-flex align-items-center fw-bold">
-                                                        <span>@update.ProgressPercentage%</span>
-                                                        @if (percentageDiff != 0)
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="badge bg-primary me-2 px-3 py-2">Tiến độ hiện tại: @update.ProgressPercentage%</span>
+                                                        @if (percentageDiff != 0 && previousUpdate != null)
                                                         {
-                                                            <span class="ms-2 @diffClass">
-                                                                <i class="fas @diffIcon"></i> @Math.Abs(percentageDiff)%
+                                                            <span class="badge @(percentageDiff > 0 ? "bg-success" : "bg-danger") px-3 py-2">
+                                                                <i class="fas @diffIcon"></i> @(percentageDiff > 0 ? "+" : "")@percentageDiff%
                                                             </span>
                                                         }
-                                                    </h6>
+                                                    </div>
                                                 </div>
                                                 <div class="text-muted">
                                                     @(string.IsNullOrEmpty(update.Comments) ? "Không có ghi chú" : update.Comments)
@@ -408,7 +408,10 @@
                                             <div>
                                                 <form asp-action="DeleteProgressUpdate" asp-route-id="@update.Id" asp-route-successFactorId="@Model.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa cập nhật tiến độ này?');">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa cập nhật này">
-                                                        <i class="fa fa-trash"></i>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                                                        </svg>
                                                     </button>
                                                 </form>
                                             </div>
