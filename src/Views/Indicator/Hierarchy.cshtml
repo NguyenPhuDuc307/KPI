@@ -1,0 +1,89 @@
+@model KPISolution.Models.ViewModels.Indicator.HierarchyViewModel
+@{
+    ViewData["Title"] = "Indicator Hierarchy";
+    ViewData["Icon"] = "bi-diagram-3";
+    ViewData["Subtitle"] = "View and manage the hierarchy of indicators and their relationships";
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-diagram-3 me-2"></i>
+            Indicator Hierarchy
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Success Factors -->
+            <div class="col-md-6">
+                <h6 class="text-primary mb-3">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Success Factors
+                </h6>
+                <div class="list-group">
+                    @foreach (var sf in Model.SuccessFactors)
+                    {
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1">@sf.Name</h6>
+                                <span class="badge bg-primary rounded-pill">
+                                    @sf.ResultIndicators?.Count() KRIs
+                                </span>
+                            </div>
+                            <p class="mb-1 text-muted small">@sf.Description</p>
+                            @if (sf.ResultIndicators?.Any() == true)
+                            {
+                                <div class="mt-2">
+                                    @foreach (var ri in sf.ResultIndicators)
+                                    {
+                                        <span class="badge bg-light text-dark me-1">@ri.Name</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Result Indicators -->
+            <div class="col-md-6">
+                <h6 class="text-danger mb-3">
+                    <i class="bi bi-pie-chart-fill me-2"></i>
+                    Result Indicators
+                </h6>
+                <div class="list-group">
+                    @foreach (var ri in Model.ResultIndicators)
+                    {
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1">@ri.Name</h6>
+                                <span class="badge bg-danger rounded-pill">
+                                    @ri.PerformanceIndicators?.Count() KPIs
+                                </span>
+                            </div>
+                            <p class="mb-1 text-muted small">@ri.Description</p>
+                            @if (ri.PerformanceIndicators?.Any() == true)
+                            {
+                                <div class="mt-2">
+                                    @foreach (var pi in ri.PerformanceIndicators)
+                                    {
+                                        <span class="badge bg-light text-dark me-1">@pi.Name</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Add any JavaScript for interactivity here
+        });
+    </script>
+}

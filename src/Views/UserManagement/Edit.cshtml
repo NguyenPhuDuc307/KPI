@@ -2,20 +2,17 @@
 @model EditUserViewModel
 
 @{
-    ViewData["Title"] = "Chỉnh sửa người dùng";
+    ViewData["Title"] = "Edit User";
+    ViewData["Icon"] = "bi-pencil-square";
+    ViewData["Subtitle"] = "Edit a user in the system";
+    ViewData["ShowButtons"] = true;
+    ViewData["PrimaryButton"] = ("Details", "UserManagement", "Details", Model.Id, "bi-info-circle");
+    ViewData["SecondaryButton"] = ("Back", "UserManagement", "Index", "", "bi-arrow-left");
 }
 
 <div class="card shadow">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa người dùng</h4>
-        <div>
-            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-light me-2">
-                <i class="bi bi-info-circle me-1"></i>Chi tiết
-            </a>
-            <a asp-action="Index" class="btn btn-outline-light">
-                <i class="bi bi-arrow-left me-1"></i>Quay lại
-            </a>
-        </div>
+    <div class="card-header">
+        <h4 class="mb-0"><i class="@ViewData["Icon"] me-2"></i>@ViewData["Title"]</h4>
     </div>
     <div class="card-body">
         <form asp-action="Edit" method="post">
@@ -73,7 +70,8 @@
 
                             <div class="mb-3">
                                 <label asp-for="ManagerId" class="form-label"></label>
-                                <select asp-for="ManagerId" class="form-select" asp-items="ViewBag.Managers">
+                                <select asp-for="ManagerId" class="form-select" asp-items="ViewBag.Managers"
+                                    data-val="false">
                                     <option value="">-- Chọn quản lý --</option>
                                 </select>
                                 <span asp-validation-for="ManagerId" class="text-danger"></span>

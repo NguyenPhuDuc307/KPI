@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using KPISolution.Models.ViewModels.Department;
+using KPISolution.Models.ViewModels.Dashboard;
 namespace KPISolution.Controllers
 {
     /// <summary>
@@ -11,6 +13,7 @@ namespace KPISolution.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<DashboardController> _logger;
         private readonly IMapper _mapper;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         /// <summary>
         /// Initializes a new instance of the DashboardController.
@@ -18,14 +21,17 @@ namespace KPISolution.Controllers
         /// <param name="unitOfWork">Unit of work for data access</param>
         /// <param name="logger">Logger for the DashboardController</param>
         /// <param name="mapper">Mapper for object mapping</param>
+        /// <param name="userManager">User manager for user-related operations</param>
         public DashboardController(
             IUnitOfWork unitOfWork,
             ILogger<DashboardController> logger,
-            IMapper mapper)
+            IMapper mapper,
+            UserManager<ApplicationUser> userManager)
         {
             this._unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this._mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            this._userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         }
 
         /// <summary>
@@ -253,12 +259,12 @@ namespace KPISolution.Controllers
                     }
                 ];
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error loading executive dashboard");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -349,47 +355,219 @@ namespace KPISolution.Controllers
                 viewModel.PerformanceCssClass = viewModel.OverallPerformance > 80 ? "bg-success" :
                                                (viewModel.OverallPerformance > 60 ? "bg-warning" : "bg-danger");
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error loading department dashboard for department {DepartmentId}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
         /// <summary>
-        /// Helper method to get CSS class for status display
+        /// Displays the department overview dashboard showing all departments
         /// </summary>
-        private string GetStatusCssClass(IndicatorStatus status)
+        /// <returns>Department overview dashboard view</returns>
+        [HttpGet]
+        public async Task<IActionResult> DepartmentDashboard()
         {
-            return status switch
+            try
             {
-                IndicatorStatus.OnTarget => "bg-success",
-                IndicatorStatus.AtRisk => "bg-warning",
-                IndicatorStatus.BelowTarget => "bg-danger",
-                IndicatorStatus.Active => "bg-primary",
-                IndicatorStatus.Draft => "bg-secondary",
-                IndicatorStatus.UnderReview => "bg-info",
-                _ => "bg-secondary"
-            };
+                this._logger.LogInformation("Loading department overview dashboard");
+
+                // Create view model
+                var viewModel = new DepartmentOverviewViewModel
+                {
+                    Title = "Dashboard phòng ban",
+                    LastUpdated = DateTime.Now
+                };
+
+                // Lấy tất cả các phòng ban
+                var departments = await this._unitOfWork.Departments.GetAllAsync();
+                viewModel.Departments = [];
+
+                // Duyệt qua từng phòng ban và lấy thông tin hiệu suất
+                foreach (var department in departments)
+                {
+                    // Lấy tất cả chỉ số của phòng ban
+                    var departmentPIs = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi => pi.DepartmentId == department.Id);
+                    var departmentRIs = await this._unitOfWork.ResultIndicators.GetAllAsync(ri => ri.DepartmentId == department.Id);
+
+                    // Kết hợp danh sách chỉ số
+                    var allIndicators = new List<BaseEntity>();
+                    allIndicators.AddRange(departmentPIs);
+                    allIndicators.AddRange(departmentRIs);
+
+                    // Đếm số lượng chỉ số đang có vấn đề (ở trạng thái AtRisk hoặc BelowTarget)
+                    int atRiskCount = allIndicators.Count(i =>
+                        (i is PerformanceIndicator pi && (pi.Status == IndicatorStatus.AtRisk || pi.Status == IndicatorStatus.BelowTarget)) ||
+                        (i is ResultIndicator ri && (ri.Status == IndicatorStatus.AtRisk || ri.Status == IndicatorStatus.BelowTarget))
+                    );
+
+                    // Đếm số lượng chỉ số đạt mục tiêu
+                    int onTargetCount = allIndicators.Count(i =>
+                        (i is PerformanceIndicator pi && pi.Status == IndicatorStatus.OnTarget) ||
+                        (i is ResultIndicator ri && ri.Status == IndicatorStatus.OnTarget)
+                    );
+
+                    // Tính phần trăm hiệu suất dựa trên số lượng chỉ số đạt mục tiêu
+                    int performancePercentage = allIndicators.Count > 0
+                        ? (int)Math.Round((double)onTargetCount / allIndicators.Count * 100)
+                        : 0;
+
+                    // Lấy thông tin người quản lý phòng ban
+                    string? managerName = null;
+                    if (!string.IsNullOrEmpty(department.DepartmentHeadId))
+                    {
+                        var manager = await this._userManager.FindByIdAsync(department.DepartmentHeadId);
+                        if (manager != null)
+                        {
+                            managerName = $"{manager.LastName} {manager.FirstName}";
+                        }
+                    }
+
+                    // Thêm thông tin hiệu suất phòng ban vào danh sách
+                    viewModel.Departments.Add(new DepartmentPerformanceViewModel
+                    {
+                        DepartmentId = department.Id,
+                        DepartmentName = department.Name,
+                        ManagerName = managerName ?? "Chưa phân công",
+                        PerformanceScore = performancePercentage,
+                        TargetAchievementRate = allIndicators.Count > 0
+                            ? (decimal)onTargetCount / allIndicators.Count * 100
+                            : 0,
+                        CompletionRate = performancePercentage,
+                        TotalIndicators = allIndicators.Count,
+                        IndicatorsOnTarget = onTargetCount,
+                        IndicatorsBelowTarget = atRiskCount,
+                        LastUpdated = DateTime.Now
+                    });
+                }
+
+                // Sắp xếp danh sách phòng ban theo hiệu suất giảm dần
+                viewModel.Departments = viewModel.Departments.OrderByDescending(d => d.PerformanceScore).ToList();
+
+                return this.View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error loading department overview dashboard");
+                return this.View("Error");
+            }
         }
 
         /// <summary>
-        /// Helper method to get display text for status
+        /// Displays the personal dashboard for the current user showing their KPIs and tasks
         /// </summary>
-        private string GetStatusDisplay(IndicatorStatus status)
+        /// <returns>Personal dashboard view</returns>
+        [HttpGet]
+        public async Task<IActionResult> PersonalDashboard()
         {
-            return status switch
+            try
             {
-                IndicatorStatus.OnTarget => "Đạt mục tiêu",
-                IndicatorStatus.AtRisk => "Cần chú ý",
-                IndicatorStatus.BelowTarget => "Không đạt",
-                IndicatorStatus.Active => "Hoạt động",
-                IndicatorStatus.Draft => "Bản nháp",
-                IndicatorStatus.UnderReview => "Đang xem xét",
-                _ => "Không xác định"
-            };
+                // Lấy User ID chuẩn từ Claims thay vì User.Identity.Name
+                var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    this._logger.LogWarning("User ID not found in claims. User might not be authenticated correctly.");
+                    return this.Challenge(); // Chuyển hướng đến đăng nhập
+                }
+
+                this._logger.LogInformation("Loading personal dashboard for user ID {UserId}", userId);
+
+                // Tìm user bằng ID chuẩn
+                var user = await this._userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    // Nếu không tìm thấy user bằng ID, trả về 404
+                    this._logger.LogWarning("User not found with ID: {UserId}", userId);
+                    return this.NotFound();
+                }
+
+                // Create view model
+                var viewModel = new PersonalDashboardViewModel
+                {
+                    Title = "Dashboard cá nhân",
+                    UserName = $"{user.LastName} {user.FirstName}",
+                    LastUpdated = DateTime.Now
+                };
+
+                // Get all KPIs the user is responsible for
+                var responsiblePIs = await this._unitOfWork.PerformanceIndicators.GetAllAsync(pi =>
+                    pi.ResponsiblePersonId == userId);
+
+                var responsibleRIs = await this._unitOfWork.ResultIndicators.GetAllAsync(ri =>
+                    ri.ResponsiblePersonId == userId);
+
+                // Combine the lists
+                var allResponsibleKpis = new List<BaseEntity>();
+                allResponsibleKpis.AddRange(responsiblePIs);
+                allResponsibleKpis.AddRange(responsibleRIs);
+
+                // Populate KPI summaries
+                viewModel.MyKpis = allResponsibleKpis.Select(k => new IndicatorSummaryViewModel
+                {
+                    Id = k.Id,
+                    Name = k is PerformanceIndicator pi ? pi.Name : (k is ResultIndicator ri ? ri.Name : "Unknown Indicator"),
+                    Code = k is PerformanceIndicator pi_c ? pi_c.Code : (k is ResultIndicator ri_c ? ri_c.Code : string.Empty),
+                    TargetValue = k is PerformanceIndicator pi_t ? pi_t.TargetValue : (k is ResultIndicator ri_t ? ri_t.TargetValue : null),
+                    CurrentValue = k is PerformanceIndicator pi_cv ? pi_cv.CurrentValue : (k is ResultIndicator ri_cv ? ri_cv.CurrentValue : null),
+                    MeasurementUnit = (k is PerformanceIndicator pi_u ? pi_u.Unit : (k is ResultIndicator ri_u ? ri_u.Unit : null))?.ToString() ?? string.Empty,
+                    Status = k is PerformanceIndicator pi_s ? pi_s.Status : (k is ResultIndicator ri_s ? ri_s.Status : IndicatorStatus.Draft),
+                    Department = (k is PerformanceIndicator pi_d ? pi_d.Department?.Name : (k is ResultIndicator ri_d ? ri_d.SuccessFactor?.Objective?.Department?.Name : string.Empty)) ?? string.Empty,
+                    StatusCssClass = this.GetStatusCssClass(k is PerformanceIndicator pi_sc ? pi_sc.Status : (k is ResultIndicator ri_sc ? ri_sc.Status : IndicatorStatus.Draft)),
+                    StatusDisplay = this.GetStatusDisplay(k is PerformanceIndicator pi_sd ? pi_sd.Status : (k is ResultIndicator ri_sd ? ri_sd.Status : IndicatorStatus.Draft))
+                }).ToList();
+
+                // Get all objectives the user is responsible for
+                var responsibleObjectives = await this._unitOfWork.Objectives.GetAllAsync(o =>
+                    o.ResponsiblePersonId == userId);
+
+                viewModel.MyObjectives = responsibleObjectives.Select(o => new ObjectiveSummaryViewModel
+                {
+                    Id = o.Id,
+                    Name = o.Name ?? string.Empty,
+                    DepartmentName = o.Department?.Name ?? "Chưa phân bổ",
+                    ProgressPercentage = o.ProgressPercentage,
+                    ProgressCssClass = o.ProgressPercentage > 80 ? "bg-success" : (o.ProgressPercentage > 60 ? "bg-warning" : "bg-danger"),
+                    // Lấy các thông tin khác nếu cần
+                }).ToList();
+
+                // Get all department the user is manager of
+                var managedDepartments = await this._unitOfWork.Departments.GetAllAsync(d =>
+                    d.DepartmentHeadId == userId);
+
+                viewModel.MyDepartments = managedDepartments.Select(d => new DepartmentSummaryViewModel
+                {
+                    Id = d.Id,
+                    Name = d.Name ?? string.Empty,
+                    // Thêm các thông tin khác về phòng ban nếu cần
+                }).ToList();
+
+                // Các thông tin thống kê khác
+                viewModel.TotalResponsibleKpis = viewModel.MyKpis.Count;
+                viewModel.TotalObjectives = viewModel.MyObjectives.Count;
+                viewModel.TotalManagedDepartments = viewModel.MyDepartments.Count;
+
+                // Tính phần trăm KPI đạt mục tiêu
+                viewModel.OnTargetPercentage = viewModel.TotalResponsibleKpis > 0
+                    ? (decimal)viewModel.MyKpis.Count(k => k.Status == IndicatorStatus.OnTarget) / viewModel.TotalResponsibleKpis * 100
+                    : 0;
+
+                // Tính hiệu suất tổng thể
+                viewModel.OverallPerformance = viewModel.OnTargetPercentage;
+
+                // Set CSS class for performance
+                viewModel.PerformanceCssClass = viewModel.OverallPerformance > 80 ? "bg-success" :
+                                               (viewModel.OverallPerformance > 60 ? "bg-warning" : "bg-danger");
+
+                return this.View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error loading personal dashboard for user {UserId}", this.User.Identity?.Name);
+                return this.View("Error");
+            }
         }
 
         /// <summary>
@@ -400,57 +578,75 @@ namespace KPISolution.Controllers
         [HttpGet]
         public async Task<IActionResult> Custom(Guid? id)
         {
+            // Declare userId and userName here for the outer scope if needed, or adjust scope
+            string? currentUserId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string currentUserName = this.User.Identity?.Name ?? "unknown"; // Get current user's name
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                this._logger.LogWarning("User ID not found in claims.");
+                return this.Challenge(); // Redirect to login if user ID is missing
+            }
+
             try
             {
-                var userName = this.User.Identity?.Name ?? "unknown";
-                this._logger.LogInformation("Loading custom dashboard {DashboardId} for user {UserId}",
-                    id, userName);
+                this._logger.LogInformation("Loading custom dashboard {DashboardId} for user ID {UserId}",
+                    id.HasValue ? id.Value.ToString() : "Default", currentUserId);
 
                 CustomDashboardViewModel viewModel;
 
                 if (!id.HasValue)
                 {
-                    // Get user's default dashboard
-                    var defaultDashboard = await this._unitOfWork.CustomDashboards.FirstOrDefaultAsync(
-                        d => d.UserId == userName && d.IsDefault);
+                    // Get user's default dashboard using currentUserId, including items
+                    var defaultDashboard = await this._unitOfWork.CustomDashboards.GetAll()
+                        .Include(d => d.DashboardItems) // Include DashboardItems
+                        .FirstOrDefaultAsync(d => d.UserId == currentUserId && d.IsDefault);
 
                     if (defaultDashboard == null)
                     {
                         // Create a new default dashboard if none exists
+                        this._logger.LogInformation("Creating default dashboard for user ID {UserId}", currentUserId);
                         defaultDashboard = new CustomDashboard
                         {
                             Title = "My Dashboard",
-                            UserId = userName,
-                            UserName = userName,
+                            UserId = currentUserId, // Store standard User ID GUID
+                            UserName = currentUserName, // Store current user's name
                             IsDefault = true
                         };
                         await this._unitOfWork.CustomDashboards.AddAsync(defaultDashboard);
                         await this._unitOfWork.SaveChangesAsync();
                     }
 
+                    // Restore call without await
                     viewModel = this.MapToViewModel(defaultDashboard);
                 }
                 else
                 {
-                    // Get specific dashboard
-                    var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id.Value);
+                    // Get specific dashboard by id, including items
+                    var dashboard = await this._unitOfWork.CustomDashboards.GetAll()
+                        .Include(d => d.DashboardItems) // Include DashboardItems
+                        .FirstOrDefaultAsync(d => d.Id == id.Value);
+                    // var dashboard = await this._unitOfWork.CustomDashboards.GetByIdAsync(id.Value); // Assuming GetByIdAsync doesn't include items by default
+
                     if (dashboard == null)
                     {
-                        this._logger.LogWarning("Custom dashboard not found {DashboardId}", id);
+                        this._logger.LogWarning("Custom dashboard not found {DashboardId}", id.Value);
                         return this.NotFound();
                     }
 
-                    if (!dashboard.IsShared && dashboard.UserId != userName)
+                    // Authorization check: Compare dashboard's UserId with currentUserId
+                    if (!dashboard.IsShared && dashboard.UserId != currentUserId)
                     {
                         this._logger.LogWarning("User {UserId} attempted to access unauthorized dashboard {DashboardId}",
-                            userName, id);
+                            currentUserId, id.Value);
                         return this.Forbid();
                     }
 
+                    // Restore call without await
                     viewModel = this.MapToViewModel(dashboard);
                 }
 
-                // Get all KPIs to populate available KPIs
+                // Restore AvailableIndicators logic here
                 var allKpis = new List<BaseEntity>();
                 var kris = await this._unitOfWork.ResultIndicators.GetAllAsync(r => r.IsKey); // Use ResultIndicators with filter
                 var pis = await this._unitOfWork.PerformanceIndicators.GetAllAsync();
@@ -470,12 +666,28 @@ namespace KPISolution.Controllers
                     Department = (k is PerformanceIndicator pi_d ? pi_d.Department?.Name : (k is ResultIndicator ri_d ? ri_d.SuccessFactor?.Objective?.Department?.Name : string.Empty)) ?? string.Empty // Ensure non-null
                 }).ToList();
 
-                return View(viewModel);
+                // Thêm code để lấy danh sách Success Factors cho widget CSF Progress
+                var criticalSuccessFactors = await this._unitOfWork.SuccessFactors.GetAllAsync(sf => sf.IsCritical);
+                viewModel.AvailableSuccessFactors = criticalSuccessFactors.Select(csf => new SuccessFactorSummaryViewModel
+                {
+                    Id = csf.Id,
+                    Name = csf.Name,
+                    Code = csf.Code,
+                    ProgressPercentage = csf.ProgressPercentage,
+                    Status = csf.Status,
+                    StatusCssClass = GetSuccessFactorStatusCssClass(csf.Status),
+                    StatusDisplay = csf.Status.ToString(),
+                    Department = csf.Department?.Name ?? string.Empty,
+                    Owner = csf.ResponsibleUser?.UserName ?? string.Empty,
+                    TargetDate = csf.TargetDate
+                }).ToList();
+
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error loading custom dashboard {DashboardId}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -494,7 +706,7 @@ namespace KPISolution.Controllers
                 UserId = userName,
                 UserName = userName
             };
-            return View(viewModel);
+            return this.View(viewModel);
         }
 
         /// <summary>
@@ -508,19 +720,29 @@ namespace KPISolution.Controllers
         {
             if (!this.ModelState.IsValid)
             {
-                return View(viewModel);
+                return this.View(viewModel);
             }
 
             try
             {
+                // Get standard User ID and UserName
+                var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var userName = this.User.Identity?.Name ?? "unknown";
-                this._logger.LogInformation("Creating new dashboard for user {UserId}", userName);
+
+                if (string.IsNullOrEmpty(userId))
+                {
+                    // Handle case where User ID is not found (should not happen if authenticated)
+                    this.ModelState.AddModelError("", "Unable to identify user.");
+                    return this.View(viewModel);
+                }
+
+                this._logger.LogInformation("Creating new dashboard for user ID {UserId}", userId);
 
                 var dashboard = new CustomDashboard
                 {
                     Title = viewModel.Title,
-                    UserId = userName,
-                    UserName = userName,
+                    UserId = userId, // Store standard User ID GUID
+                    UserName = userName, // Store username/email for display
                     IsDefault = viewModel.IsDefault,
                     IsShared = viewModel.IsShared,
                     RefreshInterval = viewModel.RefreshInterval,
@@ -531,7 +753,7 @@ namespace KPISolution.Controllers
                 await this._unitOfWork.SaveChangesAsync();
 
                 this._logger.LogInformation("Successfully created dashboard {DashboardId} for user {UserId}",
-                    dashboard.Id, userName);
+                    dashboard.Id, userId);
 
                 return this.RedirectToAction(nameof(this.Custom), new { id = dashboard.Id });
             }
@@ -539,7 +761,7 @@ namespace KPISolution.Controllers
             {
                 this._logger.LogError(ex, "Error creating custom dashboard for user {UserId}", this.User.Identity?.Name ?? "unknown");
                 this.ModelState.AddModelError("", "Error creating dashboard. Please try again.");
-                return View(viewModel);
+                return this.View(viewModel);
             }
         }
 
@@ -589,7 +811,7 @@ namespace KPISolution.Controllers
                 Department = (k is PerformanceIndicator pi_d ? pi_d.Department?.Name : (k is ResultIndicator ri_d ? ri_d.SuccessFactor?.Objective?.Department?.Name : string.Empty)) ?? string.Empty // Ensure non-null
             }).ToList();
 
-            return View(viewModel);
+            return this.View(viewModel);
         }
 
         /// <summary>
@@ -609,7 +831,7 @@ namespace KPISolution.Controllers
 
             if (!this.ModelState.IsValid)
             {
-                return View(viewModel);
+                return this.View(viewModel);
             }
 
             try
@@ -648,7 +870,7 @@ namespace KPISolution.Controllers
             {
                 this._logger.LogError(ex, "Error updating dashboard {DashboardId}", id);
                 this.ModelState.AddModelError("", "Error updating dashboard. Please try again.");
-                return View(viewModel);
+                return this.View(viewModel);
             }
         }
 
@@ -747,6 +969,13 @@ namespace KPISolution.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddItem(Guid id, [FromBody] DashboardItemViewModel item)
         {
+            // Add null check for the incoming item model
+            if (item == null)
+            {
+                this._logger.LogWarning("Received null item model in AddItem request body for dashboard {DashboardId}.", id);
+                return this.BadRequest(new { success = false, message = "Invalid item data received." });
+            }
+
             try
             {
                 this._logger.LogInformation("Adding item to dashboard {DashboardId}", id);
@@ -758,11 +987,12 @@ namespace KPISolution.Controllers
                     return this.NotFound();
                 }
 
-                var userName = this.User.Identity?.Name ?? "unknown";
-                if (dashboard.UserId != userName)
+                // Use ClaimTypes.NameIdentifier for authorization check
+                var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId) || dashboard.UserId != userId)
                 {
-                    this._logger.LogWarning("User {UserId} attempted to add item to unauthorized dashboard {DashboardId}",
-                        userName, id);
+                    this._logger.LogWarning("User {RequestingUserId} attempted to add item to unauthorized dashboard {DashboardId} owned by {OwnerUserId}",
+                        userId, id, dashboard.UserId);
                     return this.Forbid();
                 }
 
@@ -777,7 +1007,7 @@ namespace KPISolution.Controllers
                     Height = item.Height,
                     X = item.X,
                     Y = item.Y,
-                    DataConfiguration = item.DataConfiguration,
+                    DataConfiguration = item.DataConfiguration ?? string.Empty,
                     Order = item.Order,
                     ItemType = (DashboardItemType)(int)item.ItemType,
                     ShowLegend = item.ShowLegend,
@@ -878,9 +1108,9 @@ namespace KPISolution.Controllers
         /// <summary>
         /// Maps a CustomDashboard entity to a CustomDashboardViewModel
         /// </summary>
-        private CustomDashboardViewModel MapToViewModel(CustomDashboard dashboard)
+        private CustomDashboardViewModel MapToViewModel(CustomDashboard dashboard) // Remove async Task<>
         {
-            return new CustomDashboardViewModel
+            var viewModel = new CustomDashboardViewModel // Create the base ViewModel first
             {
                 Id = dashboard.Id,
                 Title = dashboard.Title ?? string.Empty,
@@ -892,23 +1122,169 @@ namespace KPISolution.Controllers
                 IsDefault = dashboard.IsDefault,
                 IsShared = dashboard.IsShared,
                 RefreshInterval = dashboard.RefreshInterval,
-                DashboardItems = dashboard.DashboardItems?.Select(item => new DashboardItemViewModel
+                DashboardItems = [] // Initialize as empty list
+            };
+
+            if (dashboard.DashboardItems != null)
+            {
+                foreach (var item in dashboard.DashboardItems.OrderBy(i => i.Order)) // Process items
                 {
-                    Id = item.Id,
-                    IndicatorId = item.IndicatorId,
-                    SuccessFactorId = item.SuccessFactorId,
-                    ChartType = (KPISolution.Models.Enums.Visualization.ChartType)(int)item.ChartType,
-                    Title = item.Title ?? string.Empty,
-                    Width = item.Width,
-                    Height = item.Height,
-                    X = item.X,
-                    Y = item.Y,
-                    DataConfiguration = item.DataConfiguration,
-                    Order = item.Order,
-                    ItemType = (DashboardItemType)(int)item.ItemType,
-                    ShowLegend = item.ShowLegend,
-                    TimePeriod = (TimePeriod)(int)item.TimePeriod
-                }).ToList() ?? []
+                    var itemViewModel = new DashboardItemViewModel
+                    {
+                        Id = item.Id,
+                        Title = item.Title ?? string.Empty,
+                        Width = item.Width,
+                        Height = item.Height,
+                        X = item.X,
+                        Y = item.Y,
+                        Order = item.Order,
+                        ItemType = (DashboardItemType)item.ItemType,
+                        WidgetType = ((DashboardItemType)item.ItemType).ToString(),
+                        ShowLegend = item.ShowLegend,
+                        ChartType = (DashboardItemType)item.ItemType == DashboardItemType.Chart ? (ChartType)item.ChartType : default,
+                        TimePeriod = (DashboardItemType)item.ItemType == DashboardItemType.Chart ? (TimePeriod)item.TimePeriod : default,
+
+                        // Process DataConfiguration and create WidgetData
+                        // Cannot use await here anymore
+                        WidgetData = this.CreateWidgetData(item).Result // Call synchronously (potential blocking)
+                    };
+                    viewModel.DashboardItems.Add(itemViewModel);
+                }
+            }
+
+            return viewModel;
+        }
+
+        // Helper function to create specific WidgetData based on item type and configuration
+        private async Task<object?> CreateWidgetData(DashboardItem item) // Make async to await data fetching
+        {
+            this._logger.LogInformation("Attempting to create widget data for item {ItemId} of type {ItemType}", item.Id, item.ItemType);
+
+            try
+            {
+                switch ((DashboardItemType)item.ItemType)
+                {
+                    case DashboardItemType.IndicatorCard:
+                        if (item.IndicatorId.HasValue)
+                        {
+                            this._logger.LogInformation("Fetching data for IndicatorCard widget. IndicatorId: {IndicatorId}", item.IndicatorId.Value);
+                            // Attempt to find the indicator in both PI and RI repositories
+                            BaseEntity? indicator = await this._unitOfWork.PerformanceIndicators.GetByIdAsync(item.IndicatorId.Value);
+                            if (indicator == null)
+                            {
+                                indicator = await this._unitOfWork.ResultIndicators.GetByIdAsync(item.IndicatorId.Value);
+                            }
+
+                            if (indicator != null)
+                            {
+                                // Map the found indicator to the specific ViewModel
+                                // var cardViewModel = new IndicatorCardWidgetViewModel // Assuming this is the correct ViewModel name
+                                // {
+                                //     IndicatorId = indicator.Id,
+                                //     Name = indicator is PerformanceIndicator pi_n ? pi_n.Name : (indicator is ResultIndicator ri_n ? ri_n.Name : "N/A"),
+                                //     Code = indicator is PerformanceIndicator pi_c ? pi_c.Code : (indicator is ResultIndicator ri_c ? ri_c.Code : "N/A"),
+                                //     CurrentValue = indicator is PerformanceIndicator pi_cv ? pi_cv.CurrentValue : (indicator is ResultIndicator ri_cv ? ri_cv.CurrentValue : null),
+                                //     TargetValue = indicator is PerformanceIndicator pi_tv ? pi_tv.TargetValue : (indicator is ResultIndicator ri_tv ? ri_tv.TargetValue : null),
+                                //     Unit = (indicator is PerformanceIndicator pi_u ? pi_u.Unit : (indicator is ResultIndicator ri_u ? ri_u.Unit : null))?.ToString() ?? "",
+                                //     Status = indicator is PerformanceIndicator pi_s ? pi_s.Status : (indicator is ResultIndicator ri_s ? ri_s.Status : IndicatorStatus.Draft),
+                                //     StatusDisplay = GetStatusDisplay(indicator is PerformanceIndicator pi_sd ? pi_sd.Status : (indicator is ResultIndicator ri_sd ? ri_sd.Status : IndicatorStatus.Draft)),
+                                //     StatusCssClass = GetStatusCssClass(indicator is PerformanceIndicator pi_sc ? pi_sc.Status : (indicator is ResultIndicator ri_sc ? ri_sc.Status : IndicatorStatus.Draft)),
+                                //     Trend = "neutral" // Placeholder for trend - requires historical data logic
+                                // };
+                                // _logger.LogInformation("Successfully created IndicatorCardWidgetViewModel for item {ItemId}", item.Id);
+                                // return cardViewModel;
+                                this._logger.LogWarning("IndicatorCardWidgetViewModel or its data fetching is not implemented correctly.");
+                                return null; // Keep returning null until ViewModel name is confirmed
+                            }
+                            else
+                            {
+                                this._logger.LogWarning("Indicator not found for IndicatorCard widget. IndicatorId: {IndicatorId}", item.IndicatorId.Value);
+                            }
+                        }
+                        else
+                        {
+                            this._logger.LogWarning("IndicatorId is null for IndicatorCard widget. ItemId: {ItemId}", item.Id);
+                        }
+                        break;
+                    case DashboardItemType.Table:
+                        this._logger.LogWarning("Widget data creation not implemented for Table. ItemId: {ItemId}", item.Id);
+                        // TODO: Implement Table data fetching
+                        break;
+                    case DashboardItemType.Chart:
+                        this._logger.LogWarning("Widget data creation not implemented for Chart. ItemId: {ItemId}", item.Id);
+                        // TODO: Implement Chart data fetching
+                        break;
+                    case DashboardItemType.ProgressBar:
+                        this._logger.LogWarning("Widget data creation not implemented for ProgressBar. ItemId: {ItemId}", item.Id);
+                        // TODO: Implement ProgressBar data fetching
+                        break;
+                    case DashboardItemType.Text:
+                        this._logger.LogWarning("Widget data creation not implemented for Text. ItemId: {ItemId}", item.Id);
+                        // TODO: Implement Text data fetching
+                        break;
+                    // Default case or handle other item types
+                    default:
+                        this._logger.LogWarning("Unhandled DashboardItemType: {ItemType} for item {ItemId}", item.ItemType, item.Id);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error creating widget data for item {ItemId}", item.Id);
+            }
+
+            // Return null if data couldn't be created or type not handled
+            this._logger.LogWarning("Failed to create widget data for item {ItemId} of type {ItemType}", item.Id, item.ItemType);
+            return null;
+        }
+
+        // Restore helper methods
+        /// <summary>
+        /// Helper method to get CSS class for status display
+        /// </summary>
+        private string GetStatusCssClass(IndicatorStatus status)
+        {
+            return status switch
+            {
+                IndicatorStatus.OnTarget => "bg-success",
+                IndicatorStatus.AtRisk => "bg-warning",
+                IndicatorStatus.BelowTarget => "bg-danger",
+                IndicatorStatus.Active => "bg-primary",
+                IndicatorStatus.Draft => "bg-secondary",
+                IndicatorStatus.UnderReview => "bg-info",
+                _ => "bg-secondary"
+            };
+        }
+
+        /// <summary>
+        /// Helper method to get display text for status
+        /// </summary>
+        private string GetStatusDisplay(IndicatorStatus status)
+        {
+            return status switch
+            {
+                IndicatorStatus.OnTarget => "Đạt mục tiêu",
+                IndicatorStatus.AtRisk => "Cần chú ý",
+                IndicatorStatus.BelowTarget => "Không đạt",
+                IndicatorStatus.Active => "Hoạt động",
+                IndicatorStatus.Draft => "Bản nháp",
+                IndicatorStatus.UnderReview => "Đang xem xét",
+                _ => "Không xác định"
+            };
+        }
+
+        private string GetSuccessFactorStatusCssClass(SuccessFactorStatus status)
+        {
+            return status switch
+            {
+                SuccessFactorStatus.Completed => "bg-success",
+                SuccessFactorStatus.OnTrack => "bg-success",
+                SuccessFactorStatus.AtRisk => "bg-warning",
+                SuccessFactorStatus.OffTrack => "bg-danger",
+                SuccessFactorStatus.NotStarted => "bg-secondary",
+                SuccessFactorStatus.InProgress => "bg-primary",
+                SuccessFactorStatus.Cancelled => "bg-dark",
+                _ => "bg-secondary"
             };
         }
     }

@@ -25,9 +25,9 @@
 
     ViewData["PrimaryButton"] = (
         Text: createActionTitle,
-        Controller: string.Empty,
-        Action: string.Empty,
-        Url: createActionUrl ?? string.Empty,
+        Controller: "PerformanceIndicator",
+        Action: "Create",
+        Url: string.Empty,
         Icon: "bi-plus-circle"
     );
 
@@ -113,9 +113,6 @@
                         }
                     </ul>
                 </div>
-                <a href="@createActionUrl" class="btn btn-primary ms-2">
-                    <i class="bi bi-plus-circle me-1"></i>@createActionTitle
-                </a>
             </div>
         </div>
     </div>
@@ -341,7 +338,7 @@
                                 <h5 class="card-title mb-0">Total</h5>
                                 <div class="text-muted small">Performance Indicators</div>
                             </div>
-                            <div class="fs-1 text-primary">@totalCount</div>
+                            <div class="fs-1">@totalCount</div>
                         </div>
                     </div>
                 </div>

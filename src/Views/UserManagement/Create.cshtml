@@ -2,17 +2,17 @@
 @model CreateUserViewModel
 
 @{
-    ViewData["Title"] = "Tạo người dùng mới";
+    ViewData["Title"] = "Create New User";
     ViewData["Icon"] = "bi-person-plus";
-    ViewData["Subtitle"] = "Thêm một người dùng mới vào hệ thống";
+    ViewData["Subtitle"] = "Add a new user to the system";
 }
 
 <div class="card shadow-sm">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header">
         <h5 class="mb-0"><i class="@ViewData["Icon"] me-2"></i>@ViewData["Title"]</h5>
     </div>
     <div class="card-body p-4">
-        <form asp-action="Create" method="post">
+        <form asp-action="Create" method="post" autocomplete="off">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-dismissible fade show" role="alert">
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -20,21 +20,21 @@
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label asp-for="Email" class="form-label"></label>
-                    <input asp-for="Email" class="form-control" />
+                    <input asp-for="Email" class="form-control" autocomplete="off" />
                     <span asp-validation-for="Email" class="text-danger"></span>
-                    <small class="form-text text-muted">Email sẽ được sử dụng làm tên đăng nhập</small>
+                    <small class="form-text text-muted">Email will be used as the login name</small>
                 </div>
             </div>
 
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label asp-for="Password" class="form-label"></label>
-                    <input asp-for="Password" class="form-control" />
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" />
                     <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="ConfirmPassword" class="form-label"></label>
-                    <input asp-for="ConfirmPassword" class="form-control" />
+                    <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
                     <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                 </div>
             </div>
@@ -42,12 +42,12 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label asp-for="FirstName" class="form-label"></label>
-                    <input asp-for="FirstName" class="form-control" />
+                    <input asp-for="FirstName" class="form-control" autocomplete="off" />
                     <span asp-validation-for="FirstName" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="LastName" class="form-label"></label>
-                    <input asp-for="LastName" class="form-control" />
+                    <input asp-for="LastName" class="form-control" autocomplete="off" />
                     <span asp-validation-for="LastName" class="text-danger"></span>
                 </div>
             </div>
@@ -55,13 +55,13 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label asp-for="JobTitle" class="form-label"></label>
-                    <input asp-for="JobTitle" class="form-control" />
+                    <input asp-for="JobTitle" class="form-control" autocomplete="off" />
                     <span asp-validation-for="JobTitle" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="DepartmentId" class="form-label"></label>
                     <select asp-for="DepartmentId" asp-items="ViewBag.Departments" class="form-select">
-                        <option value="">-- Chọn phòng ban --</option>
+                        <option value="">-- Select Department --</option>
                     </select>
                     <span asp-validation-for="DepartmentId" class="text-danger"></span>
                 </div>
@@ -70,15 +70,15 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label asp-for="ManagerId" class="form-label"></label>
-                    <select asp-for="ManagerId" asp-items="ViewBag.Managers" class="form-select">
-                        <option value="">-- Chọn quản lý --</option>
+                    <select asp-for="ManagerId" asp-items="ViewBag.Managers" class="form-select" data-val="false">
+                        <option value="">-- Select Manager --</option>
                     </select>
                     <span asp-validation-for="ManagerId" class="text-danger"></span>
                 </div>
                 <div class="col-md-6">
                     <label asp-for="Role" class="form-label"></label>
                     <select asp-for="Role" asp-items="ViewBag.Roles" class="form-select">
-                        <option value="">-- Chọn vai trò --</option>
+                        <option value="">-- Select Role --</option>
                     </select>
                     <span asp-validation-for="Role" class="text-danger"></span>
                 </div>
@@ -118,10 +118,10 @@
 
             <div class="d-flex justify-content-end">
                 <a asp-action="Index" class="btn btn-outline-secondary me-2">
-                    <i class="bi bi-x-circle me-1"></i>Hủy bỏ
+                    <i class="bi bi-x-circle me-1"></i>Cancel
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save me-1"></i>Lưu người dùng
+                    <i class="bi bi-save me-1"></i>Save User
                 </button>
             </div>
         </form>

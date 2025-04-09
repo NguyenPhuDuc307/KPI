@@ -1,26 +1,24 @@
 @model KPISolution.Models.ViewModels.Indicator.PerformanceIndicator.PerformanceIndicatorDetailsViewModel
 
 @{
-    var isKeyIndicator = Model?.IsKey ?? false;
-
-    ViewData["Title"] = $"{(isKeyIndicator ? "Key Performance Indicator" : "Performance Indicator")} Details";
+    ViewData["Title"] = $"{(Model?.IsKey ?? false ? "KPI" : "PI")} Details";
     ViewData["Icon"] = "bi-speedometer2";
     ViewData["Subtitle"] = Model?.Name ?? "Unnamed Indicator";
 
-    var backAction = isKeyIndicator ? "KeyPerformanceIndicators" : "Index";
+    var backAction = Model?.IsKey ?? false ? "KeyPerformanceIndicators" : "Index";
 
     ViewData["PrimaryButton"] = new ValueTuple<string, string, string, string, string>(
         "Edit",
         "PerformanceIndicator",
         "Edit",
-        (Model?.Id.ToString() ?? ""),
+        "id=" + (Model?.Id.ToString() ?? ""),
         "bi-pencil"
     );
 
     ViewData["SecondaryButton"] = new ValueTuple<string, string, string, string, string>(
         "Back to List",
         "PerformanceIndicator",
-        backAction,
+        "Index",
         "",
         "bi-arrow-left"
     );
@@ -28,7 +26,7 @@
     // Configure Breadcrumb
     ViewData["BreadcrumbItems"] = new List<(string Text, string Controller, string Action, string Id)>
     {
-        (isKeyIndicator ? "Key Performance Indicators" : "Performance Indicators", "PerformanceIndicator", isKeyIndicator ? "KeyPerformanceIndicators" : "Index", string.Empty),
+        (Model?.IsKey ?? false ? "KPIs" : "PIs", "PerformanceIndicator", "Index", string.Empty),
         (Model?.Name ?? "Unnamed Indicator", "PerformanceIndicator", "Details", Model?.Id.ToString() ?? string.Empty)
     };
 }
@@ -38,15 +36,19 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="mb-0 text-primary">
-                        <i class="bi bi-speedometer2 me-2"></i>@(isKeyIndicator ? "KPI" : "PI") Details
+                    <h5 class="mb-0">
+                        <i class="bi bi-speedometer2 me-2"></i>@(Model?.IsKey ?? false ? "KPI" : "PI") Details
                     </h5>
                 </div>
                 <div>
-                    <span class="badge bg-info text-white">@(Model?.Code ?? "No Code")</span>
-                    @if (isKeyIndicator)
+                    <span class="badge bg-info text-white me-1">@(Model?.Code ?? "No Code")</span>
+                    @if (Model?.IsKey ?? false)
                     {
-                            <span class="badge bg-success ms-1">Key Indicator</span>
+                        <span class="badge bg-danger">Key Performance Indicator</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-primary">Performance Indicator</span>
                     }
                 </div>
             </div>
@@ -55,18 +57,18 @@
 
                 @if (!string.IsNullOrEmpty(Model?.Description))
                 {
-                        <p class="mb-4">@Model.Description</p>
+                    <p class="mb-4">@Model.Description</p>
                 }
                 else
                 {
-                        <p class="text-muted mb-4"><i>No description provided</i></p>
+                    <p class="text-muted mb-4"><i>No description provided</i></p>
                 }
 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <h6 class="fw-bold mb-2">
-                                @if (Model?.SuccessFactorIsCritical == true)
+                                @if (Model?.SuccessFactorIsCritical ?? false)
                                 {
                                     <span>Critical Success Factor</span>
                                 }
@@ -76,10 +78,34 @@
                                 }
                             </h6>
                             <p class="mb-0">
-                                <a asp-controller="SuccessFactor" asp-action="Details" asp-route-id="@(Model?.SuccessFactorId ?? Guid.Empty)"
-                                   class="text-decoration-none">
-                                    @(Model?.SuccessFactorName ?? "N/A")
-                                </a>
+                                @if (Model?.SuccessFactorId != null && Model?.SuccessFactorId != Guid.Empty)
+                                {
+                                    <a asp-controller="SuccessFactor" asp-action="Details" asp-route-id="@Model!.SuccessFactorId"
+                                       class="text-decoration-none">
+                                        @(Model?.SuccessFactorName ?? "N/A")
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted"><i>N/A</i></span>
+                                }
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <h6 class="fw-bold mb-2">Result Indicator</h6>
+                            <p class="mb-0">
+                                @if (Model?.ResultIndicatorId != null && Model?.ResultIndicatorId != Guid.Empty)
+                                {
+                                    <a asp-controller="ResultIndicator" asp-action="Details" asp-route-id="@Model!.ResultIndicatorId"
+                                       class="text-decoration-none">
+                                        @(Model?.ResultIndicatorName ?? "N/A")
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted"><i>Not linked</i></span>
+                                }
                             </p>
                         </div>
 
@@ -104,12 +130,12 @@
                             <p class="mb-0">
                                 @if (Model?.TargetValue.HasValue ?? false)
                                 {
-                                        <span class="fw-bold">@Model.TargetValue.Value.ToString("N2")</span>
-                                        <span>@Model?.UnitDisplay</span>
+                                    <span class="fw-bold">@Model.TargetValue.Value.ToString("N2")</span>
+                                    <span>@Model?.UnitDisplay</span>
                                 }
                                 else
                                 {
-                                        <span class="text-muted"><i>Chưa thiết lập giá trị mục tiêu</i></span>
+                                    <span class="text-muted"><i>Chưa thiết lập giá trị mục tiêu</i></span>
                                 }
                             </p>
                         </div>
@@ -124,7 +150,7 @@
                                 }
                                 else
                                 {
-                                        <span class="text-muted"><i>Không có dữ liệu</i></span>
+                                    <span class="text-muted"><i>Không có dữ liệu</i></span>
                                 }
                             </p>
                         </div>
@@ -174,54 +200,50 @@
 
                 @if (!string.IsNullOrEmpty(Model?.Formula))
                 {
-                        <div class="mb-3">
-                            <h6 class="fw-bold mb-2">Công thức</h6>
-                            <p class="mb-0 font-monospace">@(Model?.Formula ?? "")</p>
-                        </div>
+                    <div class="mb-3">
+                        <h6 class="fw-bold mb-2">Công thức</h6>
+                        <p class="mb-0 font-monospace">@(Model?.Formula ?? "")</p>
+                    </div>
                 }
 
                 @if (!string.IsNullOrEmpty(Model?.ActionPlan))
                 {
-                        <div class="mb-3">
-                            <h6 class="fw-bold mb-2">Kế hoạch hành động</h6>
-                            <p class="mb-0">@Model.ActionPlan</p>
-                        </div>
+                    <div class="mb-3">
+                        <h6 class="fw-bold mb-2">Kế hoạch hành động</h6>
+                        <p class="mb-0">@Model.ActionPlan</p>
+                    </div>
                 }
 
                 @if (Model?.RecentMeasurements != null && Model.RecentMeasurements.Any())
                 {
-                        <div class="mt-2">
-                            <h6 class="fw-bold mb-2">Đo lường gần đây</h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach (var measurement in (Model?.RecentMeasurements ?? Enumerable.Empty<KPISolution.Models.ViewModels.Measurement.MeasurementViewModel>()).Take(5))
-                                {
-                                        <a asp-controller="Measurement" asp-action="Details" asp-route-id="@measurement.Id"
-                                            class="badge bg-light text-dark border text-decoration-none">
-                                            @measurement.MeasurementDate.ToString("yyyy-MM-dd"): @measurement.Value.ToString("N2") @(Model?.UnitDisplay ?? "")
-                                        </a>
-                                }
-                            </div>
+                    <div class="mt-2">
+                        <h6 class="fw-bold mb-2">Đo lường gần đây</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var measurement in Model.RecentMeasurements.Take(5))
+                            {
+                                <a asp-controller="Measurement" asp-action="Details" asp-route-id="@measurement.Id"
+                                   class="badge bg-light text-dark border text-decoration-none">
+                                    @measurement.MeasurementDate.ToString("yyyy-MM-dd"): @measurement.Value.ToString("N2") @(Model?.UnitDisplay ?? "")
+                                </a>
+                            }
                         </div>
+                    </div>
                 }
             </div>
             <div class="card-footer bg-transparent">
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted">
-                        Tạo lúc:
-                        @{
-                            System.Diagnostics.Debug.Assert(Model != null, nameof(Model) + " != null");
-                        }
-                        @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")
-                        @if (Model.UpdatedAt.HasValue)
+                        Tạo lúc: @(Model?.CreatedAt.ToString("yyyy-MM-dd HH:mm") ?? "N/A")
+                        @if (Model?.UpdatedAt.HasValue ?? false)
                         {
-                                <span class="ms-2">| Cập nhật gần nhất: @Model.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                            <span class="ms-2">| Cập nhật gần nhất: @Model.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
                         }
                     </small>
                     <div>
-                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-sm btn-primary">
                             <i class="bi bi-pencil me-1"></i>Sửa
                         </a>
-                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-danger ms-2">
+                        <a asp-action="Delete" asp-route-id="@Model?.Id" class="btn btn-sm btn-outline-danger ms-2">
                             <i class="bi bi-trash me-1"></i>Xóa
                         </a>
                     </div>
@@ -231,90 +253,80 @@
     </div>
 
     <div class="col-md-12">
-        @if (Model.RecentMeasurements.Any())
+        @if (Model?.RecentMeasurements != null && Model.RecentMeasurements.Any())
         {
-                <div class="card shadow-sm">
-                    <div class="card-header">
-                        <h5 class="mb-0 text-primary">
-                            <i class="bi bi-clipboard-data me-2"></i>Measurements
-                        </h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>Measurements
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Giá trị</th>
+                                    <th>Ghi chú</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var measurement in Model.RecentMeasurements)
+                                {
                                     <tr>
-                                        <th>Ngày</th>
-                                        <th>Giá trị</th>
-                                        <th>Trạng thái</th>
-                                        <th>Thao tác</th>
+                                        <td>@measurement.MeasurementDate.ToString("yyyy-MM-dd")</td>
+                                        <td class="fw-bold">
+                                            @measurement.Value.ToString("N2") @(Model?.UnitDisplay ?? "")
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(measurement.Notes))
+                                            {
+                                                @measurement.Notes
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted"><i>Không có ghi chú</i></span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a asp-controller="Measurement" asp-action="Edit" asp-route-id="@measurement.Id"
+                                                   class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" title="Xóa"
+                                                        onclick="deleteMeasurement('@measurement.Id')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var measurement in (Model?.RecentMeasurements ?? Enumerable.Empty<KPISolution.Models.ViewModels.Measurement.MeasurementViewModel>()).OrderByDescending(m => m.MeasurementDate))
-                                    {
-                                            <tr>
-                                                <td>@measurement.MeasurementDate.ToString("yyyy-MM-dd")</td>
-                                                <td class="fw-bold">
-                                                    @measurement.Value.ToString("N2")
-                                                    @if (Model != null)
-                                                    {
-                                                        @Model.UnitDisplay
-                                                    }
-                                                </td>
-                                                <td>
-                                                    <span class="badge @(measurement.Status == MeasurementStatus.Actual ? "bg-success" : "bg-warning")">
-                                                        @measurement.Status.ToString()
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <a asp-controller="Measurement" asp-action="Details" asp-route-id="@measurement.Id"
-                                                       class="btn btn-sm btn-outline-primary">
-                                                        <i class="bi bi-eye"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-transparent">
-
-                        @{
-                            System.Diagnostics.Debug.Assert(Model != null, nameof(Model) + " != null");
-                        }
-                        <a asp-controller="Measurement" asp-action="Create"
-                           asp-route-indicatorId="@Model.Id"
-                           asp-route-indicatorType="@((Model?.IsKey ?? false) ? IndicatorType.KPI : IndicatorType.PI)"
-                           class="btn btn-sm btn-primary">
-                            <i class="bi bi-plus-circle me-1"></i>Thêm đo lường
-                        </a>
-                        <a asp-controller="Measurement" asp-action="Index"
-                           asp-route-performanceIndicatorId="@(Model?.Id ?? Guid.Empty)"
-                           class="btn btn-sm btn-outline-secondary ms-2">
-                            <i class="bi bi-list-ul me-1"></i>Xem tất cả đo lường
-                        </a>
+                                }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+            </div>
         }
         else
         {
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div class="text-center py-4">
-                            <i class="bi bi-clipboard-data text-muted" style="font-size: 3rem;"></i>
-                            <h5 class="mt-3">Chưa có dữ liệu đo lường</h5>
-                            <p class="text-muted">Bắt đầu ghi lại các đo lường để theo dõi tiến trình của chỉ số này.</p>
-                            <a asp-controller="Measurement" asp-action="Create"
-                               asp-route-indicatorId="@Model.Id"
-                               asp-route-indicatorType="@((Model?.IsKey ?? false) ? IndicatorType.KPI : IndicatorType.PI)"
-                               class="btn btn-primary mt-2">
-                                <i class="bi bi-plus-circle me-1"></i>Thêm đo lường đầu tiên
-                            </a>
-                        </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="text-center py-4">
+                        <i class="bi bi-clipboard-data text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Chưa có dữ liệu đo lường</h5>
+                        <p class="text-muted">Bắt đầu ghi lại các đo lường để theo dõi tiến trình của chỉ số này.</p>
+                        <a asp-controller="Measurement" asp-action="Create"
+                           asp-route-indicatorId="@Model!.Id"
+                           asp-route-indicatorType="@((Model?.IsKey ?? false) ? IndicatorType.KPI : IndicatorType.PI)"
+                           class="btn btn-primary mt-2">
+                            <i class="bi bi-plus-circle me-1"></i>Thêm đo lường đầu tiên
+                        </a>
                     </div>
                 </div>
+            </div>
         }
     </div>
 </div>
@@ -347,3 +359,31 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function deleteMeasurement(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa phép đo này không?')) {
+                $.ajax({
+                    url: '/Measurement/Delete',
+                    type: 'POST',
+                    data: { id: id },
+                    headers: {
+                        RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function () {
+                        toastr.error('Có lỗi xảy ra khi xóa phép đo. Vui lòng thử lại sau.');
+                    }
+                });
+            }
+        }
+    </script>
+}

@@ -244,7 +244,7 @@ namespace KPISolution
                     Log.Information("Response status code: {StatusCode} for path: {Path}",
                         context.Response.StatusCode, context.Request.Path);
 
-                    // Handle 404 errors for non-existent endpoints if no response has been sent yet
+                    // Restore the custom 404 handling block
                     if (context.Response.StatusCode == 404 && !context.Response.HasStarted)
                     {
                         // Log the 404 error

@@ -10,7 +10,7 @@ namespace KPISolution.Controllers
 
         public LandingController(ILogger<LandingController> logger)
         {
-            _logger = logger;
+            this._logger = logger;
         }
 
         /// <summary>
@@ -18,8 +18,8 @@ namespace KPISolution.Controllers
         /// </summary>
         public IActionResult Index()
         {
-            _logger.LogInformation("Landing page accessed - Public marketing page displayed");
-            return View();
+            this._logger.LogInformation("Landing page accessed - Public marketing page displayed");
+            return this.View();
         }
     }
 }

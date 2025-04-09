@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using KPISolution.Extensions;
-using Microsoft.EntityFrameworkCore;
-
 namespace KPISolution.Controllers
 {
     [Authorize]
@@ -104,12 +99,12 @@ namespace KPISolution.Controllers
                 model.Objectives = objectiveListItems;
                 model.TotalItems = objectiveListItems.Count;
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while retrieving objective list");
-                return View("Error", new ErrorViewModel { Message = "An error occurred while retrieving objectives." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while retrieving objectives." });
             }
         }
 
@@ -128,7 +123,7 @@ namespace KPISolution.Controllers
                 if (objective == null)
                 {
                     this._logger.LogWarning("Objective with ID {Id} not found", id);
-                    return NotFound();
+                    return this.NotFound();
                 }
 
                 // Lấy thông tin người phụ trách
@@ -242,12 +237,12 @@ namespace KPISolution.Controllers
                     }
                 }
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while retrieving objective details for ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while retrieving objective details." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while retrieving objective details." });
             }
         }
 
@@ -266,16 +261,25 @@ namespace KPISolution.Controllers
                 var departments = await this._unitOfWork.Departments.GetAllAsync();
                 var parentObjectives = await this._unitOfWork.Objectives.GetAllAsync();
 
+                // Get responsible persons (users) for dropdown
+                var responsiblePersons = await this._userManager.Users
+                    .Where(u => u.IsActive)
+                    .OrderBy(u => u.LastName)
+                    .ThenBy(u => u.FirstName)
+                    .Select(u => new SelectListItem { Value = u.Id, Text = u.LastName + " " + u.FirstName })
+                    .ToListAsync();
+                this.ViewBag.ResponsiblePersons = responsiblePersons;
+
                 // Set up ViewBag for dropdowns
                 this.ViewBag.Departments = new SelectList(departments ?? new List<Department>(), "Id", "Name");
                 this.ViewBag.ParentObjectives = new SelectList(parentObjectives ?? new List<Objective>(), "Id", "Name");
 
-                return View(new ObjectiveCreateViewModel());
+                return this.View(new ObjectiveCreateViewModel());
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while displaying objective create form");
-                return View("Error", new ErrorViewModel { Message = "An error occurred while loading the create form." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while loading the create form." });
             }
         }
 
@@ -310,7 +314,17 @@ namespace KPISolution.Controllers
                         var parentObjectives = await this._unitOfWork.Objectives.GetAllAsync();
                         this.ViewBag.Departments = new SelectList(departments, "Id", "Name");
                         this.ViewBag.ParentObjectives = new SelectList(parentObjectives, "Id", "Name");
-                        return View(viewModel);
+
+                        // Get responsible persons for dropdown
+                        var responsiblePersons = await this._userManager.Users
+                            .Where(u => u.IsActive)
+                            .OrderBy(u => u.LastName)
+                            .ThenBy(u => u.FirstName)
+                            .Select(u => new SelectListItem { Value = u.Id, Text = u.LastName + " " + u.FirstName })
+                            .ToListAsync();
+                        this.ViewBag.ResponsiblePersons = responsiblePersons;
+
+                        return this.View(viewModel);
                     }
 
                     // Nếu viewModel.ResponsiblePersonId là Guid, lấy user ID tương ứng (string)
@@ -357,7 +371,16 @@ namespace KPISolution.Controllers
                 this.ViewBag.Departments = new SelectList(depts, "Id", "Name");
                 this.ViewBag.ParentObjectives = new SelectList(parentObjs, "Id", "Name");
 
-                return View(viewModel);
+                // Get responsible persons for dropdown
+                var respPersons = await this._userManager.Users
+                    .Where(u => u.IsActive)
+                    .OrderBy(u => u.LastName)
+                    .ThenBy(u => u.FirstName)
+                    .Select(u => new SelectListItem { Value = u.Id, Text = u.LastName + " " + u.FirstName })
+                    .ToListAsync();
+                this.ViewBag.ResponsiblePersons = respPersons;
+
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
@@ -368,7 +391,17 @@ namespace KPISolution.Controllers
                 var parentObjectives = await this._unitOfWork.Objectives.GetAllAsync();
                 this.ViewBag.Departments = new SelectList(departments, "Id", "Name");
                 this.ViewBag.ParentObjectives = new SelectList(parentObjectives, "Id", "Name");
-                return View(viewModel);
+
+                // Get responsible persons for dropdown
+                var respUsers = await this._userManager.Users
+                    .Where(u => u.IsActive)
+                    .OrderBy(u => u.LastName)
+                    .ThenBy(u => u.FirstName)
+                    .Select(u => new SelectListItem { Value = u.Id, Text = u.LastName + " " + u.FirstName })
+                    .ToListAsync();
+                this.ViewBag.ResponsiblePersons = respUsers;
+
+                return this.View(viewModel);
             }
         }
 
@@ -404,12 +437,21 @@ namespace KPISolution.Controllers
                 this.ViewBag.Departments = new SelectList(departments, "Id", "Name", objective.DepartmentId);
                 this.ViewBag.ParentObjectives = new SelectList(parentObjectives, "Id", "Name", objective.ParentId);
 
-                return View(viewModel);
+                // Get responsible persons (users) for dropdown
+                var responsiblePersons = await this._userManager.Users
+                    .Where(u => u.IsActive)
+                    .OrderBy(u => u.LastName)
+                    .ThenBy(u => u.FirstName)
+                    .Select(u => new SelectListItem { Value = u.Id, Text = u.LastName + " " + u.FirstName, Selected = u.Id == objective.ResponsiblePersonId })
+                    .ToListAsync();
+                this.ViewBag.ResponsiblePersons = responsiblePersons;
+
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while displaying objective edit form for ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while loading the edit form." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while loading the edit form." });
             }
         }
 
@@ -460,13 +502,22 @@ namespace KPISolution.Controllers
                 this.ViewBag.Departments = new SelectList(departments, "Id", "Name");
                 this.ViewBag.ParentObjectives = new SelectList(parentObjectives, "Id", "Name");
 
-                return View(viewModel);
+                // Get responsible persons (users) for dropdown
+                var responsiblePersons = await this._userManager.Users
+                    .Where(u => u.IsActive)
+                    .OrderBy(u => u.LastName)
+                    .ThenBy(u => u.FirstName)
+                    .Select(u => new SelectListItem { Value = u.Id, Text = u.LastName + " " + u.FirstName, Selected = u.Id == viewModel.ResponsiblePersonId.ToString() })
+                    .ToListAsync();
+                this.ViewBag.ResponsiblePersons = responsiblePersons;
+
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while updating objective with ID: {Id}", id);
                 this.ModelState.AddModelError("", "An error occurred while updating the objective.");
-                return View(viewModel);
+                return this.View(viewModel);
             }
         }
 
@@ -491,12 +542,12 @@ namespace KPISolution.Controllers
                 // Map to view model
                 var viewModel = this._mapper.Map<ObjectiveViewModel>(objective);
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while displaying objective delete confirmation for ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while loading the delete confirmation." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while loading the delete confirmation." });
             }
         }
 
@@ -526,7 +577,7 @@ namespace KPISolution.Controllers
                     this._logger.LogWarning("Cannot delete objective with ID {Id} because it has child objectives", id);
                     this.ModelState.AddModelError("", "Cannot delete this objective because it has child objectives.");
                     var viewModel = this._mapper.Map<ObjectiveViewModel>(objective);
-                    return View(viewModel);
+                    return this.View(viewModel);
                 }
 
                 // Check if has success factors
@@ -539,7 +590,7 @@ namespace KPISolution.Controllers
                     this._logger.LogWarning("Cannot delete objective with ID {Id} because it has success factors", id);
                     this.ModelState.AddModelError("", "Cannot delete this objective because it has success factors.");
                     var viewModel = this._mapper.Map<ObjectiveViewModel>(objective);
-                    return View(viewModel);
+                    return this.View(viewModel);
                 }
 
                 // Delete and save changes
@@ -553,7 +604,7 @@ namespace KPISolution.Controllers
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while deleting objective with ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while deleting the objective." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while deleting the objective." });
             }
         }
 
@@ -579,12 +630,12 @@ namespace KPISolution.Controllers
                     objectiveTreeViewModel.Add(treeNode);
                 }
 
-                return View(objectiveTreeViewModel);
+                return this.View(objectiveTreeViewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while displaying objective tree view");
-                return View("Error", new ErrorViewModel { Message = "An error occurred while loading the objective tree view." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while loading the objective tree view." });
             }
         }
 
@@ -654,19 +705,19 @@ namespace KPISolution.Controllers
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "Lỗi khi tạo mã mục tiêu tiếp theo");
+                            this._logger.LogError(ex, "Lỗi khi tạo mã mục tiêu tiếp theo");
                         }
                     }
                 }
 
                 string newCode = $"{prefix}-{year:D2}{month:D2}-{nextNumber:D3}";
 
-                return Json(new { success = true, code = newCode });
+                return this.Json(new { success = true, code = newCode });
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error generating objective code");
-                return Json(new { success = false, message = "Lỗi khi tạo mã mục tiêu" });
+                return this.Json(new { success = false, message = "Lỗi khi tạo mã mục tiêu" });
             }
         }
 
@@ -678,17 +729,17 @@ namespace KPISolution.Controllers
             {
                 if (string.IsNullOrEmpty(code))
                 {
-                    return Json(new { exists = false });
+                    return this.Json(new { exists = false });
                 }
 
                 bool exists = await this._unitOfWork.Objectives.ExistsAsync(o => o.Code == code);
 
-                return Json(new { exists });
+                return this.Json(new { exists });
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error checking if objective code exists");
-                return Json(new { error = "Lỗi khi kiểm tra mã mục tiêu" });
+                return this.Json(new { error = "Lỗi khi kiểm tra mã mục tiêu" });
             }
         }
 
@@ -753,14 +804,14 @@ namespace KPISolution.Controllers
                     using (var ms = new MemoryStream())
                     {
                         wb.SaveAs(ms);
-                        return File(ms.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DanhSachMucTieu.xlsx");
+                        return this.File(ms.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DanhSachMucTieu.xlsx");
                     }
                 }
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while exporting objectives to Excel");
-                return View("Error", new ErrorViewModel { Message = "An error occurred while exporting objectives to Excel." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while exporting objectives to Excel." });
             }
         }
 
@@ -799,12 +850,12 @@ namespace KPISolution.Controllers
                     SelectedSuccessFactorIds = assignedSuccessFactors.Select(sf => sf.Id).ToList()
                 };
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while displaying success factor assignment for objective ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while loading success factor assignment." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while loading success factor assignment." });
             }
         }
 
@@ -876,7 +927,7 @@ namespace KPISolution.Controllers
                 viewModel.ObjectiveName = objective.Name;
                 viewModel.AvailableSuccessFactors = this._mapper.Map<List<ObjectiveSuccessFactorViewModel>>(allSuccessFactors);
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
@@ -886,7 +937,7 @@ namespace KPISolution.Controllers
                 await this._unitOfWork.RollbackTransactionAsync();
 
                 this.ModelState.AddModelError("", "An error occurred while assigning success factors.");
-                return View(viewModel);
+                return this.View(viewModel);
             }
         }
     }

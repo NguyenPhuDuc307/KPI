@@ -4,17 +4,15 @@
 @{
     ViewData["Icon"] = "bi-plus-circle-fill";
     ViewData["Title"] = "Create New Objective";
-    ViewData["PageDescription"] = "Create a new objective";
+    ViewData["Subtitle"] = "Create a new objective";
     ViewData["ActiveMenu"] = "Objective";
+    ViewData["SecondaryButton"] = ("Back to list", "Objective", "Index", "", "bi-arrow-left");
 }
 
 <div class="card shadow-sm">
     <div class="card-header bg-transparent">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Thông tin mục tiêu</h5>
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
-            </a>
         </div>
     </div>
     <div class="card-body">
@@ -84,11 +82,11 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label asp-for="ParentObjectiveId" class="form-label">Mục tiêu cha</label>
-                        <select asp-for="ParentObjectiveId" class="form-select">
+                        <select asp-for="ParentObjectiveId" class="form-select select2" data-dropdown-parent=".card-body">
                             <option value="">-- Không có mục tiêu cha --</option>
                             @foreach (var objective in ViewBag.ParentObjectives)
                             {
-                                <option value="@objective.Id">@objective.Name</option>
+                                <option value="@objective.Value">@objective.Text</option>
                             }
                         </select>
                         <span asp-validation-for="ParentObjectiveId" class="text-danger"></span>
@@ -96,11 +94,11 @@
 
                     <div class="mb-3">
                         <label asp-for="DepartmentId" class="form-label required">Phòng ban</label>
-                        <select asp-for="DepartmentId" class="form-select" required>
+                        <select asp-for="DepartmentId" class="form-select select2" data-dropdown-parent=".card-body" required>
                             <option value="">-- Chọn phòng ban --</option>
                             @foreach (var department in ViewBag.Departments)
                             {
-                                <option value="@department.Id">@department.Name</option>
+                                <option value="@department.Value">@department.Text</option>
                             }
                         </select>
                         <span asp-validation-for="DepartmentId" class="text-danger"></span>
@@ -109,13 +107,13 @@
 
                     <div class="mb-3">
                         <label asp-for="ResponsiblePersonId" class="form-label required">Người phụ trách</label>
-                        <select asp-for="ResponsiblePersonId" class="form-select" required>
+                        <select asp-for="ResponsiblePersonId" class="form-select select2" data-dropdown-parent=".card-body" required>
                             <option value="">-- Chọn người phụ trách --</option>
                             @if (ViewBag.ResponsiblePersons != null)
                             {
                                 @foreach (var person in ViewBag.ResponsiblePersons)
                                 {
-                                    <option value="@person.Id">@(person.FirstName + " " + person.LastName)</option>
+                                    <option value="@person.Value">@person.Text</option>
                                 }
                             }
                         </select>
@@ -147,7 +145,7 @@
                             <div class="mb-3">
                                 <label asp-for="Timeframe" class="form-label required">Khung thời gian</label>
                                 <select asp-for="Timeframe" asp-items="Html.GetEnumSelectList<TimeframeType>()"
-                                    class="form-select" required></select>
+                                    class="form-select select2" data-dropdown-parent=".card-body" required></select>
                                 <span asp-validation-for="Timeframe" class="text-danger"></span>
                                 <div class="invalid-feedback">Vui lòng chọn khung thời gian</div>
                             </div>
@@ -156,7 +154,7 @@
                             <div class="mb-3">
                                 <label asp-for="Perspective" class="form-label required">Khía cạnh kinh doanh</label>
                                 <select asp-for="Perspective" asp-items="Html.GetEnumSelectList<BusinessPerspective>()"
-                                    class="form-select" required></select>
+                                    class="form-select select2" data-dropdown-parent=".card-body" required></select>
                                 <span asp-validation-for="Perspective" class="text-danger"></span>
                                 <div class="invalid-feedback">Vui lòng chọn khía cạnh kinh doanh</div>
                             </div>
@@ -179,8 +177,9 @@
     <script>
         $(document).ready(function () {
             // Initialize select2 for better dropdown experience
-            $('.form-select').select2({
-                theme: 'bootstrap-5'
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
             });
 
             // Auto-update progress when status changes

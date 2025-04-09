@@ -30,7 +30,7 @@ namespace KPISolution.Models.ViewModels.Users
         public Guid? DepartmentId { get; set; }
 
         [Display(Name = "Quản lý")]
-        public string ManagerId { get; set; } = string.Empty;
+        public string? ManagerId { get; set; }
 
         [Display(Name = "Vai trò")]
         public string Role { get; set; } = string.Empty;

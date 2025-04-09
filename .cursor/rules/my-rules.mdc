@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- [GlobalUsings.cs](mdc:src/GlobalUsings.cs)
+- tôi dùng GlobalUsing nên bạn đừng trên đầy đủ đường dẫn vào Using nhé, tương tự trong các file .cs cũng không cần using
+- nếu thiếu khai báo using thì bạn hãy thêm chúng trong GlobalUsing
+

@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Rendering;
-using KPISolution.Extensions;
-
 namespace KPISolution.Controllers
 {
     /// <summary>
@@ -56,7 +53,10 @@ namespace KPISolution.Controllers
                     action: "Create",
                     icon: "bi-person-plus");
 
-                var users = this._userManager.Users.ToList();
+                var users = await this._userManager.Users
+                                              .Include(u => u.Department)
+                                              .Include(u => u.Manager)
+                                              .ToListAsync();
 
                 var userViewModels = new List<UserViewModel>();
 
@@ -88,13 +88,13 @@ namespace KPISolution.Controllers
                     userViewModels.Add(userViewModel);
                 }
 
-                return View(userViewModels);
+                return this.View(userViewModels);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error fetching users");
                 this.AddErrorAlert("Đã xảy ra lỗi khi tải danh sách người dùng.");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -143,13 +143,13 @@ namespace KPISolution.Controllers
                 var managers = await this._userManager.GetUsersInRoleAsync(IndicatorAuthorizationPolicies.RoleNames.Manager);
                 this.ViewBag.Managers = new SelectList(managers, "Id", "FullName");
 
-                return View(new CreateUserViewModel());
+                return this.View(new CreateUserViewModel());
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error preparing create user form");
                 this.AddErrorAlert("Đã xảy ra lỗi khi tải form tạo người dùng.");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -203,7 +203,7 @@ namespace KPISolution.Controllers
                         var managers = await this._userManager.GetUsersInRoleAsync(IndicatorAuthorizationPolicies.RoleNames.Manager);
                         this.ViewBag.Managers = new SelectList(managers, "Id", "FullName");
 
-                        return View(model);
+                        return this.View(model);
                     }
 
                     // Create new user
@@ -273,7 +273,7 @@ namespace KPISolution.Controllers
                         var managers = await this._userManager.GetUsersInRoleAsync(IndicatorAuthorizationPolicies.RoleNames.Manager);
                         this.ViewBag.Managers = new SelectList(managers, "Id", "FullName", model.ManagerId);
 
-                        return View(model);
+                        return this.View(model);
                     }
                 }
 
@@ -306,13 +306,13 @@ namespace KPISolution.Controllers
                 var allManagers = await this._userManager.GetUsersInRoleAsync(IndicatorAuthorizationPolicies.RoleNames.Manager);
                 this.ViewBag.Managers = new SelectList(allManagers, "Id", "FullName", model.ManagerId);
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error creating user");
                 this.AddErrorAlert("Đã xảy ra lỗi khi tạo người dùng mới.");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -358,12 +358,12 @@ namespace KPISolution.Controllers
                     IsDepartmentAdmin = user.IsDepartmentAdmin
                 };
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error fetching user details for {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -421,12 +421,12 @@ namespace KPISolution.Controllers
                 var filteredManagers = managers.Where(m => m.Id != id).ToList();
                 this.ViewBag.Managers = new SelectList(filteredManagers, "Id", "FullName");
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error preparing edit form for user {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -489,7 +489,7 @@ namespace KPISolution.Controllers
                         var errorScopeFilteredManagers = errorScopeManagers.Where(m => m.Id != id).ToList();
                         this.ViewBag.Managers = new SelectList(errorScopeFilteredManagers, "Id", "FullName");
 
-                        return View(model);
+                        return this.View(model);
                     }
 
                     // Update user roles
@@ -517,12 +517,12 @@ namespace KPISolution.Controllers
                 var filteredManagers = allManagers.Where(m => m.Id != id).ToList();
                 this.ViewBag.Managers = new SelectList(filteredManagers, "Id", "FullName");
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error updating user {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -567,12 +567,12 @@ namespace KPISolution.Controllers
                     CreatedAt = user.CreatedAt
                 };
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error preparing delete form for user {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -635,5 +635,318 @@ namespace KPISolution.Controllers
                 return this.RedirectToAction(nameof(this.Index));
             }
         }
+
+        /// <summary>
+        /// Displays a list of all roles
+        /// </summary>
+        /// <returns>View with list of roles</returns>
+        [HttpGet]
+        public async Task<IActionResult> Roles()
+        {
+            try
+            {
+                this._logger.LogInformation("Fetching roles list");
+
+                // Setup page template
+                this.SetupPageTemplate(
+                    title: "Role Management",
+                    subtitle: "View and manage user roles",
+                    icon: "bi-person-rolodex");
+
+                this.SetPrimaryButton(
+                    text: "Add New Role",
+                    controller: "UserManagement", // Assuming role creation/edit is within this controller for now
+                    action: "CreateRole", // Need to create this action later
+                    icon: "bi-plus-circle");
+
+                this.SetSecondaryButton(
+                    text: "User List",
+                    controller: "UserManagement",
+                    action: "Index",
+                    icon: "bi-people");
+
+                // Get all roles
+                var roles = await this._roleManager.Roles.ToListAsync();
+
+                // For simplicity, passing the raw IndicatorRole list for now
+                // Could create a RoleViewModel later if more complex data is needed
+                return this.View(roles);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error fetching roles");
+                this.AddErrorAlert("An error occurred while loading the roles list.");
+                return this.View("Error");
+            }
+        }
+
+        #region Role Management Actions
+
+        /// <summary>
+        /// Displays the form to create a new role.
+        /// </summary>
+        [HttpGet]
+        public IActionResult CreateRole()
+        {
+            this._logger.LogInformation("Displaying create role form");
+            this.SetupPageTemplate("Create New Role", "Define a new user role", "bi-shield-plus");
+            this.SetSecondaryButton("Back to Roles", "UserManagement", "Roles", icon: "bi-arrow-left");
+            this.SetBreadcrumb(new List<(string, string, string, string)> { ("Role Management", "UserManagement", "Roles", "") });
+
+            return this.View(new RoleViewModel());
+        }
+
+        /// <summary>
+        /// Processes the create role form submission.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateRole(RoleViewModel model)
+        {
+            this._logger.LogInformation("Attempting to create new role: {RoleName}", model.Name);
+
+            if (this.ModelState.IsValid)
+            {
+                // Check if role already exists (case-insensitive check might be better depending on requirements)
+                bool roleExists = await this._roleManager.RoleExistsAsync(model.Name);
+                if (roleExists)
+                {
+                    this._logger.LogWarning("Role creation failed: Role '{RoleName}' already exists.", model.Name);
+                    this.ModelState.AddModelError("Name", "A role with this name already exists.");
+                }
+                else
+                {
+                    var role = new IndicatorRole
+                    {
+                        Name = model.Name,
+                        Description = model.Description,
+                        IsActive = model.IsActive,
+                        NormalizedName = this._roleManager.NormalizeKey(model.Name) // Important for Identity
+                    };
+
+                    var result = await this._roleManager.CreateAsync(role);
+                    if (result.Succeeded)
+                    {
+                        this._logger.LogInformation("Role '{RoleName}' created successfully with ID {RoleId}", role.Name, role.Id);
+                        this.AddSuccessAlert("Role created successfully.");
+                        return this.RedirectToAction(nameof(this.Roles));
+                    }
+
+                    // If creation failed, add errors to ModelState
+                    foreach (var error in result.Errors)
+                    {
+                        this._logger.LogError("Role creation failed for '{RoleName}': {ErrorCode} - {ErrorDescription}", model.Name, error.Code, error.Description);
+                        this.ModelState.AddModelError("", error.Description);
+                    }
+                }
+            }
+
+            // If we got this far, something failed, redisplay form
+            this._logger.LogWarning("Role creation failed for '{RoleName}' due to validation errors or other issues.", model.Name);
+            this.SetupPageTemplate("Create New Role", "Define a new user role", "bi-shield-plus");
+            this.SetSecondaryButton("Back to Roles", "UserManagement", "Roles", icon: "bi-arrow-left");
+            this.SetBreadcrumb(new List<(string, string, string, string)> { ("Role Management", "UserManagement", "Roles", "") });
+
+            return this.View(model);
+        }
+
+        /// <summary>
+        /// Displays the form to edit an existing role.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> EditRole(string id)
+        {
+            this._logger.LogInformation("Fetching role {RoleId} for editing", id);
+
+            var role = await this._roleManager.FindByIdAsync(id);
+            if (role == null)
+            {
+                this._logger.LogWarning("Role not found: {RoleId}", id);
+                return this.NotFound();
+            }
+
+            var model = new RoleViewModel
+            {
+                Id = role.Id,
+                Name = role.Name ?? string.Empty,
+                Description = role.Description,
+                IsActive = role.IsActive
+            };
+
+            this.SetupPageTemplate("Edit Role", $"Edit details for role: {model.Name}", "bi-shield-shaded");
+            this.SetSecondaryButton("Back to Roles", "UserManagement", "Roles", icon: "bi-arrow-left");
+            this.SetBreadcrumb(new List<(string, string, string, string)> { ("Role Management", "UserManagement", "Roles", ""), ($"Edit: {model.Name}", "", "", "") });
+
+            return this.View(model);
+        }
+
+        /// <summary>
+        /// Processes the edit role form submission.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditRole(string id, RoleViewModel model)
+        {
+            this._logger.LogInformation("Attempting to update role: {RoleId}", id);
+
+            if (id != model.Id)
+            {
+                this._logger.LogWarning("Role ID mismatch during update. Route ID: {RouteId}, Model ID: {ModelId}", id, model.Id);
+                return this.NotFound();
+            }
+
+            if (this.ModelState.IsValid)
+            {
+                var role = await this._roleManager.FindByIdAsync(id);
+                if (role == null)
+                {
+                    this._logger.LogWarning("Role not found during update: {RoleId}", id);
+                    return this.NotFound();
+                }
+
+                // Prevent editing the name of the Administrator role (optional but recommended)
+                if (role.Name == IndicatorAuthorizationPolicies.RoleNames.Administrator && model.Name != IndicatorAuthorizationPolicies.RoleNames.Administrator)
+                {
+                    this._logger.LogWarning("Attempted to rename Administrator role (ID: {RoleId})", id);
+                    this.ModelState.AddModelError("Name", "Cannot rename the Administrator role.");
+                }
+                // Check if new name conflicts with another existing role
+                else if (!string.Equals(role.Name, model.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    var existingRoleWithNewName = await this._roleManager.FindByNameAsync(model.Name);
+                    if (existingRoleWithNewName != null && existingRoleWithNewName.Id != id)
+                    {
+                        this._logger.LogWarning("Role update failed for {RoleId}: New name '{NewName}' conflicts with existing role {ExistingRoleId}", id, model.Name, existingRoleWithNewName.Id);
+                        this.ModelState.AddModelError("Name", "A role with this name already exists.");
+                    }
+                    else
+                    {
+                        role.Name = model.Name;
+                        role.NormalizedName = this._roleManager.NormalizeKey(model.Name);
+                    }
+                }
+
+                if (this.ModelState.IsValid) // Re-check after potential name validation errors
+                {
+                    role.Description = model.Description;
+                    role.IsActive = model.IsActive;
+
+                    var result = await this._roleManager.UpdateAsync(role);
+                    if (result.Succeeded)
+                    {
+                        this._logger.LogInformation("Role {RoleId} updated successfully.", id);
+                        this.AddSuccessAlert("Role updated successfully.");
+                        return this.RedirectToAction(nameof(this.Roles));
+                    }
+
+                    foreach (var error in result.Errors)
+                    {
+                        this._logger.LogError("Role update failed for {RoleId}: {ErrorCode} - {ErrorDescription}", id, error.Code, error.Description);
+                        this.ModelState.AddModelError("", error.Description);
+                    }
+                }
+            }
+
+            // If we got this far, something failed, redisplay form
+            this._logger.LogWarning("Role update failed for {RoleId} due to validation errors or other issues.", id);
+            this.SetupPageTemplate("Edit Role", $"Edit details for role: {model.Name}", "bi-shield-shaded");
+            this.SetSecondaryButton("Back to Roles", "UserManagement", "Roles", icon: "bi-arrow-left");
+            this.SetBreadcrumb(new List<(string, string, string, string)> { ("Role Management", "UserManagement", "Roles", ""), ($"Edit: {model.Name}", "", "", "") });
+
+            return this.View(model);
+        }
+
+        /// <summary>
+        /// Displays the delete confirmation page for a role.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> DeleteRole(string id)
+        {
+            this._logger.LogInformation("Fetching role {RoleId} for deletion confirmation", id);
+
+            var role = await this._roleManager.FindByIdAsync(id);
+            if (role == null)
+            {
+                this._logger.LogWarning("Role not found for deletion: {RoleId}", id);
+                return this.NotFound();
+            }
+
+            // Prevent deletion of Administrator role
+            if (role.Name == IndicatorAuthorizationPolicies.RoleNames.Administrator)
+            {
+                this._logger.LogWarning("Attempted to delete Administrator role (ID: {RoleId})", id);
+                this.AddErrorAlert("Cannot delete the Administrator role.");
+                return this.RedirectToAction(nameof(this.Roles));
+            }
+
+            // Check if any users are assigned to this role
+            var usersInRole = await this._userManager.GetUsersInRoleAsync(role.Name ?? string.Empty);
+            if (usersInRole.Any())
+            {
+                this._logger.LogWarning("Deletion prevented for role {RoleId}: Role is assigned to {UserCount} users.", id, usersInRole.Count);
+                this.AddErrorAlert($"Cannot delete role '{role.Name}' as it is currently assigned to users.");
+                return this.RedirectToAction(nameof(this.Roles));
+            }
+
+            var model = new RoleViewModel
+            {
+                Id = role.Id,
+                Name = role.Name ?? string.Empty,
+                Description = role.Description,
+                IsActive = role.IsActive
+            };
+
+            this.SetupPageTemplate("Delete Role", $"Confirm deletion of role: {model.Name}", "bi-shield-x");
+            this.SetSecondaryButton("Back to Roles", "UserManagement", "Roles", icon: "bi-arrow-left");
+            this.SetBreadcrumb(new List<(string, string, string, string)> { ("Role Management", "UserManagement", "Roles", ""), ($"Delete: {model.Name}", "", "", "") });
+
+            return this.View(model);
+        }
+
+        /// <summary>
+        /// Processes the role deletion.
+        /// </summary>
+        [HttpPost, ActionName("DeleteRole")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteRoleConfirmed(string id)
+        {
+            this._logger.LogInformation("Attempting to delete role: {RoleId}", id);
+
+            var role = await this._roleManager.FindByIdAsync(id);
+            if (role == null)
+            {
+                this._logger.LogWarning("Role not found for deletion confirmation: {RoleId}", id);
+                return this.NotFound();
+            }
+
+            // Double-check critical role deletion and user assignment before proceeding
+            if (role.Name == IndicatorAuthorizationPolicies.RoleNames.Administrator)
+            {
+                this._logger.LogError("Critical error: Attempt to delete Administrator role bypassed initial check (ID: {RoleId})", id);
+                this.AddErrorAlert("Cannot delete the Administrator role.");
+                return this.RedirectToAction(nameof(this.Roles));
+            }
+            var usersInRole = await this._userManager.GetUsersInRoleAsync(role.Name ?? string.Empty);
+            if (usersInRole.Any())
+            {
+                this._logger.LogError("Critical error: Attempt to delete role {RoleId} with assigned users bypassed initial check.", id);
+                this.AddErrorAlert($"Cannot delete role '{role.Name}' as it is currently assigned to users.");
+                return this.RedirectToAction(nameof(this.Roles));
+            }
+
+            var result = await this._roleManager.DeleteAsync(role);
+            if (result.Succeeded)
+            {
+                this._logger.LogInformation("Role {RoleId} deleted successfully.", id);
+                this.AddSuccessAlert("Role deleted successfully.");
+                return this.RedirectToAction(nameof(this.Roles));
+            }
+
+            this._logger.LogError("Role deletion failed for {RoleId}. Errors: {Errors}", id, string.Join(", ", result.Errors.Select(e => e.Description)));
+            this.AddErrorAlert("An error occurred while deleting the role. Please try again.");
+            return this.RedirectToAction(nameof(this.Roles));
+        }
+
+        #endregion
     }
 }

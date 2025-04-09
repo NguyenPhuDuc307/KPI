@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Rendering;
-using System.ComponentModel.DataAnnotations;
-
 namespace KPISolution.Models.ViewModels.Measurement
 {
     /// <summary>

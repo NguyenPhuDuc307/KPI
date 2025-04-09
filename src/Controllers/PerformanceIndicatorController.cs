@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc;
-using KPISolution.Extensions;
-using Microsoft.EntityFrameworkCore;
-
 namespace KPISolution.Controllers
 {
     [Authorize]
@@ -15,10 +10,10 @@ namespace KPISolution.Controllers
 
         public PerformanceIndicatorController(IUnitOfWork unitOfWork, IMapper mapper, ILogger<PerformanceIndicatorController> logger, UserManager<ApplicationUser> userManager)
         {
-            _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            this._unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+            this._mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         }
 
         // GET: PerformanceIndicator
@@ -30,10 +25,10 @@ namespace KPISolution.Controllers
                 // Save current URL for navigation
                 this.SaveCurrentUrlAsPrevious();
 
-                _logger.LogInformation("Retrieving performance indicator list with search term: {SearchTerm}, page: {Page}, showOnlyKey: {ShowOnlyKey}", 
+                this._logger.LogInformation("Retrieving performance indicator list with search term: {SearchTerm}, page: {Page}, showOnlyKey: {ShowOnlyKey}",
                     searchTerm, page, showOnlyKey);
 
-                var performanceIndicatorsQuery = _unitOfWork.PerformanceIndicators.GetAll();
+                var performanceIndicatorsQuery = this._unitOfWork.PerformanceIndicators.GetAll();
 
                 // Filter by key status if requested
                 if (showOnlyKey)
@@ -67,26 +62,26 @@ namespace KPISolution.Controllers
                     .ToListAsync();
 
                 // Map to view model
-                var performanceIndicatorListItems = _mapper?.Map<List<PerformanceIndicatorListItemViewModel>>(performanceIndicators)
+                var performanceIndicatorListItems = this._mapper?.Map<List<PerformanceIndicatorListItemViewModel>>(performanceIndicators)
                     ?? new List<PerformanceIndicatorListItemViewModel>();
 
                 // Create view model
-                ViewBag.CurrentPage = page;
-                ViewBag.PageSize = pageSize;
-                ViewBag.TotalCount = totalItems;
-                ViewBag.SearchTerm = searchTerm;
-                ViewBag.ShowOnlyKey = showOnlyKey;
-                ViewBag.IsKeyPerformanceIndicators = showOnlyKey;
+                this.ViewBag.CurrentPage = page;
+                this.ViewBag.PageSize = pageSize;
+                this.ViewBag.TotalCount = totalItems;
+                this.ViewBag.SearchTerm = searchTerm;
+                this.ViewBag.ShowOnlyKey = showOnlyKey;
+                this.ViewBag.IsKeyPerformanceIndicators = showOnlyKey;
 
                 // Populate dropdowns for result indicators and departments
-                await PopulateViewBagDropdowns();
+                await this.PopulateViewBagDropdowns();
 
-                return View(performanceIndicatorListItems);
+                return this.View(performanceIndicatorListItems);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while retrieving performance indicator list");
-                return View("Error", new ErrorViewModel { Message = "An error occurred while retrieving the performance indicator list." });
+                this._logger.LogError(ex, "Error occurred while retrieving performance indicator list");
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while retrieving the performance indicator list." });
             }
         }
 
@@ -95,7 +90,7 @@ namespace KPISolution.Controllers
         public IActionResult KeyPerformanceIndicators(string searchTerm = "", int page = 1, int pageSize = 10)
         {
             // Redirect to the unified Index action with showOnlyKey parameter set to true
-            return RedirectToAction(nameof(Index), new { searchTerm, page, pageSize, showOnlyKey = true });
+            return this.RedirectToAction(nameof(this.Index), new { searchTerm, page, pageSize, showOnlyKey = true });
         }
 
         // GET: PerformanceIndicator/Details/5
@@ -107,35 +102,36 @@ namespace KPISolution.Controllers
                 // Save current URL for navigation
                 this.SaveCurrentUrlAsPrevious();
 
-                _logger.LogInformation("Retrieving performance indicator details for ID: {Id}", id);
+                this._logger.LogInformation("Retrieving performance indicator details for ID: {Id}", id);
 
-                var performanceIndicator = await _unitOfWork.PerformanceIndicators.GetAll()
+                var performanceIndicator = await this._unitOfWork.PerformanceIndicators.GetAll()
                     .Include(pi => pi.ResultIndicator!)
                         .ThenInclude(ri => ri!.SuccessFactor)
                     .Include(pi => pi.Department!)
                     .Include(pi => pi.Measurements)
+                    .Include(pi => pi.SuccessFactor)
                     .FirstOrDefaultAsync(pi => pi.Id == id);
 
-                if (performanceIndicator?.ResultIndicator == null)
+                if (performanceIndicator == null)
                 {
-                    _logger.LogWarning("Performance indicator with ID {Id} or its ResultIndicator not found", id);
-                    return NotFound();
+                    this._logger.LogWarning("Performance indicator with ID {Id} not found", id);
+                    return this.NotFound();
                 }
 
                 // Map entity to view model
-                var viewModel = _mapper.Map<PerformanceIndicatorDetailsViewModel>(performanceIndicator);
+                var viewModel = this._mapper.Map<PerformanceIndicatorDetailsViewModel>(performanceIndicator);
 
                 // Set additional properties for view
-                ViewBag.IsKeyPerformanceIndicator = performanceIndicator.IsKey;
-                ViewBag.TypeDisplay = performanceIndicator.IsKey ? "KPI" : "PI";
-                ViewBag.TypeName = performanceIndicator.IsKey ? "Key Performance Indicator" : "Performance Indicator";
+                this.ViewBag.IsKeyPerformanceIndicator = performanceIndicator.IsKey;
+                this.ViewBag.TypeDisplay = performanceIndicator.IsKey ? "KPI" : "PI";
+                this.ViewBag.TypeName = performanceIndicator.IsKey ? "Key Performance Indicator" : "Performance Indicator";
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while retrieving performance indicator details for ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while retrieving the performance indicator details." });
+                this._logger.LogError(ex, "Error occurred while retrieving performance indicator details for ID: {Id}", id);
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while retrieving the performance indicator details." });
             }
         }
 
@@ -148,7 +144,7 @@ namespace KPISolution.Controllers
                 // Save return URL before displaying form
                 this.SaveReturnUrl();
 
-                _logger.LogInformation("Preparing create form for {Type} with Result Indicator ID: {ResultIndicatorId}, Success Factor ID: {SuccessFactorId}",
+                this._logger.LogInformation("Preparing create form for {Type} with Result Indicator ID: {ResultIndicatorId}, Success Factor ID: {SuccessFactorId}",
                     isKey ? "KPI" : "PI", resultIndicatorId, successFactorId);
 
                 // Tạo view model
@@ -158,18 +154,18 @@ namespace KPISolution.Controllers
                     SuccessFactorId = successFactorId
                 };
 
-                await PopulateViewBagDropdowns(resultIndicatorId, successFactorId);
+                await this.PopulateViewBagDropdowns(resultIndicatorId, successFactorId);
 
-                ViewBag.IsKey = isKey;
-                ViewBag.TypeDisplay = isKey ? "KPI" : "PI";
-                ViewBag.TypeName = isKey ? "Key Performance Indicator" : "Performance Indicator";
+                this.ViewBag.IsKey = isKey;
+                this.ViewBag.TypeDisplay = isKey ? "KPI" : "PI";
+                this.ViewBag.TypeName = isKey ? "Key Performance Indicator" : "Performance Indicator";
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while preparing the create form");
-                return View("Error", new ErrorViewModel { Message = "An error occurred while preparing the create form." });
+                this._logger.LogError(ex, "Error occurred while preparing the create form");
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while preparing the create form." });
             }
         }
 
@@ -180,21 +176,21 @@ namespace KPISolution.Controllers
         {
             try
             {
-                if (ModelState.IsValid)
+                if (this.ModelState.IsValid)
                 {
-                    _logger.LogInformation("Creating new performance indicator: {Name}", viewModel.Name);
+                    this._logger.LogInformation("Creating new performance indicator: {Name}", viewModel.Name);
 
                     // Kiểm tra xem mã code đã tồn tại chưa
                     if (!string.IsNullOrWhiteSpace(viewModel.Code))
                     {
-                        bool codeExists = await _unitOfWork.PerformanceIndicators.GetAll()
+                        bool codeExists = await this._unitOfWork.PerformanceIndicators.GetAll()
                             .AnyAsync(pi => pi.Code == viewModel.Code);
 
                         if (codeExists)
                         {
-                            ModelState.AddModelError("Code", "Mã này đã tồn tại trong hệ thống");
-                            await PopulateViewBagDropdowns(viewModel.ResultIndicatorId, viewModel.SuccessFactorId);
-                            return View(viewModel);
+                            this.ModelState.AddModelError("Code", "Mã này đã tồn tại trong hệ thống");
+                            await this.PopulateViewBagDropdowns(viewModel.ResultIndicatorId, viewModel.SuccessFactorId);
+                            return this.View(viewModel);
                         }
                     }
 
@@ -203,8 +199,8 @@ namespace KPISolution.Controllers
                     {
                         Name = viewModel.Name,
                         Description = viewModel.Description,
-                        Code = string.IsNullOrWhiteSpace(viewModel.Code) ? GenerateUniqueCode(ViewBag.IsKey != null && ViewBag.IsKey ? "KPI-" : "PI-") : viewModel.Code,
-                        IsKey = ViewBag.IsKey ?? false,
+                        Code = string.IsNullOrWhiteSpace(viewModel.Code) ? this.GenerateUniqueCode(this.ViewBag.IsKey != null && this.ViewBag.IsKey ? "KPI-" : "PI-") : viewModel.Code,
+                        IsKey = this.ViewBag.IsKey ?? false,
                         Formula = viewModel.Formula,
                         Frequency = viewModel.Frequency,
                         MeasurementFrequency = viewModel.Frequency,
@@ -218,32 +214,32 @@ namespace KPISolution.Controllers
                         SuccessFactorId = viewModel.SuccessFactorId,
                         ResponsiblePersonId = viewModel.ResponsibleTeamMemberId?.ToString(),
                         CreatedAt = DateTime.Now,
-                        CreatedBy = User?.Identity?.Name ?? "System",
+                        CreatedBy = this.User?.Identity?.Name ?? "System",
                         IsActive = true,
                         Status = IndicatorStatus.Active
                     };
 
                     // Add entity to repository
-                    await _unitOfWork.PerformanceIndicators.AddAsync(performanceIndicator);
-                    await _unitOfWork.CompleteAsync();
+                    await this._unitOfWork.PerformanceIndicators.AddAsync(performanceIndicator);
+                    await this._unitOfWork.CompleteAsync();
 
-                    _logger.LogInformation("Performance indicator created successfully with ID: {Id}", performanceIndicator.Id);
+                    this._logger.LogInformation("Performance indicator created successfully with ID: {Id}", performanceIndicator.Id);
                     this.AddSuccessAlert("Chỉ số hiệu suất đã được tạo thành công.");
                     return this.RedirectToPreviousPage();
                 }
 
                 // If we got this far, something failed, redisplay form
-                _logger.LogWarning("Performance indicator creation failed due to validation errors");
-                await PopulateViewBagDropdowns(viewModel.ResultIndicatorId, viewModel.SuccessFactorId);
+                this._logger.LogWarning("Performance indicator creation failed due to validation errors");
+                await this.PopulateViewBagDropdowns(viewModel.ResultIndicatorId, viewModel.SuccessFactorId);
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating performance indicator");
-                ModelState.AddModelError("", "An error occurred while creating the performance indicator.");
-                await PopulateViewBagDropdowns(viewModel.ResultIndicatorId, viewModel.SuccessFactorId);
-                return View(viewModel);
+                this._logger.LogError(ex, "Error occurred while creating performance indicator");
+                this.ModelState.AddModelError("", "An error occurred while creating the performance indicator.");
+                await this.PopulateViewBagDropdowns(viewModel.ResultIndicatorId, viewModel.SuccessFactorId);
+                return this.View(viewModel);
             }
         }
 
@@ -256,31 +252,31 @@ namespace KPISolution.Controllers
                 // Save return URL before displaying form
                 this.SaveReturnUrl();
 
-                _logger.LogInformation("Preparing edit form for performance indicator with ID: {Id}", id);
+                this._logger.LogInformation("Preparing edit form for performance indicator with ID: {Id}", id);
 
-                var performanceIndicator = await _unitOfWork.PerformanceIndicators.GetByIdAsync(id);
+                var performanceIndicator = await this._unitOfWork.PerformanceIndicators.GetByIdAsync(id);
                 if (performanceIndicator == null)
                 {
-                    _logger.LogWarning("Performance indicator with ID {Id} not found for editing", id);
-                    return NotFound();
+                    this._logger.LogWarning("Performance indicator with ID {Id} not found for editing", id);
+                    return this.NotFound();
                 }
 
-                var viewModel = _mapper.Map<PerformanceIndicatorEditViewModel>(performanceIndicator);
+                var viewModel = this._mapper.Map<PerformanceIndicatorEditViewModel>(performanceIndicator);
 
                 // Set additional view data
-                ViewBag.IsKeyPerformanceIndicator = performanceIndicator.IsKey;
-                ViewBag.TypeDisplay = performanceIndicator.IsKey ? "KPI" : "PI";
-                ViewBag.TypeName = performanceIndicator.IsKey ? "Key Performance Indicator" : "Performance Indicator";
+                this.ViewBag.IsKeyPerformanceIndicator = performanceIndicator.IsKey;
+                this.ViewBag.TypeDisplay = performanceIndicator.IsKey ? "KPI" : "PI";
+                this.ViewBag.TypeName = performanceIndicator.IsKey ? "Key Performance Indicator" : "Performance Indicator";
 
                 // Populate dropdown lists
-                await PopulateDropdownsForEdit(viewModel);
+                await this.PopulateDropdownsForEdit(viewModel);
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while preparing edit form for performance indicator with ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while preparing the edit form." });
+                this._logger.LogError(ex, "Error occurred while preparing edit form for performance indicator with ID: {Id}", id);
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while preparing the edit form." });
             }
         }
 
@@ -291,50 +287,50 @@ namespace KPISolution.Controllers
         {
             if (id != viewModel.Id)
             {
-                _logger.LogWarning("Performance indicator ID mismatch: {Id1} vs {Id2}", id, viewModel.Id);
-                return NotFound();
+                this._logger.LogWarning("Performance indicator ID mismatch: {Id1} vs {Id2}", id, viewModel.Id);
+                return this.NotFound();
             }
 
             try
             {
-                if (ModelState.IsValid)
+                if (this.ModelState.IsValid)
                 {
-                    _logger.LogInformation("Updating performance indicator with ID: {Id}", id);
+                    this._logger.LogInformation("Updating performance indicator with ID: {Id}", id);
 
-                    var performanceIndicator = await _unitOfWork.PerformanceIndicators.GetByIdAsync(id);
+                    var performanceIndicator = await this._unitOfWork.PerformanceIndicators.GetByIdAsync(id);
                     if (performanceIndicator == null)
                     {
-                        _logger.LogWarning("Performance indicator with ID {Id} not found for update", id);
-                        return NotFound();
+                        this._logger.LogWarning("Performance indicator with ID {Id} not found for update", id);
+                        return this.NotFound();
                     }
 
                     // Update entity with view model values
-                    _mapper.Map(viewModel, performanceIndicator);
+                    this._mapper.Map(viewModel, performanceIndicator);
 
                     // Set audit properties
                     performanceIndicator.UpdatedAt = DateTime.Now;
-                    performanceIndicator.UpdatedBy = User?.Identity?.Name ?? "System";
+                    performanceIndicator.UpdatedBy = this.User?.Identity?.Name ?? "System";
 
-                    _unitOfWork.PerformanceIndicators.Update(performanceIndicator);
-                    await _unitOfWork.CompleteAsync();
+                    this._unitOfWork.PerformanceIndicators.Update(performanceIndicator);
+                    await this._unitOfWork.CompleteAsync();
 
-                    _logger.LogInformation("Performance indicator updated successfully with ID: {Id}", performanceIndicator.Id);
+                    this._logger.LogInformation("Performance indicator updated successfully with ID: {Id}", performanceIndicator.Id);
                     this.AddSuccessAlert("Chỉ số hiệu suất đã được cập nhật thành công.");
                     return this.RedirectToPreviousPage();
                 }
 
                 // If we got this far, something failed, redisplay form
-                _logger.LogWarning("Performance indicator update failed due to validation errors");
-                await PopulateDropdownsForEdit(viewModel);
+                this._logger.LogWarning("Performance indicator update failed due to validation errors");
+                await this.PopulateDropdownsForEdit(viewModel);
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while updating performance indicator with ID: {Id}", id);
-                ModelState.AddModelError("", "An error occurred while updating the performance indicator.");
-                await PopulateDropdownsForEdit(viewModel);
-                return View(viewModel);
+                this._logger.LogError(ex, "Error occurred while updating performance indicator with ID: {Id}", id);
+                this.ModelState.AddModelError("", "An error occurred while updating the performance indicator.");
+                await this.PopulateDropdownsForEdit(viewModel);
+                return this.View(viewModel);
             }
         }
 
@@ -347,34 +343,34 @@ namespace KPISolution.Controllers
                 // Save return URL before displaying form
                 this.SaveReturnUrl();
 
-                _logger.LogInformation("Preparing delete confirmation for performance indicator with ID: {Id}", id);
+                this._logger.LogInformation("Preparing delete confirmation for performance indicator with ID: {Id}", id);
 
-                var performanceIndicator = await _unitOfWork.PerformanceIndicators.GetAll()
+                var performanceIndicator = await this._unitOfWork.PerformanceIndicators.GetAll()
                     .Include(pi => pi.ResultIndicator)
                     .Include(pi => pi.Measurements)
                     .FirstOrDefaultAsync(pi => pi.Id == id);
 
                 if (performanceIndicator == null)
                 {
-                    _logger.LogWarning("Performance indicator with ID {Id} not found for deletion", id);
-                    return NotFound();
+                    this._logger.LogWarning("Performance indicator with ID {Id} not found for deletion", id);
+                    return this.NotFound();
                 }
 
-                var viewModel = _mapper.Map<PerformanceIndicatorDetailsViewModel>(performanceIndicator);
+                var viewModel = this._mapper.Map<PerformanceIndicatorDetailsViewModel>(performanceIndicator);
 
                 // Set view data
-                ViewBag.IsKeyPerformanceIndicator = performanceIndicator.IsKey;
-                ViewBag.TypeDisplay = performanceIndicator.IsKey ? "KPI" : "PI";
-                ViewBag.TypeName = performanceIndicator.IsKey ? "Key Performance Indicator" : "Performance Indicator";
-                ViewBag.HasMeasurements = performanceIndicator.Measurements?.Any() ?? false;
-                ViewBag.MeasurementsCount = performanceIndicator.Measurements?.Count ?? 0;
+                this.ViewBag.IsKeyPerformanceIndicator = performanceIndicator.IsKey;
+                this.ViewBag.TypeDisplay = performanceIndicator.IsKey ? "KPI" : "PI";
+                this.ViewBag.TypeName = performanceIndicator.IsKey ? "Key Performance Indicator" : "Performance Indicator";
+                this.ViewBag.HasMeasurements = performanceIndicator.Measurements?.Any() ?? false;
+                this.ViewBag.MeasurementsCount = performanceIndicator.Measurements?.Count ?? 0;
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while preparing delete confirmation for performance indicator with ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while preparing the delete confirmation." });
+                this._logger.LogError(ex, "Error occurred while preparing delete confirmation for performance indicator with ID: {Id}", id);
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while preparing the delete confirmation." });
             }
         }
 
@@ -385,16 +381,16 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Deleting performance indicator with ID: {Id}", id);
+                this._logger.LogInformation("Deleting performance indicator with ID: {Id}", id);
 
-                var performanceIndicator = await _unitOfWork.PerformanceIndicators.GetAll()
+                var performanceIndicator = await this._unitOfWork.PerformanceIndicators.GetAll()
                     .Include(pi => pi.Measurements)
                     .FirstOrDefaultAsync(pi => pi.Id == id);
 
                 if (performanceIndicator == null)
                 {
-                    _logger.LogWarning("Performance indicator with ID {Id} not found for deletion confirmation", id);
-                    return NotFound();
+                    this._logger.LogWarning("Performance indicator with ID {Id} not found for deletion confirmation", id);
+                    return this.NotFound();
                 }
 
                 // Record whether this is a KPI or PI for redirection later
@@ -403,27 +399,27 @@ namespace KPISolution.Controllers
                 // Delete all related measurements first
                 if (performanceIndicator.Measurements != null && performanceIndicator.Measurements.Any())
                 {
-                    _logger.LogInformation("Deleting {Count} measurements related to performance indicator with ID: {Id}",
+                    this._logger.LogInformation("Deleting {Count} measurements related to performance indicator with ID: {Id}",
                         performanceIndicator.Measurements.Count, id);
 
                     foreach (var measurement in performanceIndicator.Measurements.ToList())
                     {
-                        await _unitOfWork.Measurements.DeleteAsync(measurement);
+                        await this._unitOfWork.Measurements.DeleteAsync(measurement);
                     }
                 }
 
                 // Then delete the performance indicator
-                await _unitOfWork.PerformanceIndicators.DeleteAsync(performanceIndicator);
-                await _unitOfWork.CompleteAsync();
+                await this._unitOfWork.PerformanceIndicators.DeleteAsync(performanceIndicator);
+                await this._unitOfWork.CompleteAsync();
 
-                _logger.LogInformation("Performance indicator with ID: {Id} deleted successfully", id);
+                this._logger.LogInformation("Performance indicator with ID: {Id} deleted successfully", id);
                 this.AddSuccessAlert("Chỉ số hiệu suất đã được xóa thành công.");
                 return this.RedirectToPreviousPage();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while deleting performance indicator with ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while deleting the performance indicator." });
+                this._logger.LogError(ex, "Error occurred while deleting performance indicator with ID: {Id}", id);
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while deleting the performance indicator." });
             }
         }
 
@@ -433,21 +429,21 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Retrieving performance indicators for result indicator ID: {ResultIndicatorId}", resultIndicatorId);
+                this._logger.LogInformation("Retrieving performance indicators for result indicator ID: {ResultIndicatorId}", resultIndicatorId);
 
                 // Get the result indicator to display its details
-                var resultIndicator = await _unitOfWork.ResultIndicators.GetByIdAsync(resultIndicatorId);
+                var resultIndicator = await this._unitOfWork.ResultIndicators.GetByIdAsync(resultIndicatorId);
                 if (resultIndicator == null)
                 {
-                    return NotFound();
+                    return this.NotFound();
                 }
 
-                ViewBag.ResultIndicatorName = resultIndicator.Name;
-                ViewBag.ResultIndicatorId = resultIndicatorId;
-                ViewBag.ResultIndicatorIsKey = resultIndicator.IsKey;
+                this.ViewBag.ResultIndicatorName = resultIndicator.Name;
+                this.ViewBag.ResultIndicatorId = resultIndicatorId;
+                this.ViewBag.ResultIndicatorIsKey = resultIndicator.IsKey;
 
                 // Get performance indicators for this result indicator
-                var performanceIndicatorsQuery = _unitOfWork.PerformanceIndicators.GetAll()
+                var performanceIndicatorsQuery = this._unitOfWork.PerformanceIndicators.GetAll()
                     .Where(pi => pi.ResultIndicatorId == resultIndicatorId);
 
                 // Apply search filter if provided
@@ -475,22 +471,22 @@ namespace KPISolution.Controllers
                     .ToListAsync();
 
                 // Map to view model
-                var performanceIndicatorListItems = _mapper?.Map<List<PerformanceIndicatorListItemViewModel>>(performanceIndicators)
+                var performanceIndicatorListItems = this._mapper?.Map<List<PerformanceIndicatorListItemViewModel>>(performanceIndicators)
                     ?? new List<PerformanceIndicatorListItemViewModel>();
 
                 // Set view model properties
-                ViewBag.CurrentPage = page;
-                ViewBag.PageSize = pageSize;
-                ViewBag.TotalCount = totalItems;
-                ViewBag.SearchTerm = searchTerm;
-                ViewBag.ShowingByResultIndicator = true;
+                this.ViewBag.CurrentPage = page;
+                this.ViewBag.PageSize = pageSize;
+                this.ViewBag.TotalCount = totalItems;
+                this.ViewBag.SearchTerm = searchTerm;
+                this.ViewBag.ShowingByResultIndicator = true;
 
-                return View("Index", performanceIndicatorListItems);
+                return this.View("Index", performanceIndicatorListItems);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while retrieving performance indicators for result indicator ID: {ResultIndicatorId}", resultIndicatorId);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while retrieving the performance indicators." });
+                this._logger.LogError(ex, "Error occurred while retrieving performance indicators for result indicator ID: {ResultIndicatorId}", resultIndicatorId);
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while retrieving the performance indicators." });
             }
         }
 
@@ -502,18 +498,18 @@ namespace KPISolution.Controllers
             {
                 if (string.IsNullOrWhiteSpace(code))
                 {
-                    return Json(false);
+                    return this.Json(false);
                 }
 
-                var exists = await _unitOfWork.PerformanceIndicators.GetAll()
+                var exists = await this._unitOfWork.PerformanceIndicators.GetAll()
                     .AnyAsync(pi => pi.Code == code);
 
-                return Json(exists);
+                return this.Json(exists);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while checking code existence: {Code}", code);
-                return Json(false);
+                this._logger.LogError(ex, "Error occurred while checking code existence: {Code}", code);
+                return this.Json(false);
             }
         }
 
@@ -525,16 +521,16 @@ namespace KPISolution.Controllers
             {
                 if (string.IsNullOrWhiteSpace(prefix))
                 {
-                    return BadRequest("Prefix is required");
+                    return this.BadRequest("Prefix is required");
                 }
 
-                var code = await GetUniqueCode(prefix);
-                return Content(code);
+                var code = await this.GetUniqueCode(prefix);
+                return this.Content(code);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while generating unique code with prefix: {Prefix}", prefix);
-                return StatusCode(500, "Error generating code");
+                this._logger.LogError(ex, "Error occurred while generating unique code with prefix: {Prefix}", prefix);
+                return this.StatusCode(500, "Error generating code");
             }
         }
 
@@ -545,8 +541,8 @@ namespace KPISolution.Controllers
 
             while (attempt < maxAttempts)
             {
-                var code = GenerateUniqueCode(prefix);
-                var exists = await _unitOfWork.PerformanceIndicators.GetAll()
+                var code = this.GenerateUniqueCode(prefix);
+                var exists = await this._unitOfWork.PerformanceIndicators.GetAll()
                     .AnyAsync(pi => pi.Code == code);
 
                 if (!exists)
@@ -578,39 +574,39 @@ namespace KPISolution.Controllers
             try
             {
                 // Get departments for dropdown
-                var departments = await _unitOfWork.Departments.GetAllAsync();
-                ViewBag.Departments = new SelectList(departments ?? new List<Department>(), "Id", "Name");
+                var departments = await this._unitOfWork.Departments.GetAllAsync();
+                this.ViewBag.Departments = new SelectList(departments ?? new List<Department>(), "Id", "Name");
 
                 // Get result indicators for dropdown
-                var resultIndicators = await _unitOfWork.ResultIndicators.GetAllAsync();
-                ViewBag.ResultIndicators = new SelectList(resultIndicators ?? new List<ResultIndicator>(), "Id", "Name", selectedResultIndicatorId);
+                var resultIndicators = await this._unitOfWork.ResultIndicators.GetAllAsync();
+                this.ViewBag.ResultIndicators = new SelectList(resultIndicators ?? new List<ResultIndicator>(), "Id", "Name", selectedResultIndicatorId);
 
                 // Get success factors for dropdown
-                var successFactors = await _unitOfWork.SuccessFactors.GetAllAsync();
-                ViewBag.SuccessFactors = new SelectList(successFactors ?? new List<SuccessFactor>(), "Id", "Name", selectedSuccessFactorId);
+                var successFactors = await this._unitOfWork.SuccessFactors.GetAllAsync();
+                this.ViewBag.SuccessFactors = new SelectList(successFactors ?? new List<SuccessFactor>(), "Id", "Name", selectedSuccessFactorId);
 
                 // Set selected result indicator name if provided
                 if (selectedResultIndicatorId.HasValue)
                 {
-                    var selectedRI = await _unitOfWork.ResultIndicators.GetByIdAsync(selectedResultIndicatorId.Value);
+                    var selectedRI = await this._unitOfWork.ResultIndicators.GetByIdAsync(selectedResultIndicatorId.Value);
                     if (selectedRI != null)
                     {
-                        ViewBag.SelectedResultIndicatorName = selectedRI.Name;
+                        this.ViewBag.SelectedResultIndicatorName = selectedRI.Name;
                     }
                 }
 
                 // Set selected success factor name if provided
                 if (selectedSuccessFactorId.HasValue)
                 {
-                    var selectedSF = await _unitOfWork.SuccessFactors.GetByIdAsync(selectedSuccessFactorId.Value);
+                    var selectedSF = await this._unitOfWork.SuccessFactors.GetByIdAsync(selectedSuccessFactorId.Value);
                     if (selectedSF != null)
                     {
-                        ViewBag.SelectedSuccessFactorName = selectedSF.Name;
+                        this.ViewBag.SelectedSuccessFactorName = selectedSF.Name;
                     }
                 }
 
                 // Get active users for responsible team member dropdown
-                var users = _userManager?.Users
+                var users = this._userManager?.Users
                     .Where(u => u.IsActive)
                     .OrderBy(u => u.LastName)
                     .ThenBy(u => u.FirstName)
@@ -621,19 +617,19 @@ namespace KPISolution.Controllers
                         Selected = false
                     })
                     .ToList() ?? new List<SelectListItem>();
-                ViewBag.ResponsibleTeamMembers = new SelectList(users, "Value", "Text");
+                this.ViewBag.ResponsibleTeamMembers = new SelectList(users, "Value", "Text");
 
                 // Get enum values for dropdowns
-                ViewBag.MeasurementUnits = EnumToSelectList<MeasurementUnit>();
-                ViewBag.MeasurementFrequencies = EnumToSelectList<MeasurementFrequency>();
-                ViewBag.ReviewFrequencies = EnumToSelectList<ReviewFrequency>();
-                ViewBag.ActivityTypes = EnumToSelectList<ActivityType>();
-                ViewBag.ControlLevels = EnumToSelectList<ControlLevel>();
-                ViewBag.DataCollectionMethods = EnumToSelectList<DataCollectionMethod>();
+                this.ViewBag.MeasurementUnits = this.EnumToSelectList<MeasurementUnit>();
+                this.ViewBag.MeasurementFrequencies = this.EnumToSelectList<MeasurementFrequency>();
+                this.ViewBag.ReviewFrequencies = this.EnumToSelectList<ReviewFrequency>();
+                this.ViewBag.ActivityTypes = this.EnumToSelectList<ActivityType>();
+                this.ViewBag.ControlLevels = this.EnumToSelectList<ControlLevel>();
+                this.ViewBag.DataCollectionMethods = this.EnumToSelectList<DataCollectionMethod>();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while populating dropdowns");
+                this._logger.LogError(ex, "Error occurred while populating dropdowns");
                 throw;
             }
         }
@@ -643,7 +639,7 @@ namespace KPISolution.Controllers
             try
             {
                 // Get all result indicators for dropdown
-                var resultIndicators = await _unitOfWork.ResultIndicators.GetAll()
+                var resultIndicators = await this._unitOfWork.ResultIndicators.GetAll()
                     .OrderBy(ri => ri.Name)
                     .Select(ri => new SelectListItem
                     {
@@ -654,7 +650,7 @@ namespace KPISolution.Controllers
                     .ToListAsync();
 
                 // Get all success factors for dropdown
-                var successFactors = await _unitOfWork.SuccessFactors.GetAll()
+                var successFactors = await this._unitOfWork.SuccessFactors.GetAll()
                     .OrderBy(sf => sf.Name)
                     .Select(sf => new SelectListItem
                     {
@@ -665,7 +661,7 @@ namespace KPISolution.Controllers
                     .ToListAsync();
 
                 // Get active users for responsible team member dropdown
-                var users = _userManager?.Users
+                var users = this._userManager?.Users
                     .Where(u => u.IsActive)
                     .OrderBy(u => u.LastName)
                     .ThenBy(u => u.FirstName)
@@ -681,16 +677,16 @@ namespace KPISolution.Controllers
                 viewModel.ResultIndicatorOptions = resultIndicators;
                 viewModel.SuccessFactorOptions = successFactors;
                 viewModel.ResponsibleTeamMemberOptions = users;
-                viewModel.UnitOptions = EnumToSelectList<MeasurementUnit>(viewModel.Unit);
-                viewModel.FrequencyOptions = EnumToSelectList<MeasurementFrequency>(viewModel.Frequency);
-                viewModel.ReviewFrequencyOptions = EnumToSelectList(viewModel.ReviewFrequency);
-                viewModel.ActivityTypeOptions = EnumToSelectList(viewModel.ActivityType);
-                viewModel.ControlLevelOptions = EnumToSelectList(viewModel.ControlLevel);
-                viewModel.DataCollectionMethodOptions = EnumToSelectList(viewModel.DataCollectionMethod);
+                viewModel.UnitOptions = this.EnumToSelectList<MeasurementUnit>(viewModel.Unit);
+                viewModel.FrequencyOptions = this.EnumToSelectList<MeasurementFrequency>(viewModel.Frequency);
+                viewModel.ReviewFrequencyOptions = this.EnumToSelectList(viewModel.ReviewFrequency);
+                viewModel.ActivityTypeOptions = this.EnumToSelectList(viewModel.ActivityType);
+                viewModel.ControlLevelOptions = this.EnumToSelectList(viewModel.ControlLevel);
+                viewModel.DataCollectionMethodOptions = this.EnumToSelectList(viewModel.DataCollectionMethod);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while populating dropdowns for edit");
+                this._logger.LogError(ex, "Error occurred while populating dropdowns for edit");
                 throw;
             }
         }
@@ -702,7 +698,7 @@ namespace KPISolution.Controllers
                 .Select(e => new SelectListItem
                 {
                     Value = e.ToString(),
-                    Text = GetEnumDisplayName(e),
+                    Text = this.GetEnumDisplayName(e),
                     Selected = selectedValue.HasValue && EqualityComparer<TEnum>.Default.Equals(e, selectedValue.Value)
                 });
 

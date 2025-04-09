@@ -1,6 +1,3 @@
-@using KPISolution.Models.Enums.Measurement
-@using KPISolution.Models.Enums.Object
-@using KPISolution.Models.Enums.Indicator
 @model KPISolution.Models.ViewModels.Indicator.ResultIndicator.ResultIndicatorEditViewModel
 
 @{
@@ -45,7 +42,7 @@
 
 <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 text-primary">
+        <h5 class="mb-0">
             <i class="bi bi-pencil me-2"></i>@ViewData["Title"]
         </h5>
         <div class="form-check form-switch">
@@ -87,7 +84,7 @@
                                 <div class="text-danger d-none" id="codeExistsError">Mã này đã tồn tại trong hệ thống
                                 </div>
                                 <div class="form-text">Định dạng: @((Model?.IsKey ?? false) ? "KRI-YYMM-###" :
-                                                                        "RI-YYMM-###")
+                                    "RI-YYMM-###")
                                 </div>
                             </div>
                         </div>

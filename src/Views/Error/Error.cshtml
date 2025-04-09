@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = Model.Title ?? "Error";
     var isLocalEnv = ViewData["IsLocal"] as bool? ?? false;
+    ViewData["Icon"] = "bi-exclamation-triangle";
 }
 
 <div class="error-page py-5">

@@ -5,7 +5,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-src-3ba30d2d-a190-4a57-b64c-f4c48c1e2eaa</UserSecretsId>
-    <NoWarn>$(NoWarn);NETSDK1057;NU1603</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

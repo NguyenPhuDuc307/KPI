@@ -2,20 +2,36 @@
 @model UserViewModel
 
 @{
-    ViewData["Title"] = "Chi tiết người dùng";
+    ViewData["Title"] = "User Details";
+    ViewData["Icon"] = "bi-person-badge";
+    ViewData["Subtitle"] = "View user details";
+    ViewData["ShowButtons"] = true;
+    ViewData["PrimaryButton"] = ("Edit", "UserManagement", "Edit", Model.Id, "bi-pencil");
+    ViewData["SecondaryButton"] = ("Back", "UserManagement", "Index", "", "bi-arrow-left");
 }
 
+<style>
+    .avatar-circle {
+        width: 100px;
+        height: 100px;
+        background-color: #3b82f6;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+    }
+
+    .avatar-initials {
+        font-size: 36px;
+        color: white;
+        font-weight: bold;
+    }
+</style>
+
 <div class="card shadow">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h4 class="mb-0"><i class="bi bi-person-badge me-2"></i>Chi tiết người dùng</h4>
-        <div>
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-light me-2">
-                <i class="bi bi-pencil me-1"></i>Chỉnh sửa
-            </a>
-            <a asp-action="Index" class="btn btn-outline-light">
-                <i class="bi bi-arrow-left me-1"></i>Quay lại
-            </a>
-        </div>
+    <div class="card-header">
+        <h4 class="mb-0"><i class="@ViewData["Icon"] me-2"></i>@ViewData["Title"]</h4>
     </div>
     <div class="card-body">
         <div class="row">
@@ -23,7 +39,7 @@
                 <div class="text-center mb-4">
                     <div class="avatar-circle mb-3">
                         <span class="avatar-initials">@(Model.FirstName?.Substring(0, 1))@(Model.LastName?.Substring(0,
-                                                        1))</span>
+                            1))</span>
                     </div>
                     <h4>@Model.FullName</h4>
                     <p class="text-muted">@Model.JobTitle</p>
@@ -155,24 +171,3 @@
         </div>
     </div>
 </div>
-
-@section Styles {
-    <style>
-        .avatar-circle {
-            width: 100px;
-            height: 100px;
-            background-color: #3b82f6;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto;
-        }
-
-        .avatar-initials {
-            font-size: 36px;
-            color: white;
-            font-weight: bold;
-        }
-    </style>
-}

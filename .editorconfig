@@ -1,0 +1,79 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Code files
+[*.{cs,csx,vb,vbx}]
+indent_size = 4
+max_line_length = 120
+
+# Include the existing rules from src/.editorconfig
+[*.cs]
+# Style rules
+dotnet_style_qualification_for_field = true:suggestion
+dotnet_style_qualification_for_property = true:suggestion
+dotnet_style_qualification_for_method = true:suggestion
+dotnet_style_qualification_for_event = true:suggestion
+
+# Suppress warnings about unused usings
+dotnet_diagnostic.CS8019.severity = none
+
+# StyleCop specific rules to disable
+# Prefix local calls with this
+dotnet_diagnostic.SA1101.severity = none
+
+# File may only contain a single type
+dotnet_diagnostic.SA1402.severity = none
+
+# Using directives should be ordered alphabetically
+dotnet_diagnostic.SA1210.severity = none
+
+# Using directive ordering
+dotnet_diagnostic.SA1208.severity = none
+
+# Elements should be separated by blank line
+dotnet_diagnostic.SA1516.severity = none
+
+# Use trailing comma in multi-line initializers
+dotnet_diagnostic.SA1413.severity = none
+
+# Generic type constraints should be on their own line
+dotnet_diagnostic.SA1127.severity = none
+
+# Braces should not be omitted
+dotnet_diagnostic.SA1503.severity = none
+
+# Multiple blank lines
+dotnet_diagnostic.SA1507.severity = none
+
+# Opening/closing brace spacing
+dotnet_diagnostic.SA1505.severity = none
+dotnet_diagnostic.SA1508.severity = none
+
+# Closing brace should be followed by blank line
+dotnet_diagnostic.SA1513.severity = none
+
+# Parameters should begin on the line after declaration
+dotnet_diagnostic.SA1116.severity = none
+
+# Parameters should all be on same line
+dotnet_diagnostic.SA1117.severity = none
+
+# Single-line comment should be preceded by blank line
+dotnet_diagnostic.SA1515.severity = none
+
+# Closing square bracket should be followed by a space
+dotnet_diagnostic.SA1011.severity = none
+
+# XML comment analysis disabled due to project configuration
+dotnet_diagnostic.SA0001.severity = none 

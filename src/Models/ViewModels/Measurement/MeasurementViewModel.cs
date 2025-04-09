@@ -16,6 +16,11 @@ namespace KPISolution.Models.ViewModels.Measurement
         public string IndicatorName { get; set; } = string.Empty;
 
         /// <summary>
+        /// Code of the indicator
+        /// </summary>
+        public string IndicatorCode { get; set; } = string.Empty;
+
+        /// <summary>
         /// Type of indicator (KPI, PI, KRI, RI)
         /// </summary>
         public string IndicatorType { get; set; } = string.Empty;
@@ -29,22 +34,27 @@ namespace KPISolution.Models.ViewModels.Measurement
         /// Measurement unit
         /// </summary>
         public string IndicatorUnit { get; set; } = string.Empty;
-        
+
+        /// <summary>
+        /// Unit enum value
+        /// </summary>
+        public MeasurementUnit Unit { get; set; }
+
         /// <summary>
         /// Date and time the measurement was created
         /// </summary>
         public DateTime? CreatedAt { get; set; }
-        
+
         /// <summary>
         /// User who created the measurement
         /// </summary>
         public string? CreatedBy { get; set; }
-        
+
         /// <summary>
         /// Date and time the measurement was last updated
         /// </summary>
         public DateTime? UpdatedAt { get; set; }
-        
+
         /// <summary>
         /// User who last updated the measurement
         /// </summary>

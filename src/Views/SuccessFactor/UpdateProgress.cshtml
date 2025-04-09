@@ -1,7 +1,5 @@
 @model KPISolution.Models.ViewModels.SuccessFactor.SuccessFactorProgressViewModel
 @using KPISolution.Models.Extensions
-@using KPISolution.Models.Enums
-@using KPISolution.Models.Enums.SuccessFactor
 
 @{
     ViewData["Icon"] = "bi-graph-up";
@@ -46,7 +44,7 @@
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-4">
-                        <h5 class="fw-bold text-primary">@Model.SuccessFactorName</h5>
+                        <h5 class="fw-bold">@Model.SuccessFactorName</h5>
                         <span class="badge bg-secondary px-3 py-2">@Model.SuccessFactorCode</span>
                     </div>
                     

@@ -1,0 +1,289 @@
+@model KPISolution.Models.ViewModels.Dashboard.PersonalDashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard cá nhân";
+    ViewData["Icon"] = "bi-person";
+    ViewData["ActiveMenu"] = "Dashboard";
+}
+
+<!-- Xin chào và thông tin cá nhân -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Xin chào, @Model.UserName!</h1>
+    <div>
+        <span class="text-gray-500 me-2">Cập nhật lần cuối: @Model.LastUpdated.ToString("dd/MM/yyyy HH:mm")</span>
+        <a href="#" class="btn btn-sm btn-primary shadow-sm me-1">
+            <i class="bi bi-download fa-sm text-white-50 me-1"></i>Xuất báo cáo
+        </a>
+        <a href="#" class="btn btn-sm btn-primary shadow-sm">
+            <i class="bi bi-arrow-clockwise fa-sm text-white-50 me-1"></i>Làm mới
+        </a>
+    </div>
+</div>
+
+<!-- Thông tin tổng quan -->
+<div class="row mb-4">
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Chỉ số phụ trách</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalResponsibleKpis</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-up fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Hiệu suất tổng thể</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @Model.OverallPerformance.ToString("0.0")%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Mục tiêu phụ trách</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalObjectives</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-bullseye fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Phòng ban quản lý</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalManagedDepartments</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-building fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hiệu suất chỉ số của tôi -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold">Chỉ số của tôi</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                        aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-header">Tùy chọn:</div>
+                        <a class="dropdown-item" href="#"><i class="bi bi-filter me-2"></i>Lọc chỉ số</a>
+                        <a class="dropdown-item" href="#"><i class="bi bi-download me-2"></i>Xuất danh sách</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="myKpisTable">
+                        <thead>
+                            <tr>
+                                <th>Mã chỉ số</th>
+                                <th>Tên chỉ số</th>
+                                <th>Đơn vị</th>
+                                <th>Giá trị hiện tại</th>
+                                <th>Mục tiêu</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var kpi in Model.MyKpis)
+                            {
+                                <tr>
+                                    <td>@kpi.Code</td>
+                                    <td>@kpi.Name</td>
+                                    <td>@kpi.MeasurementUnit</td>
+                                    <td>@(kpi.CurrentValue?.ToString("0.##") ?? "-")</td>
+                                    <td>@(kpi.TargetValue?.ToString("0.##") ?? "-")</td>
+                                    <td>
+                                        <span class="badge @kpi.StatusCssClass">@kpi.StatusDisplay</span>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-graph-up"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-sm btn-success">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Biểu đồ phân bố trạng thái -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Phân bố trạng thái</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie mb-4">
+                    <canvas id="myKpiStatusChart"></canvas>
+                </div>
+                <div class="mt-4 text-center small">
+                    <span class="me-2">
+                        <i class="bi bi-circle-fill text-success"></i> Đạt mục tiêu
+                    </span>
+                    <span class="me-2">
+                        <i class="bi bi-circle-fill text-warning"></i> Cần cải thiện
+                    </span>
+                    <span class="me-2">
+                        <i class="bi bi-circle-fill text-danger"></i> Không đạt
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mục tiêu của tôi -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Mục tiêu của tôi</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    @foreach (var objective in Model.MyObjectives.Take(5))
+                    {
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">@objective.Name</h6>
+                                <small>@objective.DepartmentName</small>
+                            </div>
+                            <div class="progress mt-2" style="height: 10px;">
+                                <div class="progress-bar @objective.ProgressCssClass" role="progressbar"
+                                    style="width: @objective.ProgressPercentage%"
+                                    aria-valuenow="@objective.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                                    @objective.ProgressPercentage%
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+                @if (Model.MyObjectives.Count > 5)
+                {
+                    <div class="text-center mt-3">
+                        <a href="#" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Phòng ban quản lý -->
+@if (Model.MyDepartments.Any())
+{
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold">Phòng ban quản lý</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                @foreach (var department in Model.MyDepartments)
+                {
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card border-left-primary h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">@department.Name</h5>
+                                <p class="card-text">
+                                    @if (!string.IsNullOrEmpty(department.ParentDepartmentName))
+                                    {
+                                        <span class="text-muted">Thuộc: @department.ParentDepartmentName</span>
+                                    }
+                                </p>
+                                <a asp-action="Department" asp-route-id="@department.Id" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-graph-up me-1"></i>Xem dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Khởi tạo DataTable
+            $('#myKpisTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json'
+                },
+                pageLength: 5,
+                dom: '<"top"f>rt<"bottom"p><"clear">'
+            });
+
+            // Biểu đồ phân bố trạng thái
+            const ctxPie = document.getElementById('myKpiStatusChart').getContext('2d');
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đạt mục tiêu', 'Cần cải thiện', 'Không đạt'],
+                    datasets: [{
+                        data: [
+                                                    @Model.OnTargetKpisCount,
+                                                    @Model.AtRiskKpisCount,
+                                                    @(Model.TotalResponsibleKpis - Model.OnTargetKpisCount - Model.AtRiskKpisCount)
+                                                ],
+                        backgroundColor: [
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(220, 53, 69, 0.8)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        });
+    </script>
+}

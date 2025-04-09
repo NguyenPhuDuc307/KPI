@@ -12,9 +12,9 @@ public class HomeController : Controller
 
     public HomeController(IUnitOfWork unitOfWork, ILogger<HomeController> logger, IWebHostEnvironment environment)
     {
-        _unitOfWork = unitOfWork;
-        _logger = logger;
-        _environment = environment;
+        this._unitOfWork = unitOfWork;
+        this._logger = logger;
+        this._environment = environment;
     }
 
     public async Task<IActionResult> Index()
@@ -22,62 +22,73 @@ public class HomeController : Controller
         try
         {
             // Get counts for dashboard cards
-            var performanceIndicators = await _unitOfWork.PerformanceIndicators.GetAllAsync();
-            var successFactors = await _unitOfWork.SuccessFactors.GetAllAsync();
-            var objectives = await _unitOfWork.Objectives.GetAllAsync();
-            var departments = await _unitOfWork.Departments.GetAllAsync();
+            var performanceIndicators = await this._unitOfWork.PerformanceIndicators.GetAllAsync();
+            var successFactors = await this._unitOfWork.SuccessFactors.GetAllAsync();
+            var objectives = await this._unitOfWork.Objectives.GetAllAsync();
+            var departments = await this._unitOfWork.Departments.GetAllAsync();
+            var resultIndicators = await this._unitOfWork.ResultIndicators.GetAllAsync();
 
-            ViewBag.PerformanceIndicatorCount = performanceIndicators.Count();
-            ViewBag.SuccessFactorCount = successFactors.Count();
-            ViewBag.ObjectiveCount = objectives.Count();
-            ViewBag.DepartmentCount = departments.Count();
+            this.ViewBag.PerformanceIndicatorCount = performanceIndicators.Count();
+            this.ViewBag.ResultIndicatorCount = resultIndicators.Count();
+            this.ViewBag.TotalIndicatorCount = this.ViewBag.PerformanceIndicatorCount + this.ViewBag.ResultIndicatorCount;
+            this.ViewBag.SuccessFactorCount = successFactors.Count();
+            this.ViewBag.ObjectiveCount = objectives.Count();
+            this.ViewBag.DepartmentCount = departments.Count();
 
             // Get indicator status counts
-            ViewBag.IndicatorsOnTarget = performanceIndicators.Count(p => p.Status == IndicatorStatus.OnTarget) +
-                                       (await _unitOfWork.ResultIndicators.GetAllAsync(r => r.Status == IndicatorStatus.OnTarget)).Count();
-            ViewBag.IndicatorsAtRisk = performanceIndicators.Count(p => p.Status == IndicatorStatus.AtRisk) +
-                                     (await _unitOfWork.ResultIndicators.GetAllAsync(r => r.Status == IndicatorStatus.AtRisk)).Count();
-            ViewBag.IndicatorsBelowTarget = performanceIndicators.Count(p => p.Status == IndicatorStatus.BelowTarget) +
-                                          (await _unitOfWork.ResultIndicators.GetAllAsync(r => r.Status == IndicatorStatus.BelowTarget)).Count();
-            ViewBag.IndicatorsNotMeasured = performanceIndicators.Count(p => p.Status == IndicatorStatus.Draft) +
-                                          (await _unitOfWork.ResultIndicators.GetAllAsync(r => r.Status == IndicatorStatus.Draft)).Count();
+            this.ViewBag.IndicatorsOnTarget = performanceIndicators.Count(p => p.Status == IndicatorStatus.OnTarget) +
+                                              resultIndicators.Count(r => r.Status == IndicatorStatus.OnTarget);
+            this.ViewBag.IndicatorsAtRisk = performanceIndicators.Count(p => p.Status == IndicatorStatus.AtRisk) +
+                                            resultIndicators.Count(r => r.Status == IndicatorStatus.AtRisk);
+            this.ViewBag.IndicatorsBelowTarget = performanceIndicators.Count(p => p.Status == IndicatorStatus.BelowTarget) +
+                                                 resultIndicators.Count(r => r.Status == IndicatorStatus.BelowTarget);
+            this.ViewBag.IndicatorsNotMeasured = performanceIndicators.Count(p => p.Status == IndicatorStatus.Draft) +
+                                                 resultIndicators.Count(r => r.Status == IndicatorStatus.Draft);
 
-            // Get upcoming success factors
+            // Get upcoming success factors using TargetDate only for filtering
             var upcomingSuccessFactors = successFactors
-                .Where(sf => sf.TargetDate > DateTime.Now)
-                .OrderBy(sf => sf.TargetDate)
-                .Take(3)
+                .Where(sf => sf.TargetDate.ToUniversalTime() > DateTime.UtcNow) // Lấy những SF có TargetDate trong tương lai
+                .OrderBy(sf => sf.TargetDate) // Sắp xếp theo TargetDate sớm nhất
+                .Take(5)
                 .Select(sf => new
                 {
+                    sf.Id,
                     sf.Code,
                     sf.Name,
-                    DaysRemaining = (int)(sf.TargetDate - DateTime.Now).TotalDays,
-                    ProgressPercentage = CalculateProgressPercentage(sf),
-                    StatusCssClass = GetStatusCssClass(CalculateProgressPercentage(sf))
+                    // Calculate remaining days based on UtcNow
+                    DaysRemaining = (int)(sf.TargetDate.ToUniversalTime() - DateTime.UtcNow).TotalDays,
+                    ProgressPercentage = this.CalculateProgressPercentage(sf),
+                    StatusCssClass = this.GetStatusCssClass(this.CalculateProgressPercentage(sf))
                 })
                 .ToList();
 
-            ViewBag.UpcomingSuccessFactors = upcomingSuccessFactors;
+            this._logger.LogInformation("Found {Count} upcoming success factors", upcomingSuccessFactors.Count);
+            this.ViewBag.UpcomingSuccessFactors = upcomingSuccessFactors;
 
-            return View();
+            return this.View();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading dashboard data");
-            return View("Error");
+            this._logger.LogError(ex, "Error loading dashboard data");
+            return this.View("Error");
         }
     }
 
     private int CalculateProgressPercentage(SuccessFactor sf)
     {
-        var totalDays = (sf.TargetDate - sf.StartDate).TotalDays;
-        var daysPassed = (DateTime.Now - sf.StartDate).TotalDays;
+        // Corrected: StartDate and TargetDate are not nullable
+        if (sf.StartDate >= sf.TargetDate)
+            return 0;
 
-        if (totalDays <= 0)
-            return 100;
+        // Use UtcNow for progress calculation as well
+        var totalDays = (sf.TargetDate.ToUniversalTime() - sf.StartDate.ToUniversalTime()).TotalDays;
+        var daysPassed = (DateTime.UtcNow - sf.StartDate.ToUniversalTime()).TotalDays;
+
+        if (totalDays <= 0) return 100;
+        if (daysPassed < 0) return 0; // If current time is before start date
 
         var percentage = (int)((daysPassed / totalDays) * 100);
-        return Math.Min(percentage, 100);
+        return Math.Clamp(percentage, 0, 100); // Use Clamp for safety
     }
 
     private string GetStatusCssClass(int progressPercentage)
@@ -93,38 +104,37 @@ public class HomeController : Controller
 
     public IActionResult Privacy()
     {
-        return View();
+        return this.View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        var exceptionHandlerPathFeature =
-            HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+        var exceptionHandlerPathFeature = this.HttpContext.Features.Get<IExceptionHandlerPathFeature>();
 
         var errorViewModel = new ErrorViewModel
         {
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
-            StatusCode = HttpContext.Response?.StatusCode ?? 500,
+            RequestId = Activity.Current?.Id ?? this.HttpContext.TraceIdentifier,
+            StatusCode = this.HttpContext.Response?.StatusCode ?? 500,
             Path = exceptionHandlerPathFeature?.Path,
             ExceptionMessage = exceptionHandlerPathFeature?.Error?.Message,
             Title = "Đã xảy ra lỗi",
             Message = "Chúng tôi đang tìm cách khắc phục. Vui lòng thử lại sau.",
-            IsProduction = !_environment.IsDevelopment()
+            IsProduction = !this._environment.IsDevelopment()
         };
 
-        _logger.LogError("Error occurred: {ErrorMessage} on path: {Path}",
+        this._logger.LogError("Error occurred: {ErrorMessage} on path: {Path}",
             errorViewModel.ExceptionMessage,
             errorViewModel.Path);
 
-        return View("~/Views/Shared/Error.cshtml", errorViewModel);
+        return this.View("~/Views/Shared/Error.cshtml", errorViewModel);
     }
 
     protected virtual void SetupPageTemplate()
     {
-        ViewData["Icon"] = "bi-house-fill";
-        ViewData["Title"] = "Dashboard";
-        ViewData["Subtitle"] = "Tổng quan về hiệu suất";
-        ViewData["ActiveMenu"] = "Home";
+        this.ViewData["Icon"] = "bi-house-fill";
+        this.ViewData["Title"] = "Dashboard";
+        this.ViewData["Subtitle"] = "Tổng quan về hiệu suất";
+        this.ViewData["ActiveMenu"] = "Home";
     }
 }

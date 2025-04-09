@@ -1,6 +1,6 @@
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @{
-    var title = ViewData["Title"]?.ToString();
+    var title = ViewData["Title"]?.ToString() ?? "Page Title";
     var subtitle = ViewData["Subtitle"]?.ToString();
     var icon = ViewData["Icon"]?.ToString() ?? "bi-circle";
     var showButtons = ViewData["ShowButtons"] as bool? ?? true;

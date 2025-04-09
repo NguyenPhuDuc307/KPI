@@ -4,7 +4,7 @@ namespace KPISolution.Models.Mappings
     {
         public PerformanceIndicatorMappingProfile()
         {
-            CreateMap<PerformanceIndicator, IndicatorSummaryViewModel>()
+            this.CreateMap<PerformanceIndicator, IndicatorSummaryViewModel>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Code, opt => opt.MapFrom(src => src.Code))
@@ -14,8 +14,8 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
                 .ForMember(dest => dest.Department, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : string.Empty))
                 .ForMember(dest => dest.LastMeasurementDate, opt => opt.MapFrom(src => src.Measurements != null && src.Measurements.Any() ? src.Measurements.Max(m => m.MeasurementDate) : (DateTime?)null))
-                .ForMember(dest => dest.PercentageComplete, opt => opt.MapFrom(src => 
-                    src.CurrentValue.HasValue && src.TargetValue.HasValue && src.TargetValue.Value != 0 
+                .ForMember(dest => dest.PercentageComplete, opt => opt.MapFrom(src =>
+                    src.CurrentValue.HasValue && src.TargetValue.HasValue && src.TargetValue.Value != 0
                         ? Math.Round((src.CurrentValue.Value / src.TargetValue.Value) * 100, 2)
                         : (decimal?)null))
                 .ForMember(dest => dest.Trend, opt => opt.Ignore())
@@ -23,7 +23,7 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.StatusDisplay, opt => opt.MapFrom(src => src.Status.ToString()))
                 .ForMember(dest => dest.StatusCssClass, opt => opt.MapFrom(src => GetStatusCssClass(src.Status)));
 
-            CreateMap<PerformanceIndicator, IndicatorViewModel>()
+            this.CreateMap<PerformanceIndicator, IndicatorViewModel>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Code, opt => opt.MapFrom(src => src.Code))
@@ -31,18 +31,18 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.Unit, opt => opt.MapFrom(src => src.Unit))
                 .ForMember(dest => dest.CurrentValue, opt => opt.MapFrom(src => src.CurrentValue));
 
-            CreateMap<PerformanceIndicatorCreateViewModel, PerformanceIndicator>()
+            this.CreateMap<PerformanceIndicatorCreateViewModel, PerformanceIndicator>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.NewGuid()))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.LastUpdated, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => IndicatorStatus.Draft))
                 .ForMember(dest => dest.SuccessFactorId, opt => opt.MapFrom(src => src.SuccessFactorId));
 
-            CreateMap<PerformanceIndicator, PerformanceIndicatorListItemViewModel>()
+            this.CreateMap<PerformanceIndicator, PerformanceIndicatorListItemViewModel>()
                 .ForMember(dest => dest.ResultIndicatorName, opt => opt.MapFrom(src => src.ResultIndicator != null ? src.ResultIndicator.Name : string.Empty))
                 .ForMember(dest => dest.SuccessFactorName, opt => opt.MapFrom(src => src.SuccessFactor != null ? src.SuccessFactor.Name : string.Empty));
 
-            CreateMap<PerformanceIndicator, PerformanceIndicatorDetailsViewModel>()
+            this.CreateMap<PerformanceIndicator, PerformanceIndicatorDetailsViewModel>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
@@ -50,34 +50,40 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.IsKey, opt => opt.MapFrom(src => src.IsKey))
                 .ForMember(dest => dest.Formula, opt => opt.MapFrom(src => src.Formula))
                 .ForMember(dest => dest.TargetValue, opt => opt.MapFrom(src => src.TargetValue))
-                .ForMember(dest => dest.CurrentValue, opt => opt.MapFrom(src => src.CurrentValue))
+                .ForMember(dest => dest.CurrentValue, opt => opt.MapFrom(src =>
+                    src.Measurements != null && src.Measurements.Any()
+                        ? src.Measurements.OrderByDescending(m => m.MeasurementDate)
+                            .Select(m => m.Value)
+                            .FirstOrDefault()
+                        : (decimal?)null))
                 .ForMember(dest => dest.MinAlertThreshold, opt => opt.MapFrom(src => src.MinAlertThreshold))
                 .ForMember(dest => dest.MaxAlertThreshold, opt => opt.MapFrom(src => src.MaxAlertThreshold))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
                 .ForMember(dest => dest.CreatedBy, opt => opt.MapFrom(src => src.CreatedBy))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt))
                 .ForMember(dest => dest.UpdatedBy, opt => opt.MapFrom(src => src.UpdatedBy))
-                .ForMember(dest => dest.SuccessFactorId, opt => opt.MapFrom(src => src.SuccessFactorId != null ? src.SuccessFactorId : (src.ResultIndicator != null ? src.ResultIndicator.SuccessFactorId : Guid.Empty)))
-                .ForMember(dest => dest.SuccessFactorName, opt => opt.MapFrom(src => src.SuccessFactor != null ? src.SuccessFactor.Name : (src.ResultIndicator != null && src.ResultIndicator.SuccessFactor != null ? src.ResultIndicator.SuccessFactor.Name : string.Empty)))
-                .ForMember(dest => dest.SuccessFactorIsCritical, opt => opt.MapFrom(src => (src.SuccessFactor != null && src.SuccessFactor.IsCritical) || (src.ResultIndicator != null && src.ResultIndicator.SuccessFactor != null && src.ResultIndicator.SuccessFactor.IsCritical)))
+                .ForMember(dest => dest.SuccessFactorId, opt => opt.MapFrom(src => src.SuccessFactor != null ? src.SuccessFactor.Id : (Guid?)null))
+                .ForMember(dest => dest.SuccessFactorName, opt => opt.MapFrom(src => src.SuccessFactor != null ? src.SuccessFactor.Name : null))
+                .ForMember(dest => dest.SuccessFactorIsCritical, opt => opt.MapFrom(src => src.SuccessFactor != null && src.SuccessFactor.IsCritical))
+                .ForMember(dest => dest.ResultIndicatorId, opt => opt.MapFrom(src => src.ResultIndicator != null ? src.ResultIndicator.Id : (Guid?)null))
+                .ForMember(dest => dest.ResultIndicatorName, opt => opt.MapFrom(src => src.ResultIndicator != null ? src.ResultIndicator.Name : null))
+                .ForMember(dest => dest.ActivityTypeDisplay, opt => opt.MapFrom(src => src.ActivityType != null ? src.ActivityType.ToString() : null))
+                .ForMember(dest => dest.ControlLevelDisplay, opt => opt.MapFrom(src => src.ControlLevel.HasValue ? src.ControlLevel.Value.ToString() : null))
+                .ForMember(dest => dest.DataCollectionMethodDisplay, opt => opt.MapFrom(src => src.DataCollectionMethod != null ? src.DataCollectionMethod.ToString() : null))
                 .ForMember(dest => dest.MeasurementCount, opt => opt.MapFrom(src => src.Measurements != null ? src.Measurements.Count : 0))
-                .ForMember(dest => dest.LastMeasurementDate, opt => opt.MapFrom(src => src.Measurements != null && src.Measurements.Any() ? src.Measurements.Max(m => m.MeasurementDate) : (DateTime?)null))
-                .ForMember(dest => dest.RecentMeasurements, opt => opt.MapFrom(src => src.Measurements != null ? src.Measurements.OrderByDescending(m => m.MeasurementDate).Take(10).Select(m => new MeasurementViewModel
-                {
-                    Id = m.Id,
-                    MeasurementDate = m.MeasurementDate,
-                    Value = m.Value,
-                    Status = m.Status,
-                    Notes = m.Notes,
-                    IndicatorId = src.Id,
-                    IndicatorName = src.Name,
-                    IndicatorType = src.IsKey ? "KPI" : "PI",
-                    DepartmentName = src.Department != null ? src.Department.Name : "Unknown",
-                    IndicatorUnit = src.Unit.ToString(),
-                    TargetValue = src.TargetValue
-                }) : new List<MeasurementViewModel>()));
+                .ForMember(dest => dest.RecentMeasurements, opt => opt.MapFrom(src => src.Measurements != null ? src.Measurements.OrderByDescending(m => m.MeasurementDate).Take(10) : new List<Measurement>()))
+                .ForMember(dest => dest.LastMeasurementDate, opt => opt.MapFrom(src =>
+                    src.Measurements != null && src.Measurements.Any()
+                        ? src.Measurements.Max(m => m.MeasurementDate)
+                        : (DateTime?)null))
+                .ForMember(dest => dest.CurrentValue, opt => opt.MapFrom(src =>
+                    src.Measurements != null && src.Measurements.Any()
+                        ? src.Measurements.OrderByDescending(m => m.MeasurementDate)
+                            .Select(m => m.Value)
+                            .FirstOrDefault()
+                        : (decimal?)null));
 
-            CreateMap<PerformanceIndicator, PerformanceIndicatorEditViewModel>()
+            this.CreateMap<PerformanceIndicator, PerformanceIndicatorEditViewModel>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
@@ -98,7 +104,7 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.ResultIndicatorId, opt => opt.MapFrom(src => src.ResultIndicatorId))
                 .ForMember(dest => dest.ResponsibleTeamMemberId, opt => opt.MapFrom(src => src.ResponsiblePersonId != null ? Guid.Parse(src.ResponsiblePersonId) : (Guid?)null));
 
-            CreateMap<PerformanceIndicatorEditViewModel, PerformanceIndicator>()
+            this.CreateMap<PerformanceIndicatorEditViewModel, PerformanceIndicator>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
@@ -119,7 +125,7 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.ResultIndicatorId, opt => opt.MapFrom(src => src.ResultIndicatorId))
                 .ForMember(dest => dest.ResponsiblePersonId, opt => opt.MapFrom(src => src.ResponsibleTeamMemberId.HasValue ? src.ResponsibleTeamMemberId.Value.ToString() : null));
 
-            CreateMap<Measurement, MeasurementViewModel>()
+            this.CreateMap<Measurement, MeasurementViewModel>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.MeasurementDate, opt => opt.MapFrom(src => src.MeasurementDate))
                 .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.Value))

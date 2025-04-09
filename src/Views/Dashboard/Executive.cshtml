@@ -15,9 +15,9 @@
 
     // Calculate which departments to show on current page
     var departmentsToShow = Model.PerformanceByDepartment
-        .OrderBy(d => d.DepartmentName) // Thêm sắp xếp để tránh cảnh báo
-        .Skip((currentDeptPage - 1) * departmentsPerPage)
-        .Take(departmentsPerPage);
+    .OrderBy(d => d.DepartmentName) // Thêm sắp xếp để tránh cảnh báo
+    .Skip((currentDeptPage - 1) * departmentsPerPage)
+    .Take(departmentsPerPage);
 }
 
 <div class="d-flex justify-content-end mb-3">
@@ -30,7 +30,7 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-white text-primary">
+            <div class="card-header bg-white">
                 <h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Tổng quan cấu trúc phân cấp KPI</h5>
             </div>
             <div class="card-body">
@@ -68,10 +68,8 @@
                             <h3 class="display-6">@Model.IndicatorCount</h3>
                             <p class="text-muted small">Indicators</p>
                             <div class="btn-group">
-                                <a asp-controller="RI" asp-action="Index"
-                                    class="btn btn-sm btn-outline-warning">RIs</a>
-                                <a asp-controller="PI" asp-action="Index"
-                                    class="btn btn-sm btn-outline-warning">PIs</a>
+                                <a asp-controller="RI" asp-action="Index" class="btn btn-sm btn-outline-warning">RIs</a>
+                                <a asp-controller="PI" asp-action="Index" class="btn btn-sm btn-outline-warning">PIs</a>
                             </div>
                         </div>
                     </div>
@@ -100,7 +98,7 @@
         <div class="card border-primary h-100">
             <div class="card-body">
                 <h5 class="card-title">Tổng số KPI</h5>
-                <div class="display-4 text-primary mb-2">@Model.TotalIndicatorCount</div>
+                <div class="display-4 mb-2">@Model.TotalIndicatorCount</div>
                 <div class="small text-muted">Tất cả các KPI trong hệ thống</div>
             </div>
         </div>
@@ -111,7 +109,7 @@
                 <h5 class="card-title">Đạt mục tiêu</h5>
                 <div class="display-4 text-success mb-2">
                     @(Model.IndicatorsByStatus.ContainsKey(IndicatorStatus.OnTarget) ?
-                        Model.IndicatorsByStatus[IndicatorStatus.OnTarget] : 0)
+                                        Model.IndicatorsByStatus[IndicatorStatus.OnTarget] : 0)
                 </div>
                 <div class="small text-muted">@Model.OnTargetPercentage.ToString("F1")% đạt mục tiêu</div>
             </div>
@@ -123,7 +121,7 @@
                 <h5 class="card-title">Cần chú ý</h5>
                 <div class="display-4 text-warning mb-2">
                     @(Model.IndicatorsByStatus.ContainsKey(IndicatorStatus.AtRisk) ?
-                        Model.IndicatorsByStatus[IndicatorStatus.AtRisk] : 0)
+                                        Model.IndicatorsByStatus[IndicatorStatus.AtRisk] : 0)
                 </div>
                 <div class="small text-muted">Cần theo dõi và kiểm soát</div>
             </div>
@@ -135,7 +133,7 @@
                 <h5 class="card-title">Không đạt</h5>
                 <div class="display-4 text-danger mb-2">
                     @(Model.IndicatorsByStatus.ContainsKey(IndicatorStatus.BelowTarget) ?
-                        Model.IndicatorsByStatus[IndicatorStatus.BelowTarget] : 0)
+                                        Model.IndicatorsByStatus[IndicatorStatus.BelowTarget] : 0)
                 </div>
                 <div class="small text-muted">Yêu cầu hành động khắc phục</div>
             </div>
@@ -169,7 +167,8 @@
                             {
                                 <tr>
                                     <td>
-                                        <a asp-action="Department" asp-route-id="@dept.DepartmentId">@dept.DepartmentName</a>
+                                        <a asp-action="Department"
+                                            asp-route-id="@dept.DepartmentId">@dept.DepartmentName</a>
                                     </td>
                                     <td class="text-end">
                                         <div class="progress" style="height: 8px;">
@@ -190,30 +189,30 @@
             <div class="card-footer d-flex justify-content-between align-items-center">
                 <span class="small text-muted">
                     Hiển thị @((currentDeptPage - 1) * departmentsPerPage + 1)-@(Math.Min(currentDeptPage *
-                                            departmentsPerPage, Model.PerformanceByDepartment.Count()))
+                    departmentsPerPage, Model.PerformanceByDepartment.Count()))
                     của @Model.PerformanceByDepartment.Count()
                 </span>
                 @if (Model.PerformanceByDepartment.Count() > departmentsPerPage)
-                {
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item @(currentDeptPage == 1 ? "disabled" : "")">
-                                <a class="page-link" asp-action="Executive"
-                                    asp-route-departmentPage="@(currentDeptPage - 1)">Trước</a>
+                                {
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(currentDeptPage == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Executive"
+                                asp-route-departmentPage="@(currentDeptPage - 1)">Trước</a>
+                        </li>
+                        @for (int i = 1; i <= totalDeptPages; i++)
+                                                {
+                            <li class="page-item @(i == currentDeptPage ? "active" : "")">
+                                <a class="page-link" asp-action="Executive" asp-route-departmentPage="@i">@i</a>
                             </li>
-                            @for (int i = 1; i <= totalDeptPages; i++)
-                            {
-                                <li class="page-item @(i == currentDeptPage ? "active" : "")">
-                                    <a class="page-link" asp-action="Executive" asp-route-departmentPage="@i">@i</a>
-                                </li>
-                            }
-                            <li class="page-item @(currentDeptPage == totalDeptPages ? "disabled" : "")">
-                                <a class="page-link" asp-action="Executive"
-                                    asp-route-departmentPage="@(currentDeptPage + 1)">Sau</a>
-                            </li>
-                        </ul>
-                    </nav>
-                }
+                        }
+                        <li class="page-item @(currentDeptPage == totalDeptPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Executive"
+                                asp-route-departmentPage="@(currentDeptPage + 1)">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+                                }
             </div>
         </div>
     </div>
@@ -249,7 +248,8 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Tiến độ Objectives</h5>
-                <a asp-controller="BusinessObjective" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                <a asp-controller="BusinessObjective" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất
+                    cả</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -275,8 +275,9 @@
                                         <td class="text-center">
                                             <div class="progress" style="height: 8px;">
                                                 <div class="progress-bar @objective.ProgressCssClass" role="progressbar"
-                                                        style="width: @objective.ProgressPercentage%;"
-                                                        aria-valuenow="@objective.ProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    style="width: @objective.ProgressPercentage%;"
+                                                    aria-valuenow="@objective.ProgressPercentage" aria-valuemin="0"
+                                                    aria-valuemax="100"></div>
                                             </div>
                                             <span class="small">@objective.ProgressPercentage%</span>
                                         </td>
@@ -397,7 +398,8 @@
                                     <small class="@alert.SeverityCssClass">
                                         <i class="bi bi-exclamation-triangle-fill me-1"></i>@alert.SeverityDisplay
                                     </small>
-                                    <a asp-controller="Indicator" asp-action="Details" asp-route-id="@alert.IndicatorId" class="btn btn-sm btn-outline-secondary">Xem</a>
+                                    <a asp-controller="Indicator" asp-action="Details" asp-route-id="@alert.IndicatorId"
+                                        class="btn btn-sm btn-outline-secondary">Xem</a>
                                 </div>
                             </div>
                         }
@@ -421,7 +423,8 @@
                                     <small class="text-muted">
                                         <i class="bi bi-person-fill me-1"></i>@update.UpdatedBy
                                     </small>
-                                    <a asp-controller="Indicator" asp-action="Details" asp-route-id="@update.IndicatorId" class="btn btn-sm btn-outline-secondary">Xem</a>
+                                    <a asp-controller="Indicator" asp-action="Details" asp-route-id="@update.IndicatorId"
+                                        class="btn btn-sm btn-outline-secondary">Xem</a>
                                 </div>
                             </div>
                         }
@@ -435,7 +438,8 @@
                 </div>
             </div>
             <div class="card-footer text-center p-3">
-                <a asp-controller="Alert" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả cảnh báo</a>
+                <a asp-controller="Alert" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả cảnh
+                    báo</a>
             </div>
         </div>
     </div>
@@ -445,7 +449,7 @@
     <script>
         $(document).ready(function () {
             // Đảm bảo biểu đồ được khởi tạo đúng kích thước
-            window.addEventListener('resize', function() {
+            window.addEventListener('resize', function () {
                 kpiStatusChart.resize();
             });
 
@@ -458,75 +462,75 @@
             };
 
             var statusData = @Html.Raw(Json.Serialize(Model.IndicatorsByStatus.Select(kvp => new {
-                status = kvp.Key.ToString(),
-                count = kvp.Value
-            }).ToList()));
+                    status = kvp.Key.ToString(),
+                                count = kvp.Value
+                        }).ToList()));
 
-            var kpiStatusChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: statusData.map(item => {
-                        switch(item.status) {
-                            case 'OnTarget': return 'Đạt mục tiêu';
-                            case 'AtRisk': return 'Cần cải thiện';
-                            case 'BelowTarget': return 'Không đạt';
-                            default: return item.status;
-                        }
-                    }),
-                    datasets: [{
-                        data: statusData.map(item => item.count),
-                        backgroundColor: statusData.map(item => statusColors[item.status] || 'rgba(108, 117, 125, 0.7)'),
-                        borderWidth: 1
-                    }]
+        var kpiStatusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: statusData.map(item => {
+                    switch (item.status) {
+                        case 'OnTarget': return 'Đạt mục tiêu';
+                        case 'AtRisk': return 'Cần cải thiện';
+                        case 'BelowTarget': return 'Không đạt';
+                        default: return item.status;
+                    }
+                }),
+                datasets: [{
+                    data: statusData.map(item => item.count),
+                    backgroundColor: statusData.map(item => statusColors[item.status] || 'rgba(108, 117, 125, 0.7)'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
+                layout: {
+                    padding: 20
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 2,
-                    layout: {
-                        padding: 20
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 15,
-                                padding: 15
-                            }
-                        },
-                        tooltip: {
-                            enabled: true
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15
                         }
+                    },
+                    tooltip: {
+                        enabled: true
                     }
                 }
-            });
-
-            // Chart type change handler
-            $('.chart-type').click(function (e) {
-                e.preventDefault();
-                var chartType = $(this).data('type');
-                kpiStatusChart.config.type = chartType;
-                kpiStatusChart.update();
-            });
-
-            // Xử lý lỗi zoom vô hạn
-            function resizeChart() {
-                if (kpiStatusChart) {
-                    kpiStatusChart.resize();
-                }
             }
-
-            // Gọi hàm resize khi cửa sổ thay đổi kích thước
-            var resizeTimer;
-            $(window).on('resize', function() {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(resizeChart, 100);
-            });
-
-            // Gọi hàm resize khi tab được kích hoạt (nếu biểu đồ nằm trong tab)
-            $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-                resizeChart();
-            });
         });
-    </script>
+
+        // Chart type change handler
+        $('.chart-type').click(function (e) {
+            e.preventDefault();
+            var chartType = $(this).data('type');
+            kpiStatusChart.config.type = chartType;
+            kpiStatusChart.update();
+        });
+
+        // Xử lý lỗi zoom vô hạn
+        function resizeChart() {
+            if (kpiStatusChart) {
+                kpiStatusChart.resize();
+            }
+        }
+
+        // Gọi hàm resize khi cửa sổ thay đổi kích thước
+        var resizeTimer;
+        $(window).on('resize', function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeChart, 100);
+        });
+
+        // Gọi hàm resize khi tab được kích hoạt (nếu biểu đồ nằm trong tab)
+        $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            resizeChart();
+        });
+    });
+</script>
 }

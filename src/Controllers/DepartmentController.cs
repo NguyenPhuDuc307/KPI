@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc;
-using KPISolution.Extensions;
-
 namespace KPISolution.Controllers
 {
     /// <summary>
@@ -120,12 +116,12 @@ namespace KPISolution.Controllers
                     viewModels.Add(model);
                 }
 
-                return View(viewModels);
+                return this.View(viewModels);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error fetching departments");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -152,12 +148,12 @@ namespace KPISolution.Controllers
                 var users = await this._userManager.GetUsersInRoleAsync("Manager");
                 this.ViewBag.Users = new SelectList(users, "Id", "FullName");
 
-                return View();
+                return this.View();
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error preparing create department form");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -190,7 +186,7 @@ namespace KPISolution.Controllers
                         var users = await this._userManager.GetUsersInRoleAsync("Manager");
                         this.ViewBag.Users = new SelectList(users, "Id", "FullName");
 
-                        return View(model);
+                        return this.View(model);
                     }
 
                     // Create new department entity
@@ -233,12 +229,12 @@ namespace KPISolution.Controllers
                 var allUsers = await this._userManager.GetUsersInRoleAsync("Manager");
                 this.ViewBag.Users = new SelectList(allUsers, "Id", "FullName");
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error creating department");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -331,12 +327,12 @@ namespace KPISolution.Controllers
 
                 viewModel.IndicatorCount = krisWithDept.Count() + kpisWithDept.Count() + risWithDept.Count();
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error fetching department details for {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -382,12 +378,12 @@ namespace KPISolution.Controllers
                 var users = await this._userManager.GetUsersInRoleAsync("Manager");
                 this.ViewBag.Users = new SelectList(users, "Id", "FullName");
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error preparing edit form for department {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -435,7 +431,7 @@ namespace KPISolution.Controllers
                         var users = await this._userManager.GetUsersInRoleAsync("Manager");
                         this.ViewBag.Users = new SelectList(users, "Id", "FullName");
 
-                        return View(model);
+                        return this.View(model);
                     }
 
                     // Update department properties
@@ -477,12 +473,12 @@ namespace KPISolution.Controllers
                 var allUsers = await this._userManager.GetUsersInRoleAsync("Manager");
                 this.ViewBag.Users = new SelectList(allUsers, "Id", "FullName");
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error updating department {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -551,12 +547,12 @@ namespace KPISolution.Controllers
                     this.ViewBag.IndicatorsCount = indicatorCount;
                 }
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error preparing delete view for department {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -624,7 +620,7 @@ namespace KPISolution.Controllers
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error deleting department {Id}", id);
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -675,12 +671,12 @@ namespace KPISolution.Controllers
                     hierarchyViewModel.Add(rootViewModel);
                 }
 
-                return View(hierarchyViewModel);
+                return this.View(hierarchyViewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error fetching organizational hierarchy");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -885,12 +881,12 @@ namespace KPISolution.Controllers
                     treeViewModel.Add(rootViewModel);
                 }
 
-                return View(treeViewModel);
+                return this.View(treeViewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Lỗi khi hiển thị cấu trúc phòng ban dạng cây");
-                return View("Error");
+                return this.View("Error");
             }
         }
 

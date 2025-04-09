@@ -1,5 +1,5 @@
 ﻿@{
-    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout !=  null)
+    if (ViewData.TryGetValue("ParentLayout", out var parentLayout) && parentLayout != null)
     {
         Layout = parentLayout.ToString();
     }
@@ -7,6 +7,7 @@
     {
         Layout = $"/Areas/Identity/Pages/_Layout.cshtml";
     }
+    ViewData["Icon"] = "bi-user";
 }
 
 <h1>Manage your account</h1>

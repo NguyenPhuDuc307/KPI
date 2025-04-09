@@ -116,7 +116,13 @@ namespace KPISolution.Models.ViewModels.Department
         /// Tên phòng ban/đơn vị
         /// </summary>
         [Display(Name = "Tên")]
-        public string Name => DepartmentName;
+        public string Name => this.DepartmentName;
+
+        /// <summary>
+        /// Tên người quản lý phòng ban
+        /// </summary>
+        [Display(Name = "Người quản lý")]
+        public string? ManagerName { get; set; }
 
         /// <summary>
         /// Khởi tạo với giá trị mặc định

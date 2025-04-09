@@ -63,7 +63,7 @@ namespace KPISolution.Controllers
             var host = this.HttpContext.Request.Host.Value;
             this.ViewData["IsLocal"] = host != null && (host.StartsWith("localhost") || host.StartsWith("127.0.0.1"));
 
-            return View("Error", viewModel);
+            return this.View("Error", viewModel);
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace KPISolution.Controllers
             var host = this.HttpContext.Request.Host.Value;
             this.ViewData["IsLocal"] = host != null && (host.StartsWith("localhost") || host.StartsWith("127.0.0.1"));
 
-            return View(viewModel);
+            return this.View(viewModel);
         }
     }
 }

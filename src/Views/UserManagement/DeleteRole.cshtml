@@ -1,0 +1,38 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model RoleViewModel
+
+@{
+    // ViewData for Title, Subtitle, Icon, Buttons, Breadcrumb are set in the DeleteRole GET action
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="@ViewData["Icon"] me-2"></i>@ViewData["Title"]</h5>
+    </div>
+    <div class="card-body p-4">
+        <div class="alert alert-danger">
+            <strong>Warning!</strong> Are you sure you want to delete the role '<strong>@Model.Name</strong>'?
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                        <br/>
+            
+                        <em>Description: @Model.Description</em>
+            }
+            <br/>This action cannot be undone.
+        </div>
+
+        <form asp-action="DeleteRole" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="d-flex justify-content-end mt-4">
+                <a asp-action="Roles" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>Delete Role
+                </button>
+            </div>
+        </form>
+    </div>
+</div> 

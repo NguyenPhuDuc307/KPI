@@ -8,7 +8,7 @@ namespace KPISolution.Models.Mappings
         public ObjectiveMappingProfile()
         {
             // Map từ Objective entity sang ObjectiveViewModel
-            CreateMap<Objective, ObjectiveViewModel>()
+            this.CreateMap<Objective, ObjectiveViewModel>()
                 .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.TargetDate))
                 .ForMember(dest => dest.Department, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : string.Empty))
                 .ForMember(dest => dest.ResponsiblePerson, opt => opt.MapFrom(src => src.ResponsiblePersonId ?? string.Empty))
@@ -16,7 +16,7 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.ParentObjectiveName, opt => opt.MapFrom(src => src.Parent != null ? src.Parent.Name : string.Empty));
 
             // Map từ Objective entity sang ObjectiveListItemViewModel
-            CreateMap<Objective, ObjectiveListItemViewModel>()
+            this.CreateMap<Objective, ObjectiveListItemViewModel>()
                 .ForMember(dest => dest.Code, opt => opt.MapFrom(src => src.Code))
                 .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.TargetDate))
                 .ForMember(dest => dest.Department, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : string.Empty))
@@ -26,28 +26,28 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.TimeframeType, opt => opt.MapFrom(src => src.Timeframe));
 
             // Map từ Objective entity sang ObjectiveDetailsViewModel
-            CreateMap<Objective, ObjectiveDetailsViewModel>()
+            this.CreateMap<Objective, ObjectiveDetailsViewModel>()
                 .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.TargetDate))
                 .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : string.Empty));
 
             // Map từ Objective entity sang ObjectiveTreeNodeViewModel
-            CreateMap<Objective, ObjectiveTreeNodeViewModel>()
+            this.CreateMap<Objective, ObjectiveTreeNodeViewModel>()
                 .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : string.Empty));
 
             // Map từ Objective entity sang ObjectiveSummaryViewModel
-            CreateMap<Objective, ObjectiveSummaryViewModel>()
+            this.CreateMap<Objective, ObjectiveSummaryViewModel>()
                 .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : string.Empty))
                 .ForMember(dest => dest.ProgressCssClass, opt => opt.Ignore());
 
             // Map từ Objective entity sang ObjectiveCreateViewModel
-            CreateMap<Objective, ObjectiveCreateViewModel>()
+            this.CreateMap<Objective, ObjectiveCreateViewModel>()
                 .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.TargetDate))
                 .ForMember(dest => dest.Perspective, opt => opt.MapFrom(src => src.BusinessPerspective))
                 .ForMember(dest => dest.ParentObjectiveId, opt => opt.MapFrom(src => src.ParentId))
                 .ForMember(dest => dest.ResponsiblePersonId, opt => opt.Ignore());
 
             // Map từ ObjectiveCreateViewModel sang Objective entity
-            CreateMap<ObjectiveCreateViewModel, Objective>()
+            this.CreateMap<ObjectiveCreateViewModel, Objective>()
                 .ForMember(dest => dest.TargetDate, opt => opt.MapFrom(src => src.EndDate))
                 .ForMember(dest => dest.BusinessPerspective, opt => opt.MapFrom(src => src.Perspective))
                 .ForMember(dest => dest.ParentId, opt => opt.MapFrom(src => src.ParentObjectiveId))
@@ -64,7 +64,7 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.SuccessFactors, opt => opt.Ignore());
 
             // Map từ SuccessFactor sang ObjectiveSuccessFactorViewModel
-            CreateMap<SuccessFactor, ObjectiveSuccessFactorViewModel>()
+            this.CreateMap<SuccessFactor, ObjectiveSuccessFactorViewModel>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Code, opt => opt.MapFrom(src => src.Code))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))

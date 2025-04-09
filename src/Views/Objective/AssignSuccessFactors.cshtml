@@ -63,24 +63,26 @@
                                         {
                                             @foreach (var sf in Model.AvailableSuccessFactors)
                                             {
-                                                bool isAssigned = Model.AssignedSuccessFactors != null && Model.AssignedSuccessFactors.Any(a => a.Id == sf.Id);
+                                                bool isAssigned = Model.SelectedSuccessFactorIds != null && Model.SelectedSuccessFactorIds.Contains(sf.Id);
+                                                bool isInAssignedList = Model.AssignedSuccessFactors != null && Model.AssignedSuccessFactors.Any(a => a.Id == sf.Id);
+                                                bool shouldBeChecked = isAssigned || isInAssignedList;
 
-                                                <tr class="@(isAssigned ? "table-primary" : "")">
+                                                <tr class="@(shouldBeChecked ? "table-primary" : "")">
                                                     <td class="text-center">
                                                         <div class="form-check">
                                                             <input type="checkbox" class="form-check-input" 
                                                                 name="SelectedSuccessFactorIds" value="@sf.Id" 
-                                                                id="sf-@sf.Id" @(isAssigned ? "checked" : "") />
+                                                                id="sf-@sf.Id" @(shouldBeChecked ? "checked" : "") />
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <label for="sf-@sf.Id" class="form-check-label d-block">
-                                                            <span class="fw-semibold">@sf.Name</span>
-                                                            @if (!string.IsNullOrEmpty(sf.Description))
-                                                            {
-                                                                <small class="text-muted d-block">@(sf.Description?.Length > 50 ? sf.Description.Substring(0, 50) + "..." : sf.Description)</small>
-                                                            }
+                                                        <label for="sf-@sf.Id" class="form-check-label fw-semibold">
+                                                            @sf.Name
                                                         </label>
+                                                        @if (!string.IsNullOrEmpty(sf.Description))
+                                                        {
+                                                            <small class="text-muted d-block">@(sf.Description?.Length > 50 ? sf.Description.Substring(0, 50) + "..." : sf.Description)</small>
+                                                        }
                                                     </td>
                                                     <td>
                                                         <span class="badge @(sf.Type == "CSF" ? "bg-primary" : "bg-info")">@sf.Type</span>
@@ -91,9 +93,7 @@
                                         else
                                         {
                                             <tr>
-                                                <td colspan="3" class="text-center py-3">
-                                                    <i class="bi bi-info-circle me-1"></i>Không có yếu tố thành công nào khả dụng.
-                                                </td>
+                                                <td colspan="3" class="text-center py-3">Không có yếu tố thành công nào khả dụng.</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -102,7 +102,7 @@
                         </div>
                     </div>
                 </div>
-
+                
                 <div class="col-md-7">
                     <div class="card mb-3">
                         <div class="card-header bg-light">
@@ -136,27 +136,20 @@
                                                         <span class="badge @(sf.Type == "CSF" ? "bg-primary" : "bg-info")">@sf.Type</span>
                                                     </td>
                                                     <td>
-                                                        <span class="badge @(sf.Status switch { 
-                                                            "Completed" => "bg-success",
-                                                            "InProgress" => "bg-primary",
-                                                            "Delayed" => "bg-warning",
-                                                            "AtRisk" => "bg-danger",
-                                                            "Cancelled" => "bg-secondary",
-                                                            _ => "bg-light text-dark"
-                                                        })">
-                                                            @sf.Status
-                                                        </span>
+                                                        @if (sf.Status == null)
+                                                        {
+                                                            <span class="badge bg-secondary">Chưa xác định</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge @sf.StatusCssClass">@sf.Status</span>
+                                                        }
                                                     </td>
                                                     <td>
-                                                        <div class="progress" style="height: 5px; width: 100px;">
-                                                            <div class="progress-bar @(sf.ProgressPercentage switch { 
-                                                                >= 75 => "bg-success",
-                                                                >= 50 => "bg-info",
-                                                                >= 25 => "bg-warning",
-                                                                _ => "bg-danger"
-                                                            })" style="width: @sf.ProgressPercentage%;"></div>
+                                                        <div class="progress" style="height: 6px; width: 100px;">
+                                                            <div class="progress-bar @sf.ProgressCssClass" role="progressbar" style="width: @(sf.ProgressPercentage)%;" aria-valuenow="@sf.ProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
                                                         </div>
-                                                        <small>@sf.ProgressPercentage%</small>
+                                                        <span class="small">@sf.ProgressPercentage%</span>
                                                     </td>
                                                 </tr>
                                             }
@@ -165,7 +158,7 @@
                                         {
                                             <tr>
                                                 <td colspan="4" class="text-center py-3">
-                                                    <i class="bi bi-info-circle me-1"></i>Chưa có yếu tố thành công nào được gán cho mục tiêu này.
+                                                    <i class="bi bi-info-circle text-muted me-2"></i>Chưa có yếu tố thành công nào được gán cho mục tiêu này.
                                                 </td>
                                             </tr>
                                         }
@@ -175,26 +168,34 @@
                         </div>
                     </div>
 
-                    <div class="card">
+                    <div class="card mb-3">
                         <div class="card-header bg-light">
                             <h6 class="mb-0">Hướng dẫn</h6>
                         </div>
                         <div class="card-body">
-                            <ul class="mb-0">
-                                <li>Chọn các yếu tố thành công từ bảng bên trái để gán cho mục tiêu này.</li>
-                                <li>Các yếu tố đã được gán sẽ hiển thị màu xanh trong bảng bên trái và xuất hiện trong bảng bên phải.</li>
-                                <li>Bỏ chọn các yếu tố để gỡ bỏ khỏi mục tiêu.</li>
-                                <li>Nhấn nút "Lưu thay đổi" để cập nhật các yếu tố thành công đã gán.</li>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item border-0 ps-0">
+                                    <i class="bi bi-check-circle text-success me-2"></i>Chọn các yếu tố thành công từ bảng bên trái để gán cho mục tiêu này.
+                                </li>
+                                <li class="list-group-item border-0 ps-0">
+                                    <i class="bi bi-info-circle text-info me-2"></i>Các yếu tố đã được gán sẽ hiện thị màu xanh trong bảng bên trái và xuất hiện trong bảng bên phải.
+                                </li>
+                                <li class="list-group-item border-0 ps-0">
+                                    <i class="bi bi-gear text-primary me-2"></i>Bỏ chọn các yếu tố để gỡ bỏ khỏi mục tiêu.
+                                </li>
+                                <li class="list-group-item border-0 ps-0">
+                                    <i class="bi bi-arrow-clockwise text-warning me-2"></i>Nhấn nút "Lưu thay đổi" để cập nhật các yếu tố thành công đã gán.
+                                </li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
+            <div class="text-end mt-3">
                 <a asp-action="Details" asp-route-id="@Model.ObjectiveId" class="btn btn-outline-secondary me-2">Hủy bỏ</a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-1"></i>Lưu thay đổi
+                    <i class="bi bi-save me-1"></i>Lưu thay đổi
                 </button>
             </div>
         </form>
@@ -212,6 +213,9 @@
                     $(this).closest('tr').removeClass('table-primary');
                 }
             });
+
+            // Đảm bảo khi trang tải lên, các checkbox đã chọn được highlight
+            $('input[type="checkbox"]:checked').closest('tr').addClass('table-primary');
         });
     </script>
 } 

@@ -1,0 +1,282 @@
+@model SelectIndicatorViewModel
+
+@{
+    ViewData["Title"] = "Select Indicator";
+    ViewData["Icon"] = "bi-rulers";
+    ViewData["Subtitle"] = "Select an indicator to create a new measurement";
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex align-items-center">
+        <i class="@ViewData["Icon"] me-2 text-muted"></i>
+        <p class="text-muted mb-0 flex-grow-1">@ViewData["Subtitle"]</p>
+    </div>
+
+    <div class="card-body p-0">
+        <ul class="nav nav-tabs" id="indicatorTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="kpi-tab" data-bs-toggle="tab" data-bs-target="#kpi-tab-pane"
+                    type="button" role="tab" aria-controls="kpi-tab-pane" aria-selected="true">
+                    <span class="badge bg-danger me-1">KPI</span> Key Performance Indicator
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pi-tab" data-bs-toggle="tab" data-bs-target="#pi-tab-pane" type="button"
+                    role="tab" aria-controls="pi-tab-pane" aria-selected="false">
+                    <span class="badge bg-primary me-1">PI</span> Performance Indicator
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="kri-tab" data-bs-toggle="tab" data-bs-target="#kri-tab-pane" type="button"
+                    role="tab" aria-controls="kri-tab-pane" aria-selected="false">
+                    <span class="badge bg-danger me-1">KRI</span> Key Result Indicator
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ri-tab" data-bs-toggle="tab" data-bs-target="#ri-tab-pane" type="button"
+                    role="tab" aria-controls="ri-tab-pane" aria-selected="false">
+                    <span class="badge bg-success me-1">RI</span> Result Indicator
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content p-3" id="indicatorTabsContent">
+            <!-- KPI Tab -->
+            <div class="tab-pane fade show active" id="kpi-tab-pane" role="tabpanel" aria-labelledby="kpi-tab"
+                tabindex="0">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="kpiSearch" placeholder="Tìm kiếm KPI..."
+                        aria-label="Tìm kiếm KPI">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle datatable" id="kpiTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã KPI</th>
+                                <th>Tên chỉ số</th>
+                                <th>Phòng ban</th>
+                                <th>Đo lường gần nhất</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var indicator in Model.PerformanceIndicators.Where(i => i.IsKey))
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-danger">KPI</span>
+                                        <code class="ms-1">@indicator.Code</code>
+                                    </td>
+                                    <td>@indicator.Name</td>
+                                    <td>@indicator.Department</td>
+                                    <td>
+                                        @if (indicator.LastMeasurementDate.HasValue)
+                                        {
+                                            <span>@indicator.LastMeasurementDate.Value.ToString("dd/MM/yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted"><i>Chưa có đo lường</i></span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Create" asp-route-indicatorId="@indicator.Id"
+                                            asp-route-type="@indicator.Type" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle me-1"></i> Tạo đo lường
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PI Tab -->
+            <div class="tab-pane fade" id="pi-tab-pane" role="tabpanel" aria-labelledby="pi-tab" tabindex="0">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="piSearch" placeholder="Tìm kiếm PI..."
+                        aria-label="Tìm kiếm PI">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle datatable" id="piTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã PI</th>
+                                <th>Tên chỉ số</th>
+                                <th>Phòng ban</th>
+                                <th>Đo lường gần nhất</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var indicator in Model.PerformanceIndicators.Where(i => !i.IsKey))
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-primary">PI</span>
+                                        <code class="ms-1">@indicator.Code</code>
+                                    </td>
+                                    <td>@indicator.Name</td>
+                                    <td>@indicator.Department</td>
+                                    <td>
+                                        @if (indicator.LastMeasurementDate.HasValue)
+                                        {
+                                            <span>@indicator.LastMeasurementDate.Value.ToString("dd/MM/yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted"><i>Chưa có đo lường</i></span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Create" asp-route-indicatorId="@indicator.Id"
+                                            asp-route-type="@indicator.Type" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle me-1"></i> Tạo đo lường
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- KRI Tab -->
+            <div class="tab-pane fade" id="kri-tab-pane" role="tabpanel" aria-labelledby="kri-tab" tabindex="0">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="kriSearch" placeholder="Tìm kiếm KRI..."
+                        aria-label="Tìm kiếm KRI">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle datatable" id="kriTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã KRI</th>
+                                <th>Tên chỉ số</th>
+                                <th>Phòng ban</th>
+                                <th>Đo lường gần nhất</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var indicator in Model.ResultIndicators.Where(i => i.IsKey))
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-danger">KRI</span>
+                                        <code class="ms-1">@indicator.Code</code>
+                                    </td>
+                                    <td>@indicator.Name</td>
+                                    <td>@indicator.Department</td>
+                                    <td>
+                                        @if (indicator.LastMeasurementDate.HasValue)
+                                        {
+                                            <span>@indicator.LastMeasurementDate.Value.ToString("dd/MM/yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted"><i>Chưa có đo lường</i></span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Create" asp-route-indicatorId="@indicator.Id"
+                                            asp-route-type="@indicator.Type" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle me-1"></i> Tạo đo lường
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RI Tab -->
+            <div class="tab-pane fade" id="ri-tab-pane" role="tabpanel" aria-labelledby="ri-tab" tabindex="0">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="riSearch" placeholder="Tìm kiếm RI..."
+                        aria-label="Tìm kiếm RI">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle datatable" id="riTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã RI</th>
+                                <th>Tên chỉ số</th>
+                                <th>Phòng ban</th>
+                                <th>Đo lường gần nhất</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var indicator in Model.ResultIndicators.Where(i => !i.IsKey))
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-success">RI</span>
+                                        <code class="ms-1">@indicator.Code</code>
+                                    </td>
+                                    <td>@indicator.Name</td>
+                                    <td>@indicator.Department</td>
+                                    <td>
+                                        @if (indicator.LastMeasurementDate.HasValue)
+                                        {
+                                            <span>@indicator.LastMeasurementDate.Value.ToString("dd/MM/yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted"><i>Chưa có đo lường</i></span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Create" asp-route-indicatorId="@indicator.Id"
+                                            asp-route-type="@indicator.Type" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle me-1"></i> Tạo đo lường
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Khởi tạo DataTables với tính năng tìm kiếm
+            $('.datatable').each(function () {
+                $(this).DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json'
+                    },
+                    dom: "<'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                    pageLength: 10,
+                    ordering: true,
+                    responsive: true
+                });
+            });
+
+            // Kết nối ô tìm kiếm với DataTables
+            $('#kpiSearch').on('keyup', function () {
+                $('#kpiTable').DataTable().search($(this).val()).draw();
+            });
+
+            $('#piSearch').on('keyup', function () {
+                $('#piTable').DataTable().search($(this).val()).draw();
+            });
+
+            $('#kriSearch').on('keyup', function () {
+                $('#kriTable').DataTable().search($(this).val()).draw();
+            });
+
+            $('#riSearch').on('keyup', function () {
+                $('#riTable').DataTable().search($(this).val()).draw();
+            });
+        });
+    </script>
+}

@@ -32,12 +32,12 @@ namespace KPISolution.Areas.Identity.Pages.Account.Manage
         /// </summary>
         public IActionResult OnGet()
         {
-            if (RecoveryCodes == null || RecoveryCodes.Length == 0)
+            if (this.RecoveryCodes == null || this.RecoveryCodes.Length == 0)
             {
-                return RedirectToPage("./TwoFactorAuthentication");
+                return this.RedirectToPage("./TwoFactorAuthentication");
             }
 
-            return Page();
+            return this.Page();
         }
     }
 }

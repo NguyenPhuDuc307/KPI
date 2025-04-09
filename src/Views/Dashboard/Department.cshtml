@@ -22,7 +22,7 @@
             <div class="card border-primary h-100">
                 <div class="card-body">
                     <h5 class="card-title">Tổng số KPI</h5>
-                    <div class="display-4 text-primary mb-2">@Model.TotalIndicatorCount</div>
+                    <div class="display-4 mb-2">@Model.TotalIndicatorCount</div>
                     <div class="small text-muted">Số chỉ số KPI của phòng ban</div>
                 </div>
             </div>
@@ -38,7 +38,7 @@
                     <div class="small text-muted">
                         @(Model.TotalIndicatorCount > 0 ? ((float)Model.KpiSummaries.Count(k =>
                                                 k.Status == IndicatorStatus.OnTarget) / Model.TotalIndicatorCount *
-                                                100).ToString("F1") : "0")% đạt mục tiêu</div>
+                                                100).ToString("F1") : "0") % đạt mục tiêu</div>
                 </div>
             </div>
         </div>

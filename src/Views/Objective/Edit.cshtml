@@ -69,7 +69,7 @@
                             <option value="">-- Không có mục tiêu cha --</option>
                             @foreach (var objective in ViewBag.ParentObjectives)
                             {
-                                <option value="@objective.Id">@objective.Name</option>
+                                <option value="@objective.Value">@objective.Text</option>
                             }
                         </select>
                         <span asp-validation-for="ParentObjectiveId" class="text-danger"></span>
@@ -84,7 +84,7 @@
                             <option value="">-- Chọn phòng ban --</option>
                             @foreach (var department in ViewBag.Departments)
                             {
-                                <option value="@department.Id">@department.Name</option>
+                                <option value="@department.Value">@department.Text</option>
                             }
                         </select>
                         <span asp-validation-for="DepartmentId" class="text-danger"></span>
@@ -98,7 +98,7 @@
                             {
                                 @foreach (var person in ViewBag.ResponsiblePersons)
                                 {
-                                    <option value="@person.Id">@(person.FirstName + " " + person.LastName)</option>
+                                    <option value="@person.Value">@person.Text</option>
                                 }
                             }
                         </select>

@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc;
-using KPISolution.Extensions;
-
 namespace KPISolution.Controllers
 {
     [Authorize]
@@ -77,12 +73,12 @@ namespace KPISolution.Controllers
                 this.ViewBag.Departments = new SelectList(departments, "Id", "Name");
                 this.ViewBag.Objectives = new SelectList(objectives, "Id", "Name");
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while retrieving success factor list");
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi truy xuất danh sách yếu tố thành công." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi truy xuất danh sách yếu tố thành công." });
             }
         }
 
@@ -98,7 +94,7 @@ namespace KPISolution.Controllers
                 var objective = await this._unitOfWork.Objectives.GetByIdAsync(objectiveId);
                 if (objective == null)
                 {
-                    return NotFound("Không tìm thấy mục tiêu");
+                    return this.NotFound("Không tìm thấy mục tiêu");
                 }
 
                 // Lọc theo ObjectiveId
@@ -145,15 +141,15 @@ namespace KPISolution.Controllers
                     SelectedObjectiveId = objectiveId
                 };
 
-                ViewBag.ObjectiveName = objective.Name;
-                ViewBag.ObjectiveId = objectiveId;
+                this.ViewBag.ObjectiveName = objective.Name;
+                this.ViewBag.ObjectiveId = objectiveId;
 
-                return View("Index", model);
+                return this.View("Index", model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while retrieving success factors for objective");
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi truy xuất danh sách yếu tố thành công cho mục tiêu này." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi truy xuất danh sách yếu tố thành công cho mục tiêu này." });
             }
         }
 
@@ -237,12 +233,12 @@ namespace KPISolution.Controllers
                 this.ViewBag.Departments = new SelectList(departments, "Id", "Name");
                 this.ViewBag.Objectives = new SelectList(objectives, "Id", "Name");
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while retrieving critical success factor list");
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi truy xuất danh sách yếu tố cốt lõi." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi truy xuất danh sách yếu tố cốt lõi." });
             }
         }
 
@@ -287,7 +283,7 @@ namespace KPISolution.Controllers
                 }
 
                 // Lấy lịch sử cập nhật tiến độ
-                var progressUpdates = await _unitOfWork.ProgressUpdates
+                var progressUpdates = await this._unitOfWork.ProgressUpdates
                     .GetAll()
                     .Where(p => p.SuccessFactorId == id)
                     .OrderByDescending(p => p.UpdateDate)
@@ -315,12 +311,12 @@ namespace KPISolution.Controllers
                     });
                 }
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while retrieving success factor details for ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi xem chi tiết yếu tố thành công." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi xem chi tiết yếu tố thành công." });
             }
         }
 
@@ -362,12 +358,12 @@ namespace KPISolution.Controllers
                     }
                 }
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while displaying success factor create form");
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi tải form tạo yếu tố thành công." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi tải form tạo yếu tố thành công." });
             }
         }
 
@@ -415,7 +411,7 @@ namespace KPISolution.Controllers
                 else
                 {
                     // Log validation errors
-                    foreach (var modelState in ModelState.Values)
+                    foreach (var modelState in this.ModelState.Values)
                     {
                         foreach (var error in modelState.Errors)
                         {
@@ -447,7 +443,7 @@ namespace KPISolution.Controllers
                     }
                 }
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
@@ -482,7 +478,7 @@ namespace KPISolution.Controllers
                     }
                 }
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
         }
 
@@ -520,12 +516,12 @@ namespace KPISolution.Controllers
                 this.ViewBag.ParentSuccessFactors = new SelectList(parentSuccessFactors, "Id", "Name", successFactor.ParentId);
                 this.ViewBag.Departments = new SelectList(departments, "Id", "Name", successFactor.DepartmentId);
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while editing success factor with ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi sửa yếu tố thành công." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi sửa yếu tố thành công." });
             }
         }
 
@@ -568,9 +564,10 @@ namespace KPISolution.Controllers
                         existingSuccessFactor.ObjectiveId = model.ObjectiveId;
                         existingSuccessFactor.DepartmentId = model.DepartmentId;
                         existingSuccessFactor.ProgressPercentage = model.ProgressPercentage;
-                        existingSuccessFactor.StartDate = model.StartDate ?? DateTime.Now;
-                        existingSuccessFactor.TargetDate = model.TargetDate ?? DateTime.Now.AddYears(1);
-                        existingSuccessFactor.UpdatedAt = DateTime.Now;
+                        existingSuccessFactor.RiskLevel = model.RiskLevel;
+                        existingSuccessFactor.StartDate = model.StartDate ?? DateTime.UtcNow;
+                        existingSuccessFactor.TargetDate = model.TargetDate ?? DateTime.UtcNow.AddYears(1);
+                        existingSuccessFactor.UpdatedAt = DateTime.UtcNow;
 
                         // Update in database
                         this._unitOfWork.SuccessFactors.Update(existingSuccessFactor);
@@ -609,12 +606,12 @@ namespace KPISolution.Controllers
                 this.ViewBag.Objectives = new SelectList(objectives, "Id", "Name", model.ObjectiveId);
                 this.ViewBag.ParentSuccessFactors = new SelectList(parentSuccessFactors, "Id", "Name", model.ParentId);
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while processing edit for success factor with ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi cập nhật yếu tố thành công." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi cập nhật yếu tố thành công." });
             }
         }
 
@@ -639,12 +636,12 @@ namespace KPISolution.Controllers
                 // Map to view model
                 var viewModel = this._mapper?.Map<SuccessFactorDetailsViewModel>(successFactor) ?? new SuccessFactorDetailsViewModel();
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while displaying success factor delete confirmation for ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi tải trang xác nhận xóa yếu tố thành công." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi tải trang xác nhận xóa yếu tố thành công." });
             }
         }
 
@@ -674,7 +671,7 @@ namespace KPISolution.Controllers
                     this._logger.LogWarning("Cannot delete success factor with ID {Id} because it has child success factors", id);
                     this.ModelState.AddModelError("", "Không thể xóa yếu tố thành công này vì nó có các yếu tố thành công con.");
                     var viewModel = this._mapper?.Map<SuccessFactorDetailsViewModel>(successFactor) ?? new SuccessFactorDetailsViewModel();
-                    return View(viewModel);
+                    return this.View(viewModel);
                 }
 
                 // Check if has related indicators
@@ -691,7 +688,7 @@ namespace KPISolution.Controllers
                     this._logger.LogWarning("Cannot delete success factor with ID {Id} because it has related indicators", id);
                     this.ModelState.AddModelError("", "Không thể xóa yếu tố thành công này vì nó có các chỉ số hiệu suất hoặc chỉ số kết quả liên quan.");
                     var viewModel = this._mapper?.Map<SuccessFactorDetailsViewModel>(successFactor) ?? new SuccessFactorDetailsViewModel();
-                    return View(viewModel);
+                    return this.View(viewModel);
                 }
 
                 // Delete and save changes
@@ -705,7 +702,7 @@ namespace KPISolution.Controllers
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while deleting success factor with ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi xóa yếu tố thành công." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi xóa yếu tố thành công." });
             }
         }
 
@@ -719,14 +716,14 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Truy cập trang cập nhật tiến độ cho Success Factor ID: {SuccessFactorId}", id);
+                this._logger.LogInformation("Truy cập trang cập nhật tiến độ cho Success Factor ID: {SuccessFactorId}", id);
 
                 // Lấy thông tin Success Factor từ repository
-                var successFactor = await _unitOfWork.SuccessFactors.GetByIdAsync(id);
+                var successFactor = await this._unitOfWork.SuccessFactors.GetByIdAsync(id);
                 if (successFactor == null)
                 {
-                    _logger.LogWarning("Không tìm thấy Success Factor với ID: {SuccessFactorId}", id);
-                    return NotFound();
+                    this._logger.LogWarning("Không tìm thấy Success Factor với ID: {SuccessFactorId}", id);
+                    return this.NotFound();
                 }
 
                 // Tạo view model
@@ -745,13 +742,13 @@ namespace KPISolution.Controllers
                     TargetDate = successFactor.TargetDate
                 };
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi hiển thị trang cập nhật tiến độ cho Success Factor ID: {SuccessFactorId}", id);
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải thông tin cập nhật tiến độ. Vui lòng thử lại.";
-                return RedirectToAction(nameof(Index));
+                this._logger.LogError(ex, "Lỗi khi hiển thị trang cập nhật tiến độ cho Success Factor ID: {SuccessFactorId}", id);
+                this.TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải thông tin cập nhật tiến độ. Vui lòng thử lại.";
+                return this.RedirectToAction(nameof(this.Index));
             }
         }
 
@@ -766,19 +763,19 @@ namespace KPISolution.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
+                if (!this.ModelState.IsValid)
                 {
-                    _logger.LogWarning("Dữ liệu không hợp lệ khi cập nhật tiến độ cho Success Factor ID: {SuccessFactorId}", model.SuccessFactorId);
-                    return View(model);
+                    this._logger.LogWarning("Dữ liệu không hợp lệ khi cập nhật tiến độ cho Success Factor ID: {SuccessFactorId}", model.SuccessFactorId);
+                    return this.View(model);
                 }
 
                 // Lấy thông tin Success Factor từ repository
-                var successFactor = await _unitOfWork.SuccessFactors.GetByIdAsync(model.SuccessFactorId);
+                var successFactor = await this._unitOfWork.SuccessFactors.GetByIdAsync(model.SuccessFactorId);
                 if (successFactor == null)
                 {
-                    _logger.LogWarning("Không tìm thấy Success Factor với ID: {SuccessFactorId}", model.SuccessFactorId);
-                    ModelState.AddModelError(string.Empty, "Không tìm thấy yếu tố thành công này.");
-                    return View(model);
+                    this._logger.LogWarning("Không tìm thấy Success Factor với ID: {SuccessFactorId}", model.SuccessFactorId);
+                    this.ModelState.AddModelError(string.Empty, "Không tìm thấy yếu tố thành công này.");
+                    return this.View(model);
                 }
 
                 // Lưu thông tin cập nhật tiến độ
@@ -800,7 +797,7 @@ namespace KPISolution.Controllers
                     NeedsAttention = model.NeedsAttention,
                     AttentionReason = model.AttentionReason,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = User.Identity?.Name ?? "System"
+                    CreatedBy = this.User.Identity?.Name ?? "System"
                 };
 
                 // Cập nhật thông tin mới cho Success Factor
@@ -810,20 +807,20 @@ namespace KPISolution.Controllers
                 successFactor.LastUpdated = DateTime.UtcNow;
 
                 // Lưu thay đổi vào database
-                _unitOfWork.SuccessFactors.Update(successFactor);
-                await _unitOfWork.ProgressUpdates.AddAsync(progressUpdate);
-                await _unitOfWork.CompleteAsync();
+                this._unitOfWork.SuccessFactors.Update(successFactor);
+                await this._unitOfWork.ProgressUpdates.AddAsync(progressUpdate);
+                await this._unitOfWork.CompleteAsync();
 
-                _logger.LogInformation("Đã cập nhật tiến độ thành công cho Success Factor ID: {SuccessFactorId}", model.SuccessFactorId);
-                TempData["SuccessMessage"] = "Cập nhật tiến độ thành công.";
+                this._logger.LogInformation("Đã cập nhật tiến độ thành công cho Success Factor ID: {SuccessFactorId}", model.SuccessFactorId);
+                this.TempData["SuccessMessage"] = "Cập nhật tiến độ thành công.";
 
-                return RedirectToAction(nameof(Details), new { id = model.SuccessFactorId });
+                return this.RedirectToAction(nameof(this.Details), new { id = model.SuccessFactorId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi cập nhật tiến độ cho Success Factor ID: {SuccessFactorId}", model.SuccessFactorId);
-                ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi cập nhật tiến độ. Vui lòng thử lại.");
-                return View(model);
+                this._logger.LogError(ex, "Lỗi khi cập nhật tiến độ cho Success Factor ID: {SuccessFactorId}", model.SuccessFactorId);
+                this.ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi cập nhật tiến độ. Vui lòng thử lại.");
+                return this.View(model);
             }
         }
 
@@ -835,17 +832,17 @@ namespace KPISolution.Controllers
             {
                 if (string.IsNullOrEmpty(code))
                 {
-                    return Json(new { exists = false });
+                    return this.Json(new { exists = false });
                 }
 
                 bool exists = await this._unitOfWork.SuccessFactors.ExistsAsync(sf => sf.Code == code);
 
-                return Json(new { exists });
+                return this.Json(new { exists });
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error checking if success factor code exists");
-                return Json(new { error = "Lỗi khi kiểm tra mã yếu tố thành công" });
+                return this.Json(new { error = "Lỗi khi kiểm tra mã yếu tố thành công" });
             }
         }
 
@@ -874,12 +871,12 @@ namespace KPISolution.Controllers
                 var model = this._mapper?.Map<List<SuccessFactorListItemViewModel>>(successFactorsWithoutDepartment)
                     ?? new List<SuccessFactorListItemViewModel>();
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while loading assign departments page");
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi tải trang gán phòng ban." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi tải trang gán phòng ban." });
             }
         }
 
@@ -894,19 +891,19 @@ namespace KPISolution.Controllers
                 var successFactor = await this._unitOfWork.SuccessFactors.GetByIdAsync(id);
                 if (successFactor == null)
                 {
-                    return NotFound();
+                    return this.NotFound();
                 }
 
                 successFactor.DepartmentId = departmentId;
                 this._unitOfWork.SuccessFactors.Update(successFactor);
                 await this._unitOfWork.SaveChangesAsync();
 
-                return RedirectToAction(nameof(AssignDepartments));
+                return this.RedirectToAction(nameof(this.AssignDepartments));
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while assigning department");
-                return View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi gán phòng ban." });
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi gán phòng ban." });
             }
         }
 
@@ -922,21 +919,21 @@ namespace KPISolution.Controllers
         {
             try
             {
-                _logger.LogInformation("Xóa bản ghi cập nhật tiến độ ID: {ProgressUpdateId}", id);
+                this._logger.LogInformation("Xóa bản ghi cập nhật tiến độ ID: {ProgressUpdateId}", id);
 
                 // Kiểm tra sự tồn tại của bản ghi cập nhật
-                var progressUpdate = await _unitOfWork.ProgressUpdates
+                var progressUpdate = await this._unitOfWork.ProgressUpdates
                     .FirstOrDefaultAsync(p => p.Id == id && p.SuccessFactorId == successFactorId);
 
                 if (progressUpdate == null)
                 {
-                    _logger.LogWarning("Không tìm thấy bản ghi cập nhật tiến độ ID: {ProgressUpdateId}", id);
-                    TempData["ErrorMessage"] = "Không tìm thấy bản ghi cập nhật tiến độ.";
-                    return RedirectToAction(nameof(Details), new { id = successFactorId });
+                    this._logger.LogWarning("Không tìm thấy bản ghi cập nhật tiến độ ID: {ProgressUpdateId}", id);
+                    this.TempData["ErrorMessage"] = "Không tìm thấy bản ghi cập nhật tiến độ.";
+                    return this.RedirectToAction(nameof(this.Details), new { id = successFactorId });
                 }
 
                 // Kiểm tra xem có phải là bản ghi mới nhất không
-                var isLatestUpdate = await _unitOfWork.ProgressUpdates
+                var isLatestUpdate = await this._unitOfWork.ProgressUpdates
                     .GetAll()
                     .Where(p => p.SuccessFactorId == successFactorId)
                     .OrderByDescending(p => p.UpdateDate)
@@ -947,7 +944,7 @@ namespace KPISolution.Controllers
                 if (isLatestUpdate)
                 {
                     // Tìm bản ghi cũ nhất trước bản ghi hiện tại
-                    var previousUpdate = await _unitOfWork.ProgressUpdates
+                    var previousUpdate = await this._unitOfWork.ProgressUpdates
                         .GetAll()
                         .Where(p => p.SuccessFactorId == successFactorId && p.Id != id)
                         .OrderByDescending(p => p.UpdateDate)
@@ -957,7 +954,7 @@ namespace KPISolution.Controllers
                     if (previousUpdate != null)
                     {
                         // Lấy Success Factor và cập nhật lại thông tin
-                        var successFactor = await _unitOfWork.SuccessFactors.GetByIdAsync(successFactorId);
+                        var successFactor = await this._unitOfWork.SuccessFactors.GetByIdAsync(successFactorId);
                         if (successFactor != null)
                         {
                             successFactor.ProgressPercentage = previousUpdate.ProgressPercentage;
@@ -965,25 +962,25 @@ namespace KPISolution.Controllers
                             successFactor.RiskLevel = previousUpdate.RiskLevel;
                             successFactor.LastUpdated = DateTime.UtcNow;
 
-                            _unitOfWork.SuccessFactors.Update(successFactor);
+                            this._unitOfWork.SuccessFactors.Update(successFactor);
                         }
                     }
                 }
 
                 // Xóa bản ghi cập nhật
-                await _unitOfWork.Repository<ProgressUpdate>().DeleteAsync(progressUpdate);
-                await _unitOfWork.CompleteAsync();
+                await this._unitOfWork.Repository<ProgressUpdate>().DeleteAsync(progressUpdate);
+                await this._unitOfWork.CompleteAsync();
 
-                _logger.LogInformation("Đã xóa bản ghi cập nhật tiến độ ID: {ProgressUpdateId}", id);
-                TempData["SuccessMessage"] = "Đã xóa bản ghi cập nhật tiến độ thành công.";
+                this._logger.LogInformation("Đã xóa bản ghi cập nhật tiến độ ID: {ProgressUpdateId}", id);
+                this.TempData["SuccessMessage"] = "Đã xóa bản ghi cập nhật tiến độ thành công.";
 
-                return RedirectToAction(nameof(Details), new { id = successFactorId });
+                return this.RedirectToAction(nameof(this.Details), new { id = successFactorId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xóa bản ghi cập nhật tiến độ ID: {ProgressUpdateId}", id);
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa bản ghi cập nhật tiến độ.";
-                return RedirectToAction(nameof(Details), new { id = successFactorId });
+                this._logger.LogError(ex, "Lỗi khi xóa bản ghi cập nhật tiến độ ID: {ProgressUpdateId}", id);
+                this.TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa bản ghi cập nhật tiến độ.";
+                return this.RedirectToAction(nameof(this.Details), new { id = successFactorId });
             }
         }
     }

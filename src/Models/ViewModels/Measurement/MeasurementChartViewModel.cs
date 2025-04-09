@@ -9,7 +9,7 @@ namespace KPISolution.Models.ViewModels.Measurement
         public string Unit { get; set; } = string.Empty;
         public List<string> Labels { get; set; } = new();
         public List<decimal> ActualValues { get; set; } = new();
-        public string ChartTitle => $"Biểu đồ theo dõi {IndicatorName}";
-        public string YAxisLabel => $"Giá trị ({Unit})";
+        public string ChartTitle => $"Biểu đồ theo dõi {this.IndicatorName}";
+        public string YAxisLabel => $"Giá trị ({this.Unit})";
     }
 } 

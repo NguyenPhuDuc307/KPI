@@ -92,14 +92,14 @@ namespace KPISolution.Data
                         },
                         Permissions = roleName switch
                         {
-                            "Administrator" => KPISolution.Models.Entities.Identity.IndicatorPermission.Admin,
-                            "Manager" => KPISolution.Models.Entities.Identity.IndicatorPermission.View | KPISolution.Models.Entities.Identity.IndicatorPermission.Create | KPISolution.Models.Entities.Identity.IndicatorPermission.Edit | KPISolution.Models.Entities.Identity.IndicatorPermission.Assign | KPISolution.Models.Entities.Identity.IndicatorPermission.ViewAll,
-                            "DepartmentManager" => KPISolution.Models.Entities.Identity.IndicatorPermission.View | KPISolution.Models.Entities.Identity.IndicatorPermission.Create | KPISolution.Models.Entities.Identity.IndicatorPermission.Edit | KPISolution.Models.Entities.Identity.IndicatorPermission.Assign | KPISolution.Models.Entities.Identity.IndicatorPermission.ViewAll,
-                            "CMO" => KPISolution.Models.Entities.Identity.IndicatorPermission.View | KPISolution.Models.Entities.Identity.IndicatorPermission.ViewAll | KPISolution.Models.Entities.Identity.IndicatorPermission.Export, // Quyền xem và xuất dữ liệu
-                            "IndicatorOwner" => KPISolution.Models.Entities.Identity.IndicatorPermission.View | KPISolution.Models.Entities.Identity.IndicatorPermission.Edit, // Quyền xem và sửa chỉ số mình sở hữu
-                            "User" => KPISolution.Models.Entities.Identity.IndicatorPermission.View, // Chỉ quyền xem
-                            "Guest" => KPISolution.Models.Entities.Identity.IndicatorPermission.None,
-                            _ => KPISolution.Models.Entities.Identity.IndicatorPermission.None
+                            "Administrator" => IndicatorPermission.Admin,
+                            "Manager" => IndicatorPermission.View | IndicatorPermission.Create | IndicatorPermission.Edit | IndicatorPermission.Assign | IndicatorPermission.ViewAll,
+                            "DepartmentManager" => IndicatorPermission.View | IndicatorPermission.Create | IndicatorPermission.Edit | IndicatorPermission.Assign | IndicatorPermission.ViewAll,
+                            "CMO" => IndicatorPermission.View | IndicatorPermission.ViewAll | IndicatorPermission.Export, // Quyền xem và xuất dữ liệu
+                            "IndicatorOwner" => IndicatorPermission.View | IndicatorPermission.Edit, // Quyền xem và sửa chỉ số mình sở hữu
+                            "User" => IndicatorPermission.View, // Chỉ quyền xem
+                            "Guest" => IndicatorPermission.None,
+                            _ => IndicatorPermission.None
                         }
                     };
                     await roleManager.CreateAsync(role);
@@ -115,7 +115,7 @@ namespace KPISolution.Data
             var users = new List<ApplicationUser>();
 
             // Create admin user if it doesn't exist
-            var adminEmail = "admin@kpiapp.com";
+            var adminEmail = "admin@deha.com";
             var admin = await userManager.FindByEmailAsync(adminEmail);
 
             if (admin == null)
@@ -125,9 +125,9 @@ namespace KPISolution.Data
                     UserName = adminEmail,
                     Email = adminEmail,
                     EmailConfirmed = true,
-                    FirstName = "System",
-                    LastName = "Administrator",
-                    JobTitle = "System Administrator",
+                    FirstName = "Đức",
+                    LastName = "Nguyễn Phú",
+                    JobTitle = "Quản trị hệ thống",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     IsKpiOwner = true,
@@ -147,7 +147,7 @@ namespace KPISolution.Data
             }
 
             // Create executive user
-            var executiveEmail = "ceo@kpiapp.com";
+            var executiveEmail = "anhnt@deha.com";
             var executive = await userManager.FindByEmailAsync(executiveEmail);
 
             if (executive == null)
@@ -157,9 +157,9 @@ namespace KPISolution.Data
                     UserName = executiveEmail,
                     Email = executiveEmail,
                     EmailConfirmed = true,
-                    FirstName = "Jane",
-                    LastName = "Smith",
-                    JobTitle = "Chief Executive Officer",
+                    FirstName = "Nguyễn",
+                    LastName = "Tuấn Anh",
+                    JobTitle = "Giám đốc điều hành",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     IsKpiOwner = true,
@@ -181,11 +181,11 @@ namespace KPISolution.Data
             // Create department managers
             var departmentManagers = new List<(string email, string firstName, string lastName, string jobTitle)>
             {
-                ("finance@kpiapp.com", "Michael", "Johnson", "Finance Director"),
-                ("marketing@kpiapp.com", "Sarah", "Williams", "Marketing Director"),
-                ("operations@kpiapp.com", "Robert", "Brown", "Operations Director"),
-                ("hr@kpiapp.com", "Emily", "Davis", "HR Director"),
-                ("it@kpiapp.com", "David", "Miller", "IT Director")
+                ("huongdt@deha.com", "Đỗ", "Thanh Hương", "Giám đốc Tài chính"),
+                ("thuypt@deha.com", "Phạm", "Thanh Thủy", "Giám đốc Marketing"),
+                ("minhvq@deha.com", "Vũ", "Quang Minh", "Giám đốc Vận hành"),
+                ("hoangnm@deha.com", "Nguyễn", "Minh Hoàng", "Giám đốc Nhân sự"),
+                ("ducnp@deha.com", "Nguyễn", "Phú Đức", "Giám đốc CNTT")
             };
 
             foreach (var manager in departmentManagers)
@@ -225,9 +225,9 @@ namespace KPISolution.Data
             // Create analysts
             var analysts = new List<(string email, string firstName, string lastName, string jobTitle)>
             {
-                ("analyst1@kpiapp.com", "Alex", "Turner", "Data Analyst"),
-                ("analyst2@kpiapp.com", "Nina", "Garcia", "Business Analyst"),
-                ("analyst3@kpiapp.com", "Thomas", "Wilson", "Performance Analyst")
+                ("tunglt@deha.com", "Lê", "Thanh Tùng", "Chuyên viên phân tích dữ liệu"),
+                ("thuynt@deha.com", "Nguyễn", "Thanh Thủy", "Chuyên viên phân tích kinh doanh"),
+                ("hungpv@deha.com", "Phạm", "Văn Hùng", "Chuyên viên phân tích hiệu suất")
             };
 
             foreach (var analyst in analysts)
@@ -266,14 +266,14 @@ namespace KPISolution.Data
             // Create regular users
             var regularUsers = new List<(string email, string firstName, string lastName, string jobTitle)>
             {
-                ("user1@kpiapp.com", "Jessica", "Parker", "Marketing Specialist"),
-                ("user2@kpiapp.com", "John", "Adams", "Sales Representative"),
-                ("user3@kpiapp.com", "Lisa", "Chen", "HR Specialist"),
-                ("user4@kpiapp.com", "Mark", "Taylor", "IT Support Specialist"),
-                ("user5@kpiapp.com", "Amanda", "Lopez", "Financial Analyst"),
-                ("user6@kpiapp.com", "Kevin", "Wilson", "Customer Support Specialist"),
-                ("user7@kpiapp.com", "Rachel", "Murphy", "Operations Coordinator"),
-                ("user8@kpiapp.com", "Daniel", "Martin", "Product Manager")
+                ("linhnt@deha.com", "Nguyễn", "Thùy Linh", "Chuyên viên Marketing"),
+                ("anhnv@deha.com", "Nguyễn", "Văn Anh", "Đại diện Kinh doanh"),
+                ("hatt@deha.com", "Trần", "Thanh Hà", "Chuyên viên Nhân sự"),
+                ("namnd@deha.com", "Nguyễn", "Đức Nam", "Chuyên viên hỗ trợ CNTT"),
+                ("maitt@deha.com", "Trần", "Thị Mai", "Chuyên viên phân tích tài chính"),
+                ("trungdk@deha.com", "Đặng", "Kim Trung", "Chuyên viên Hỗ trợ khách hàng"),
+                ("huongtt@deha.com", "Trần", "Thị Hương", "Điều phối viên vận hành"),
+                ("longnh@deha.com", "Nguyễn", "Hoàng Long", "Quản lý sản phẩm")
             };
 
             foreach (var regularUser in regularUsers)

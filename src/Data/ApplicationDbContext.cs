@@ -7,12 +7,15 @@ namespace KPISolution.Data
     /// </summary>
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IndicatorRole, string>
     {
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+
         /// <summary>
         /// Constructor
         /// </summary>
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor? httpContextAccessor = null)
             : base(options)
         {
+            this._httpContextAccessor = httpContextAccessor;
         }
 
         // Identity DbSets
@@ -42,6 +45,62 @@ namespace KPISolution.Data
 
         // Progress
         public DbSet<ProgressUpdate> ProgressUpdates { get; set; } = null!;
+
+        /// <summary>
+        /// Override SaveChanges to automatically update audit fields for BaseEntity objects
+        /// </summary>
+        public override int SaveChanges()
+        {
+            this.UpdateAuditFields();
+            return base.SaveChanges();
+        }
+
+        /// <summary>
+        /// Override SaveChangesAsync to automatically update audit fields for BaseEntity objects
+        /// </summary>
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            this.UpdateAuditFields();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Updates audit fields (CreatedAt, CreatedBy, UpdatedAt, UpdatedBy) for all modified entities
+        /// </summary>
+        private void UpdateAuditFields()
+        {
+            var currentTime = DateTime.UtcNow;
+            string? currentUser = this.GetCurrentUser();
+
+            foreach (var entry in this.ChangeTracker.Entries<BaseEntity>())
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entry.Entity.CreatedAt = currentTime;
+                        entry.Entity.CreatedBy = currentUser ?? "System";
+                        entry.Entity.IsActive = true;
+                        break;
+
+                    case EntityState.Modified:
+                        entry.Entity.UpdatedAt = currentTime;
+                        entry.Entity.UpdatedBy = currentUser;
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the current user's name/id from HttpContext
+        /// </summary>
+        private string? GetCurrentUser()
+        {
+            if (this._httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true)
+            {
+                return this._httpContextAccessor.HttpContext.User.Identity.Name;
+            }
+            return null;
+        }
 
         /// <summary>
         /// Configure the entity relationships

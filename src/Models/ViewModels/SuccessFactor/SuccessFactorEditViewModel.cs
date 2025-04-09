@@ -53,5 +53,9 @@ namespace KPISolution.Models.ViewModels.SuccessFactor
         [Display(Name = "Target Date")]
         [DataType(DataType.Date)]
         public DateTime? TargetDate { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng chọn mức độ rủi ro")]
+        [Display(Name = "Risk Level")]
+        public RiskLevel RiskLevel { get; set; } = RiskLevel.Low;
     }
 }

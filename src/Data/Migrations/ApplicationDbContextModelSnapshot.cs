@@ -597,9 +597,6 @@ namespace KPISolution.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int?>("ContributionPercentage")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -610,9 +607,9 @@ namespace KPISolution.Data.Migrations
                     b.Property<decimal?>("CurrentValue")
                         .HasColumnType("decimal(18,4)");
 
-                    b.Property<int?>("DataSource")
+                    b.Property<string>("DataSource")
                         .HasMaxLength(100)
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid?>("DepartmentId")
                         .HasColumnType("uniqueidentifier");
@@ -620,9 +617,6 @@ namespace KPISolution.Data.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("Direction")
-                        .HasColumnType("int");
 
                     b.Property<string>("Formula")
                         .HasMaxLength(500)
@@ -643,21 +637,18 @@ namespace KPISolution.Data.Migrations
                     b.Property<DateTime?>("LastUpdated")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("MaxAlertThreshold")
-                        .HasColumnType("decimal(18,4)");
-
                     b.Property<decimal?>("MaximumValue")
                         .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("MeasurementDirection")
+                        .HasColumnType("int");
 
                     b.Property<int>("MeasurementFrequency")
                         .HasColumnType("int");
 
-                    b.Property<int?>("MeasurementScope")
+                    b.Property<string>("MeasurementScope")
                         .HasMaxLength(200)
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("MinAlertThreshold")
-                        .HasColumnType("decimal(18,4)");
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal?>("MinimumValue")
                         .HasColumnType("decimal(18,4)");
@@ -673,15 +664,12 @@ namespace KPISolution.Data.Migrations
                     b.Property<int?>("ProcessArea")
                         .HasColumnType("int");
 
-                    b.Property<string>("ResponsibleManagerId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("ResponsiblePersonId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("ResultType")
+                    b.Property<string>("ResultType")
                         .HasMaxLength(50)
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -692,13 +680,14 @@ namespace KPISolution.Data.Migrations
                     b.Property<decimal?>("TargetValue")
                         .HasColumnType("decimal(18,4)");
 
-                    b.Property<int?>("TimeFrame")
+                    b.Property<string>("TimeFrame")
                         .HasMaxLength(50)
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("Unit")
+                    b.Property<string>("Unit")
+                        .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -706,11 +695,12 @@ namespace KPISolution.Data.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("Weight")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DepartmentId");
-
-                    b.HasIndex("ResponsibleManagerId");
 
                     b.HasIndex("ResponsiblePersonId");
 
@@ -1618,10 +1608,6 @@ namespace KPISolution.Data.Migrations
                         .WithMany()
                         .HasForeignKey("DepartmentId");
 
-                    b.HasOne("KPISolution.Models.Entities.Identity.ApplicationUser", "ResponsibleManager")
-                        .WithMany()
-                        .HasForeignKey("ResponsibleManagerId");
-
                     b.HasOne("KPISolution.Models.Entities.Identity.ApplicationUser", "ResponsiblePerson")
                         .WithMany()
                         .HasForeignKey("ResponsiblePersonId");
@@ -1633,8 +1619,6 @@ namespace KPISolution.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Department");
-
-                    b.Navigation("ResponsibleManager");
 
                     b.Navigation("ResponsiblePerson");
 

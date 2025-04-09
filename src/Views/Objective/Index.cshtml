@@ -1,11 +1,12 @@
 @using Microsoft.AspNetCore.Mvc.TagHelpers
-@using KPISolution.Models.Enums.Object
 @model ObjectiveListViewModel
 
 @{
     ViewData["Title"] = "Objectives";
     ViewData["Icon"] = "bi-bullseye";
     ViewData["Subtitle"] = "Manage strategic objectives of the organization";
+    ViewData["PrimaryButton"] = ("Thêm mới", "Objective", "Create", "", "bi-plus-circle");
+    ViewData["SecondaryButton"] = ("Xem cấu trúc cây", "Objective", "TreeView", "", "bi-diagram-3");
 }
 
 @section Styles {
@@ -25,84 +26,78 @@
     </style>
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i>Thêm mới
-        </a>
-        <a asp-action="TreeView" class="btn btn-outline-primary">
-            <i class="bi bi-diagram-3 me-1"></i>Xem cấu trúc cây
-        </a>
-    </div>
-</div>
-
 <div class="card shadow-sm mb-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-search me-2"></i>Tìm kiếm và lọc</h5>
+    <div class="card-header" role="button" data-bs-toggle="collapse" data-bs-target="#searchCollapse" aria-expanded="false">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-search me-2"></i>Tìm kiếm và lọc</h5>
+            <i class="bi bi-chevron-down"></i>
+        </div>
     </div>
-    <div class="card-body p-4">
-        <form method="get" asp-action="Index" id="searchForm">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="mb-3">
-                        <label asp-for="SearchTerm" class="form-label">Tìm kiếm</label>
-                        <input asp-for="SearchTerm" class="form-control" placeholder="Tìm theo tên mục tiêu" />
+    <div class="collapse" id="searchCollapse">
+        <div class="card-body p-4">
+            <form method="get" asp-action="Index" id="searchForm">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label asp-for="SearchTerm" class="form-label">Tìm kiếm</label>
+                            <input asp-for="SearchTerm" class="form-control" placeholder="Tìm theo tên mục tiêu" />
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label asp-for="SelectedPerspective" class="form-label">Khía cạnh kinh doanh</label>
+                            <select asp-for="SelectedPerspective" class="form-select"
+                                asp-items="ViewBag.BusinessPerspectives">
+                                <option value="">-- Tất cả khía cạnh --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label asp-for="SelectedTimeframe" class="form-label">Khung thời gian</label>
+                            <select asp-for="SelectedTimeframe" class="form-select" asp-items="ViewBag.TimeFrames">
+                                <option value="">-- Tất cả khung thời gian --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label asp-for="SelectedStatus" class="form-label">Trạng thái</label>
+                            <select asp-for="SelectedStatus" class="form-select" asp-items="ViewBag.Statuses">
+                                <option value="">-- Tất cả trạng thái --</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="mb-3">
-                        <label asp-for="SelectedPerspective" class="form-label">Khía cạnh kinh doanh</label>
-                        <select asp-for="SelectedPerspective" class="form-select"
-                            asp-items="ViewBag.BusinessPerspectives">
-                            <option value="">-- Tất cả khía cạnh --</option>
-                        </select>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label asp-for="SelectedYear" class="form-label">Năm</label>
+                            <select asp-for="SelectedYear" class="form-select" asp-items="ViewBag.Years">
+                                <option value="">-- Tất cả các năm --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mb-3 pt-4 mt-2">
+                            <input asp-for="ShowOnlyTopLevel" class="form-check-input" type="checkbox" />
+                            <label asp-for="ShowOnlyTopLevel" class="form-check-label">Chỉ hiển thị mục tiêu cấp cao
+                                nhất</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end mb-3">
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i> Tìm
+                            kiếm</button>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="mb-3">
-                        <label asp-for="SelectedTimeframe" class="form-label">Khung thời gian</label>
-                        <select asp-for="SelectedTimeframe" class="form-select" asp-items="ViewBag.TimeFrames">
-                            <option value="">-- Tất cả khung thời gian --</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="mb-3">
-                        <label asp-for="SelectedStatus" class="form-label">Trạng thái</label>
-                        <select asp-for="SelectedStatus" class="form-select" asp-items="ViewBag.Statuses">
-                            <option value="">-- Tất cả trạng thái --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="mb-3">
-                        <label asp-for="SelectedYear" class="form-label">Năm</label>
-                        <select asp-for="SelectedYear" class="form-select" asp-items="ViewBag.Years">
-                            <option value="">-- Tất cả các năm --</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-check mb-3 pt-4 mt-2">
-                        <input asp-for="ShowOnlyTopLevel" class="form-check-input" type="checkbox" />
-                        <label asp-for="ShowOnlyTopLevel" class="form-check-label">Chỉ hiển thị mục tiêu cấp cao
-                            nhất</label>
-                    </div>
-                </div>
-                <div class="col-md-3 d-flex align-items-end mb-3">
-                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i> Tìm
-                        kiếm</button>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 
 <div class="card shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 text-primary"><i class="bi bi-list-check me-2"></i>Danh sách mục tiêu</h5>
+        <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Danh sách mục tiêu</h5>
         <div>
             <button id="btnExportExcel" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-download me-1"></i>Xuất Excel
@@ -147,8 +142,8 @@
                             <td>
                                 <div class="progress" style="height: 20px;">
                                     <div class="progress-bar @(item.ProgressPercentage >= 75 ? "bg-success" : 
-                                                                                                                                                                                                                                                                                                                    item.ProgressPercentage >= 50 ? "bg-info" : 
-                                                                                                                                                                                                                                                                                                                    item.ProgressPercentage >= 25 ? "bg-warning" : "bg-danger")"
+                                                                                                                                                                                                                                                                                                                            item.ProgressPercentage >= 50 ? "bg-info" :
+                                                                                                                                                                                                                                                                                                                            item.ProgressPercentage >= 25 ? "bg-warning" : "bg-danger")"
                                 role="progressbar" style="width: @item.ProgressPercentage%"
                                 aria-valuenow="@item.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
                                 @item.ProgressPercentage%
@@ -158,10 +153,10 @@
                     <td>
                         <span
                             class="badge @(item.Status == ObjectiveStatus.Completed ? "bg-success" :
-                                                                                                                                                                                                                          item.Status == ObjectiveStatus.InProgress ? "bg-info" :
-                                                                                                                                                                                                                          item.Status == ObjectiveStatus.AtRisk ? "bg-warning" :
-                                                                                                                                                                                                                          item.Status == ObjectiveStatus.Delayed ? "bg-danger" :
-                                                                                                                                                                                                                          item.Status == ObjectiveStatus.Cancelled ? "bg-secondary" : "bg-primary")">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    item.Status == ObjectiveStatus.InProgress ? "bg-info" :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    item.Status == ObjectiveStatus.AtRisk ? "bg-warning" :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    item.Status == ObjectiveStatus.Delayed ? "bg-danger" :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    item.Status == ObjectiveStatus.Cancelled ? "bg-secondary" : "bg-primary")">
                             @item.Status
                         </span>
                     </td>

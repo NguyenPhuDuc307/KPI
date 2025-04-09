@@ -2,26 +2,29 @@
 @model List<DepartmentHierarchyViewModel>
 
 @{
-    ViewData["Title"] = "Cấu trúc phòng ban";
-    ViewData["Subtitle"] = "Hiển thị cấu trúc phòng ban dạng cây";
+    ViewData["Title"] = "Department Hierarchy";
+    ViewData["Subtitle"] = "View the organizational structure as a hierarchy";
     ViewData["Icon"] = "bi-diagram-3";
-}
+    ViewData["ShowButtons"] = true;
+    
+    // Remove PrimaryButton as this view IS the hierarchy view now
+    // ViewData["PrimaryButton"] = (
+    //     "Xem phân cấp phòng ban", // Text
+    //     "Department", // Controller
+    //     "Hierarchy", // Action
+    //     "", // Id
+    //     "bi-diagram-2" // Icon
+    // );
 
-<div class="row mb-3">
-    <div class="col-md-6">
-        <h4 class="text-primary">
-            <i class="bi bi-diagram-3"></i> Cấu trúc phòng ban
-        </h4>
-    </div>
-    <div class="col-md-6 text-end">
-        <a asp-action="Index" class="btn btn-outline-secondary">
-            <i class="bi bi-list me-1"></i> Danh sách phòng ban
-        </a>
-        <a asp-action="Hierarchy" class="btn btn-outline-primary">
-            <i class="bi bi-diagram-2 me-1"></i> Xem phân cấp phòng ban
-        </a>
-    </div>
-</div>
+    // Keep SecondaryButton to link to the list view
+    ViewData["SecondaryButton"] = (
+        "Danh sách phòng ban", // Text
+        "Department", // Controller
+        "Index", // Action
+        "", // Id  
+        "bi-list" // Icon
+    );
+}
 
 <div class="card shadow-sm mb-4">
     <div class="card-body">
@@ -40,7 +43,7 @@
                                 <li class="mb-3">
                                     <div class="department-node">
                                         <div class="d-flex align-items-center">
-                                            <i class="bi bi-building me-2 text-primary"></i>
+                                            <i class="bi bi-building me-2"></i>
                                             <strong>@rootDept.DepartmentName</strong>
                                             <span class="badge bg-primary ms-2">Phòng ban gốc</span>
                                         </div>
@@ -68,24 +71,7 @@
                                     {
                                             <div class="tree-view">
                                                 <ul class="tree">
-                                                    <li>
-                                                        <div class="tree-node department-node">
-                                                            <div class="node-content">
-                                                                <span class="department-name">@rootDept.DepartmentName</span>
-                                                                <span class="badge bg-primary ms-2">@rootDept.TotalEmployees nhân viên</span>
-                                                                @if (!string.IsNullOrEmpty(rootDept.DepartmentHead))
-                                                                {
-                                                                    <span class="department-head"><i class="bi bi-person me-1"></i>@rootDept.DepartmentHead</span>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                        @if (rootDept.HasChildren)
-                                                        {
-                                                            <ul>
-                                                                @await Html.PartialAsync("~/Views/Shared/Tree/_TreeNodePartial.cshtml", rootDept.ChildDepartments)
-                                                            </ul>
-                                                        }
-                                                    </li>
+                                                    @await Html.PartialAsync("~/Views/Shared/Tree/_TreeNodePartial.cshtml", rootDept.ChildDepartments)
                                                 </ul>
                                             </div>
                                     }

@@ -117,6 +117,27 @@ namespace KPISolution.Models.ViewModels.SuccessFactor
         public int IndicatorCount { get; set; }
 
         /// <summary>
+        /// Gets or sets the weight of this Success Factor
+        /// </summary>
+        [Display(Name = "Weight")]
+        [Range(0, 100)]
+        public decimal? Weight { get; set; }
+
+        /// <summary>
+        /// Gets or sets the start date of this Success Factor
+        /// </summary>
+        [Display(Name = "Start Date")]
+        [DataType(DataType.Date)]
+        public DateTime StartDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the target date of this Success Factor
+        /// </summary>
+        [Display(Name = "Target Date")]
+        [DataType(DataType.Date)]
+        public DateTime TargetDate { get; set; }
+
+        /// <summary>
         /// Gets or sets the collection of indicators associated with this success factor.
         /// </summary>
         public List<IndicatorViewModel> Indicators { get; set; } = [];

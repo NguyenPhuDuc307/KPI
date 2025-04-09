@@ -1,6 +1,4 @@
 @using Microsoft.AspNetCore.Mvc.TagHelpers
-@using KPISolution.Models.Enums.SuccessFactor
-@using KPISolution.Models.Enums.Indicator
 @model SuccessFactorListViewModel
 
 @{
@@ -21,69 +19,75 @@
 }
 
 <div class="card shadow-sm mb-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-search me-2"></i>Tìm kiếm yếu tố cốt lõi (CSF)</h5>
+    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#searchCollapse" aria-expanded="false" style="cursor: pointer;">
+        <h5 class="mb-0">
+            <i class="bi bi-search me-2"></i>
+            Tìm kiếm yếu tố cốt lõi (CSF)
+            <i class="bi bi-chevron-down float-end"></i>
+        </h5>
     </div>
-    <div class="card-body p-4">
-        <form method="get" asp-action="CriticalSuccessFactors" id="searchForm">
-            <input type="hidden" name="IsCritical" value="true" />
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label asp-for="SearchTerm" class="form-label"></label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-                            <input asp-for="SearchTerm" class="form-control"
-                                placeholder="Tìm theo tên, mã hoặc mô tả" />
+    <div class="collapse" id="searchCollapse">
+        <div class="card-body p-4">
+            <form method="get" asp-action="CriticalSuccessFactors" id="searchForm">
+                <input type="hidden" name="IsCritical" value="true" />
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="SearchTerm" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                                <input asp-for="SearchTerm" class="form-control"
+                                    placeholder="Tìm theo tên, mã hoặc mô tả" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="SelectedDepartmentId" class="form-label"></label>
+                            <select asp-for="SelectedDepartmentId" asp-items="@ViewBag.Departments" class="form-select">
+                                <option value="">-- Tất cả phòng ban --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="SelectedStatus" class="form-label"></label>
+                            <select asp-for="SelectedStatus" asp-items="@Html.GetEnumSelectList<SuccessFactorStatus>()"
+                                class="form-select">
+                                <option value="">-- Tất cả trạng thái --</option>
+                            </select>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label asp-for="SelectedDepartmentId" class="form-label"></label>
-                        <select asp-for="SelectedDepartmentId" asp-items="@ViewBag.Departments" class="form-select">
-                            <option value="">-- Tất cả phòng ban --</option>
-                        </select>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="SelectedCategory" class="form-label"></label>
+                            <select asp-for="SelectedCategory" asp-items="@Html.GetEnumSelectList<SuccessFactorCategory>()"
+                                class="form-select">
+                                <option value="">-- Tất cả danh mục --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="SelectedObjectiveId" class="form-label"></label>
+                            <select asp-for="SelectedObjectiveId" asp-items="@ViewBag.Objectives" class="form-select">
+                                <option value="">-- Tất cả mục tiêu --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="mb-3 w-100">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search me-1"></i> Tìm kiếm
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label asp-for="SelectedStatus" class="form-label"></label>
-                        <select asp-for="SelectedStatus" asp-items="@Html.GetEnumSelectList<SuccessFactorStatus>()"
-                            class="form-select">
-                            <option value="">-- Tất cả trạng thái --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label asp-for="SelectedCategory" class="form-label"></label>
-                        <select asp-for="SelectedCategory" asp-items="@Html.GetEnumSelectList<SuccessFactorCategory>()"
-                            class="form-select">
-                            <option value="">-- Tất cả danh mục --</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        <label asp-for="SelectedObjectiveId" class="form-label"></label>
-                        <select asp-for="SelectedObjectiveId" asp-items="@ViewBag.Objectives" class="form-select">
-                            <option value="">-- Tất cả mục tiêu --</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <div class="mb-3 w-100">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-search me-1"></i> Tìm kiếm
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <input type="hidden" asp-for="CurrentPage" id="currentPage" />
-        </form>
+                <input type="hidden" asp-for="CurrentPage" id="currentPage" />
+            </form>
+        </div>
     </div>
 </div>
 

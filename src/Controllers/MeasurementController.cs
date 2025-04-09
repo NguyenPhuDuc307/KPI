@@ -140,12 +140,12 @@ namespace KPISolution.Controllers
                 // Map measurements to IndicatorValueViewModel instead of MeasurementViewModel
                 model.Items = await this.MapToIndicatorValueViewModels(measurements);
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error getting measurements");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -180,6 +180,12 @@ namespace KPISolution.Controllers
                         item.TargetValue = pi.TargetValue;
                         item.AchievementPercentage = this.CalculateAchievementPercentage(measurement.Value, pi.TargetValue);
                         item.StatusCssClass = this.GetStatusCssClass(measurement.Status);
+                        item.IndicatorType = pi.IsKey ? "KPI" : "PI";
+                        item.Unit = pi.Unit;
+
+                        // Log indicator type
+                        this._logger.LogInformation("Set IndicatorType to {IndicatorType} for indicator {IndicatorCode}",
+                            item.IndicatorType, item.IndicatorCode);
                     }
                 }
                 else if (measurement.ResultIndicatorId.HasValue)
@@ -193,6 +199,8 @@ namespace KPISolution.Controllers
                         item.TargetValue = ri.TargetValue;
                         item.AchievementPercentage = this.CalculateAchievementPercentage(measurement.Value, ri.TargetValue);
                         item.StatusCssClass = this.GetStatusCssClass(measurement.Status);
+                        item.IndicatorType = ri.IsKey ? "KRI" : "RI";
+                        item.Unit = ri.Unit;
                     }
                 }
 
@@ -265,9 +273,10 @@ namespace KPISolution.Controllers
         {
             return
             [
-                new SelectListItem { Value = "PI", Text = "Chỉ số thực hiện (PI)" },
-                new SelectListItem { Value = "RI", Text = "Chỉ số kết quả (RI)" },
-                new SelectListItem { Value = "KPI", Text = "Chỉ số KPI" }
+                new SelectListItem { Value = ((int)IndicatorType.PI).ToString(), Text = "Chỉ số thực hiện (PI)" },
+                new SelectListItem { Value = ((int)IndicatorType.KPI).ToString(), Text = "Chỉ số KPI" },
+                new SelectListItem { Value = ((int)IndicatorType.RI).ToString(), Text = "Chỉ số kết quả (RI)" },
+                new SelectListItem { Value = ((int)IndicatorType.KRI).ToString(), Text = "Chỉ số KRI" }
             ];
         }
 
@@ -369,13 +378,13 @@ namespace KPISolution.Controllers
                     return this.NotFound($"Indicator with ID {indicatorId} of type {type} was not found.");
                 }
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while displaying measurement creation form for indicator ID: {Id}, type: {Type}",
                     indicatorId, type);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while preparing the measurement form." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while preparing the measurement form." });
             }
         }
 
@@ -392,7 +401,7 @@ namespace KPISolution.Controllers
                 if (!this.ModelState.IsValid)
                 {
                     this._logger.LogWarning("Invalid model state when creating measurement");
-                    return View(viewModel);
+                    return this.View(viewModel);
                 }
 
                 this._logger.LogInformation("Creating new measurement for indicator: {Name}", viewModel.IndicatorName);
@@ -426,7 +435,7 @@ namespace KPISolution.Controllers
                 {
                     this._logger.LogError("No indicator ID set in the view model");
                     this.ModelState.AddModelError("", "No indicator ID set in the view model.");
-                    return View(viewModel);
+                    return this.View(viewModel);
                 }
 
                 // Lưu đo lường mới vào cơ sở dữ liệu
@@ -446,7 +455,7 @@ namespace KPISolution.Controllers
             {
                 this._logger.LogError(ex, "Error occurred while creating measurement");
                 this.ModelState.AddModelError("", "An unexpected error occurred while saving the measurement.");
-                return View(viewModel);
+                return this.View(viewModel);
             }
         }
 
@@ -566,13 +575,13 @@ namespace KPISolution.Controllers
 
                 this._logger.LogInformation("Retrieved {0} measurements for indicator {1}", items.Count, viewModel.IndicatorName);
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while retrieving measurement history for indicator ID: {Id}, type: {Type}",
                     indicatorId, type);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while retrieving measurement history." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while retrieving measurement history." });
             }
         }
 
@@ -954,12 +963,12 @@ namespace KPISolution.Controllers
                     }
                 }
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error getting measurement chart data");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -1004,12 +1013,12 @@ namespace KPISolution.Controllers
                     new SelectListItem { Value = "PI", Text = "PI" }
                 };
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error getting performance indicator measurements");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -1054,12 +1063,12 @@ namespace KPISolution.Controllers
                     new SelectListItem { Value = "RI", Text = "RI" }
                 };
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error getting result indicator measurements");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -1090,12 +1099,12 @@ namespace KPISolution.Controllers
                     Items = await this.MapToIndicatorValueViewModels(measurements)
                 };
 
-                return View(model);
+                return this.View(model);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error generating measurement report");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -1161,7 +1170,7 @@ namespace KPISolution.Controllers
                 var content = stream.ToArray();
 
                 // Return file
-                return File(
+                return this.File(
                     content,
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     $"Measurements_{DateTime.Now:yyyyMMdd}.xlsx"
@@ -1170,7 +1179,7 @@ namespace KPISolution.Controllers
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error exporting measurements to Excel");
-                return View("Error");
+                return this.View("Error");
             }
         }
 
@@ -1190,7 +1199,7 @@ namespace KPISolution.Controllers
                 if (measurement == null)
                 {
                     this._logger.LogWarning("Measurement not found with ID: {Id}", id);
-                    return NotFound();
+                    return this.NotFound();
                 }
 
                 // Create view model
@@ -1241,12 +1250,12 @@ namespace KPISolution.Controllers
                     }
                 }
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while retrieving measurement details for ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while retrieving measurement details." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while retrieving measurement details." });
             }
         }
 
@@ -1269,7 +1278,7 @@ namespace KPISolution.Controllers
                 if (measurement == null)
                 {
                     this._logger.LogWarning("Measurement not found with ID: {Id}", id);
-                    return NotFound();
+                    return this.NotFound();
                 }
 
                 // Create view model
@@ -1329,14 +1338,14 @@ namespace KPISolution.Controllers
                 }
 
                 // Prepare status list
-                viewModel.StatusList = GetStatusSelectList();
+                viewModel.StatusList = this.GetStatusSelectList();
 
-                return View(viewModel);
+                return this.View(viewModel);
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while preparing measurement edit form for ID: {Id}", id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while preparing the edit form." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while preparing the edit form." });
             }
         }
 
@@ -1351,15 +1360,15 @@ namespace KPISolution.Controllers
             try
             {
                 // Validate model
-                if (!ModelState.IsValid)
+                if (!this.ModelState.IsValid)
                 {
                     this._logger.LogWarning("Invalid model state when editing measurement: {Errors}",
-                        string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                        string.Join("; ", this.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
 
                     // Prepare status list again
-                    viewModel.StatusList = GetStatusSelectList();
+                    viewModel.StatusList = this.GetStatusSelectList();
 
-                    return View(viewModel);
+                    return this.View(viewModel);
                 }
 
                 // Get existing measurement
@@ -1367,7 +1376,7 @@ namespace KPISolution.Controllers
                 if (measurement == null)
                 {
                     this._logger.LogWarning("Measurement not found with ID: {Id}", viewModel.Id);
-                    return NotFound();
+                    return this.NotFound();
                 }
 
                 // Update measurement properties
@@ -1385,15 +1394,15 @@ namespace KPISolution.Controllers
                 var returnUrl = this.GetReturnUrl();
                 if (!string.IsNullOrEmpty(returnUrl))
                 {
-                    return Redirect(returnUrl);
+                    return this.Redirect(returnUrl);
                 }
 
-                return RedirectToAction(nameof(Index));
+                return this.RedirectToAction(nameof(this.Index));
             }
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "Error occurred while updating measurement with ID: {Id}", viewModel.Id);
-                return View("Error", new ErrorViewModel { Message = "An error occurred while updating the measurement." });
+                return this.View("Error", new ErrorViewModel { Message = "An error occurred while updating the measurement." });
             }
         }
 
@@ -1417,6 +1426,100 @@ namespace KPISolution.Controllers
         {
             const string ReturnUrlKey = "ReturnUrl";
             return this.TempData[ReturnUrlKey]?.ToString();
+        }
+
+        /// <summary>
+        /// Deletes a measurement and returns JSON result
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Policy = IndicatorAuthorizationPolicies.PolicyNames.CanManageIndicators)]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                this._logger.LogInformation("Deleting measurement with ID: {Id}", id);
+
+                var measurement = await this._unitOfWork.Measurements.GetByIdAsync(id);
+                if (measurement == null)
+                {
+                    this._logger.LogWarning("Measurement not found with ID: {Id}", id);
+                    return this.Json(new { success = false, message = "Không tìm thấy đo lường này." });
+                }
+
+                await this._unitOfWork.Measurements.DeleteAsync(measurement);
+                await this._unitOfWork.SaveChangesAsync();
+
+                this._logger.LogInformation("Measurement with ID {Id} deleted successfully", id);
+
+                return this.Json(new { success = true, message = "Đã xóa đo lường thành công." });
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error occurred while deleting measurement with ID: {Id}", id);
+                return this.Json(new { success = false, message = "Có lỗi xảy ra khi xóa đo lường." });
+            }
+        }
+
+        /// <summary>
+        /// Hiển thị trang chọn chỉ số trước khi tạo đo lường mới
+        /// </summary>
+        [Authorize(Policy = IndicatorAuthorizationPolicies.PolicyNames.CanManageIndicators)]
+        [HttpGet]
+        public async Task<IActionResult> SelectIndicator()
+        {
+            try
+            {
+                this._logger.LogInformation("Displaying indicator selection page for measurement creation");
+
+                var model = new SelectIndicatorViewModel
+                {
+                    PerformanceIndicators = await this._unitOfWork.PerformanceIndicators.GetAll()
+                        .Include(pi => pi.Department)
+                        .OrderBy(pi => pi.Name)
+                        .Select(pi => new IndicatorSelectionItemViewModel
+                        {
+                            Id = pi.Id,
+                            Name = pi.Name,
+                            Code = pi.Code,
+                            IsKey = pi.IsKey,
+                            Type = pi.IsKey ? IndicatorType.KPI : IndicatorType.PI,
+                            Department = pi.Department != null ? pi.Department.Name : "N/A",
+                            LastMeasurementDate = this._unitOfWork.Measurements.GetAll()
+                                .Where(m => m.PerformanceIndicatorId == pi.Id)
+                                .OrderByDescending(m => m.MeasurementDate)
+                                .Select(m => m.MeasurementDate)
+                                .FirstOrDefault()
+                        })
+                        .ToListAsync(),
+
+                    ResultIndicators = await this._unitOfWork.ResultIndicators.GetAll()
+                        .Include(ri => ri.Department)
+                        .OrderBy(ri => ri.Name)
+                        .Select(ri => new IndicatorSelectionItemViewModel
+                        {
+                            Id = ri.Id,
+                            Name = ri.Name,
+                            Code = ri.Code,
+                            IsKey = ri.IsKey,
+                            Type = ri.IsKey ? IndicatorType.KRI : IndicatorType.RI,
+                            Department = ri.Department != null ? ri.Department.Name : "N/A",
+                            LastMeasurementDate = this._unitOfWork.Measurements.GetAll()
+                                .Where(m => m.ResultIndicatorId == ri.Id)
+                                .OrderByDescending(m => m.MeasurementDate)
+                                .Select(m => m.MeasurementDate)
+                                .FirstOrDefault()
+                        })
+                        .ToListAsync()
+                };
+
+                return this.View(model);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error occurred while displaying indicator selection page");
+                return this.View("Error", new ErrorViewModel { Message = "Đã xảy ra lỗi khi tải trang chọn chỉ số." });
+            }
         }
     }
 }

@@ -5,26 +5,26 @@
 
 @{
     var isKeyIndicator = Model?.IsKey ?? false;
-    
+
     ViewData["Title"] = $"{(isKeyIndicator ? "Key Result Indicator" : "Result Indicator")} Details";
     ViewData["Icon"] = "bi-graph-up";
     ViewData["Subtitle"] = Model?.Name ?? "Unnamed Indicator";
-    
+
     var backAction = isKeyIndicator ? "KeyResultIndicators" : "Index";
-    
+
     ViewData["PrimaryButton"] = new ValueTuple<string, string, string, string, string>(
-        "Edit", 
-        "ResultIndicator", 
-        "Edit", 
-        "id=" + (Model?.Id.ToString() ?? ""), 
+        "Edit",
+        "ResultIndicator",
+        "Edit",
+        "id=" + (Model?.Id.ToString() ?? ""),
         "bi-pencil"
     );
-    
+
     ViewData["SecondaryButton"] = new ValueTuple<string, string, string, string, string>(
-        "Back to List", 
-        "ResultIndicator", 
-        backAction, 
-        "", 
+        "Back to List",
+        "ResultIndicator",
+        backAction,
+        "",
         "bi-arrow-left"
     );
 
@@ -63,7 +63,7 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="mb-0 text-primary">
+                    <h5 class="mb-0">
                         <i class="bi bi-graph-up me-2"></i>@(isKeyIndicator ? "KRI" : "RI") Details
                     </h5>
                 </div>
@@ -77,7 +77,7 @@
             </div>
             <div class="card-body">
                 <h4 class="fw-bold mb-3">@(Model?.Name ?? "Unnamed Indicator")</h4>
-                
+
                 @if (!string.IsNullOrEmpty(Model?.Description))
                 {
                     <p class="mb-4">@Model.Description</p>
@@ -86,13 +86,13 @@
                 {
                     <p class="text-muted mb-4"><i>No description provided</i></p>
                 }
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <h6 class="fw-bold mb-2">SuccessFactor</h6>
                             <p class="mb-0">
-                                <a asp-controller="SuccessFactor" asp-action="Details" asp-route-id="@Model?.SuccessFactorId" 
+                                <a asp-controller="SuccessFactor" asp-action="Details" asp-route-id="@Model?.SuccessFactorId"
                                    class="text-decoration-none">
                                     @(Model?.SuccessFactorName ?? "Unknown Success Factor")
                                 </a>
@@ -102,14 +102,14 @@
                                 }
                             </p>
                         </div>
-                        
+
                         <div class="mb-3">
                             <h6 class="fw-bold mb-2">Phương diện kinh doanh</h6>
                             <p class="mb-0">
                                 <span class="badge bg-secondary">@(Model?.ProcessAreaDisplay ?? "Not Set")</span>
                             </p>
                         </div>
-                        
+
                         <div class="mb-3">
                             <h6 class="fw-bold mb-2">Loại chỉ số</h6>
                             <p class="mb-0">
@@ -117,7 +117,7 @@
                             </p>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <div class="mb-3">
                             <h6 class="fw-bold mb-2">Giá trị mục tiêu</h6>
@@ -133,14 +133,14 @@
                                 }
                             </p>
                         </div>
-                        
+
                         <div class="mb-3">
                             <h6 class="fw-bold mb-2">Tần suất đo lường</h6>
                             <p class="mb-0">
                                 <span class="badge bg-secondary">@(Model?.FrequencyDisplay ?? "Not Set")</span>
                             </p>
                         </div>
-                        
+
                         <div class="mb-3">
                             <h6 class="fw-bold mb-2">Người phụ trách</h6>
                             <p class="mb-0">
@@ -166,7 +166,7 @@
                         <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-sm btn-primary">
                             <i class="bi bi-pencil me-1"></i>Sửa
                         </a>
-                        <button type="button" class="btn btn-sm btn-outline-danger ms-2" 
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2"
                             data-bs-toggle="modal" data-bs-target="#deleteConfirmModal">
                             <i class="bi bi-trash me-1"></i>Xóa
                         </button>
@@ -183,10 +183,12 @@
             <div class="card shadow-sm">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 text-primary">
+                        <h5 class="mb-0">
                             <i class="bi bi-clipboard-data me-2"></i>Đo lường
                         </h5>
-                        <a asp-controller="Measurement" asp-action="Create" asp-route-indicatorId="@(Model?.Id ?? Guid.Empty)" 
+                        <a asp-controller="Measurement" asp-action="Create"
+                            asp-route-indicatorId="@(Model?.Id ?? Guid.Empty)"
+                            asp-route-type="@IndicatorType.RI"
                             class="btn btn-success btn-sm">
                             <i class="bi bi-plus-circle me-1"></i>Thêm đo lường
                         </a>
@@ -204,7 +206,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var measurement in (Model?.RecentMeasurements ?? Enumerable.Empty<KPISolution.Models.ViewModels.Measurement.MeasurementViewModel>()).OrderByDescending(m => m.MeasurementDate))
+                                @foreach (var measurement in (Model?.RecentMeasurements ?? Enumerable.Empty<MeasurementViewModel>()).OrderByDescending(m => m.MeasurementDate))
                                 {
                                     <tr>
                                         <td>@measurement.MeasurementDate.ToString("yyyy-MM-dd")</td>
@@ -223,7 +225,7 @@
                                         </td>
                                         <td>
                                             <div class="btn-group">
-                                                <a asp-controller="Measurement" asp-action="Edit" asp-route-id="@measurement.Id" 
+                                                <a asp-controller="Measurement" asp-action="Edit" asp-route-id="@measurement.Id"
                                                    class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
@@ -250,7 +252,9 @@
                     </div>
                     <h5 class="text-muted mb-3">Chưa có đo lường</h5>
                     <p class="text-muted mb-4">Hiện chưa có dữ liệu đo lường nào cho chỉ số này. Thêm đo lường đầu tiên để bắt đầu theo dõi.</p>
-                    <a asp-controller="Measurement" asp-action="Create" asp-route-indicatorId="@(Model?.Id ?? Guid.Empty)" 
+                    <a asp-controller="Measurement" asp-action="Create"
+                        asp-route-indicatorId="@(Model?.Id ?? Guid.Empty)"
+                        asp-route-type="@IndicatorType.RI"
                         class="btn btn-success">
                         <i class="bi bi-plus-circle me-1"></i>Thêm đo lường
                     </a>
@@ -264,7 +268,7 @@
         <div class="card shadow-sm">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 text-primary">
+                    <h5 class="mb-0">
                         <i class="bi bi-speedometer2 me-2"></i>Chỉ số hiệu suất (PI)
                     </h5>
                     <div class="btn-group">
@@ -329,11 +333,11 @@
                                         </td>
                                         <td>
                                             <div class="btn-group">
-                                                <a asp-controller="PerformanceIndicator" asp-action="Details" asp-route-id="@pi.Id" 
+                                                <a asp-controller="PerformanceIndicator" asp-action="Details" asp-route-id="@pi.Id"
                                                    class="btn btn-sm btn-outline-primary" title="Chi tiết">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
-                                                <a asp-controller="PerformanceIndicator" asp-action="Edit" asp-route-id="@pi.Id" 
+                                                <a asp-controller="PerformanceIndicator" asp-action="Edit" asp-route-id="@pi.Id"
                                                    class="btn btn-sm btn-outline-secondary" title="Chỉnh sửa">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
@@ -395,7 +399,43 @@
     <script>
         function deleteMeasurement(id) {
             if (confirm('Bạn có chắc chắn muốn xóa đo lường này?')) {
-                window.location.href = '/Measurement/Delete/' + id;
+                // Disable delete button
+                const deleteBtn = event.target;
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xóa...';
+
+                // Send AJAX request
+                $.ajax({
+                    url: '/Measurement/Delete/' + id,
+                    type: 'POST',
+                    success: function(result) {
+                        if (result.success) {
+                            // Remove the row from table
+                            const row = deleteBtn.closest('tr');
+                            row.remove();
+
+                            // Show success message
+                            toastr.success('Đã xóa đo lường thành công');
+
+                            // If no measurements left, show empty message
+                            const tbody = document.querySelector('#measurementsTable tbody');
+                            if (tbody.children.length === 0) {
+                                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Chưa có đo lường nào</td></tr>';
+                            }
+                        } else {
+                            toastr.error('Có lỗi xảy ra khi xóa đo lường');
+                            // Re-enable button
+                            deleteBtn.disabled = false;
+                            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                        }
+                    },
+                    error: function() {
+                        toastr.error('Có lỗi xảy ra khi xóa đo lường');
+                        // Re-enable button
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    }
+                });
             }
         }
     </script>

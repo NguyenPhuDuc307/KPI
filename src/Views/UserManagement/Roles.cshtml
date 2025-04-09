@@ -1,0 +1,82 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Microsoft.AspNetCore.Identity
+@model IEnumerable<IndicatorRole>
+
+@{
+    // ViewData comes from the Roles action in UserManagementController
+}
+
+<div class="card shadow">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0"><i class="@ViewData["Icon"] me-2"></i>Role List</h4>
+        @* Buttons are now handled by _PageHeader.cshtml *@
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+             <input type="text" id="roleSearch" class="form-control" placeholder="Search roles..." aria-label="Search Roles">
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="rolesTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="fw-bold">Role Name</th>
+                        <th class="fw-bold">Description</th>
+                        <th class="fw-bold">Status</th>
+                        <th class="fw-bold text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in Model)
+                    {
+                            <tr>
+                                <td class="fw-medium">@role.Name</td>
+                                <td>@role.Description</td>
+                                <td>
+                                    @if (role.IsActive)
+                                    {
+                                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active</span>
+                                    }
+                                    else
+                                    {
+                                            <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        @* TODO: Create EditRole and DeleteRole actions and views *@
+                                        <a asp-action="EditRole" asp-route-id="@role.Id" class="btn btn-sm btn-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="DeleteRole" asp-route-id="@role.Id" class="btn btn-sm btn-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script>
+            $(document).ready(function () {
+                var rolesTable = $('#rolesTable').DataTable({
+                    order: [[0, 'asc']], // Order by Role Name by default
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json' // Assuming Vietnamese localization needed
+                    },
+                    responsive: true,
+                    // Use standard Bootstrap DOM structure
+                    dom: "<'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>" 
+                });
+
+                // Custom search box integration
+                $('#roleSearch').on('keyup', function () {
+                    rolesTable.search($(this).val()).draw();
+                });
+            });
+        </script>
+}

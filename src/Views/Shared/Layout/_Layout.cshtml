@@ -1,4 +1,4 @@
-@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@inject IHttpContextAccessor HttpContextAccessor
 @{
     var currentController = ViewContext?.RouteData?.Values["Controller"]?.ToString() ?? "";
 }
@@ -29,7 +29,6 @@
         rel="stylesheet" />
     <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/ui-scale.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/KPISolution.styles.css" asp-append-version="true" />
     <style>
         /* Xử lý vấn đề modal-backdrop đơn giản */
@@ -39,6 +38,35 @@
 
         .modal {
             z-index: 1050 !important;
+        }
+
+        /* CSS for Multi-level Dropdown */
+        .dropdown-submenu {
+            position: relative;
+        }
+
+        .dropdown-submenu>.dropdown-menu {
+            top: -10px;
+            /* Điều chỉnh vị trí theo chiều dọc */
+            left: 100%;
+            margin-left: 0.1rem;
+            margin-right: 0.1rem;
+            display: none;
+            /* Ẩn ban đầu */
+            position: absolute;
+            /* Định vị tuyệt đối so với thẻ li cha */
+            min-width: 200px;
+            /* Đảm bảo đủ rộng */
+        }
+
+        /* Hiển thị menu con khi lớp 'show' được thêm bằng JS */
+        .dropdown-submenu>.dropdown-menu.show {
+            display: block;
+        }
+
+        /* Đổi con trỏ để cho biết mục có thể nhấp */
+        .dropdown-submenu>a {
+            cursor: pointer;
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
@@ -73,194 +101,295 @@
                                 <span>Home</span>
                             </a>
                         </li>
+
+                        <!-- Strategy Dropdown -->
                         <li class="nav-item dropdown px-1">
-                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center @(currentController == "Dashboard" ? "active" : "")"
-                                href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-speedometer2 me-2"></i>
-                                <span>Dashboard</span>
+                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center dropdown-toggle @(new[] { "Objective", "BusinessObjective", "SuccessFactor", "Indicator", "PerformanceIndicator", "ResultIndicator" }.Contains(currentController) ? "active" : "")"
+                                href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-compass me-2"></i> <!-- Changed icon -->
+                                <span>Strategy</span>
                             </a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item py-2" asp-controller="Dashboard"
-                                        asp-action="Executive">Dashboard tổng quan</a></li>
-                                <li><a class="dropdown-item py-2" asp-controller="Dashboard"
-                                        asp-action="Department">Dashboard phòng ban</a></li>
-                                <li><a class="dropdown-item py-2" asp-controller="Dashboard"
-                                        asp-action="Personal">Dashboard cá nhân</a></li>
+                                <!-- Objective Menu Item -->
+                                <li class="dropdown-submenu">
+                                    <a class="dropdown-item py-2 d-flex align-items-center" href="#">
+                                        <!-- Removed toggle, keep as header-like -->
+                                        <i class="bi bi-bullseye me-2"></i>
+                                        <span>Objective</span>
+                                        <i class="bi bi-chevron-right ms-auto"></i> <!-- Indicate submenu -->
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-start shadow-sm border-0">
+                                        <li><a class="dropdown-item py-2" asp-controller="Objective" asp-action="Index">
+                                                <i class="bi bi-list-ul me-2"></i>All Objectives
+                                            </a></li>
+                                        @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+                                        {
+                                            <li>
+                                                <hr class="dropdown-divider opacity-25">
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item py-2" asp-controller="Objective"
+                                                    asp-action="Create">
+                                                    <i class="bi bi-plus-circle me-1"></i>Add New Objective
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                                <!-- Success Factor Menu Item -->
+                                <li class="dropdown-submenu">
+                                    <a class="dropdown-item py-2 d-flex align-items-center" href="#">
+                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                        <span>Success Factor</span>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-start shadow-sm border-0">
+                                        <li><a class="dropdown-item py-2" asp-controller="SuccessFactor"
+                                                asp-action="Index">
+                                                <i class="bi bi-list-ul me-2"></i>All Success Factors
+                                            </a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="SuccessFactor"
+                                                asp-action="CriticalSuccessFactors">
+                                                <i class="bi bi-star-fill me-2"></i>Critical Success Factor (CSF)
+                                            </a></li>
+                                        @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+                                        {
+                                            <li>
+                                                <hr class="dropdown-divider opacity-25">
+                                            </li>
+                                            <li><a class="dropdown-item py-2" asp-controller="SuccessFactor"
+                                                    asp-action="Create">
+                                                    <i class="bi bi-plus-circle me-1"></i>Add Success Factor</a></li>
+                                        }
+                                    </ul>
+                                </li>
+                                <!-- Indicator Menu Item -->
+                                <li class="dropdown-submenu">
+                                    <a class="dropdown-item py-2 d-flex align-items-center" href="#">
+                                        <i class="bi bi-graph-up me-2"></i>
+                                        <span>Indicator</span>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-start shadow-sm border-0 p-2"
+                                        style="min-width: 280px;">
+                                        <!-- Hierarchy View -->
+                                        <li>
+                                            <a class="dropdown-item rounded py-2" asp-controller="Indicator"
+                                                asp-action="Hierarchy">
+                                                <i class="bi bi-diagram-3 me-2"></i>Indicator Hierarchy
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <!-- Performance Indicators Section -->
+                                        <li>
+                                            <h6 class="dropdown-header fw-bold"><i
+                                                    class="bi bi-graph-up-arrow me-1"></i> Performance Indicators</h6>
+                                        </li>
+                                        <li class="d-flex justify-content-between px-2 mb-2">
+                                            <a class="dropdown-item rounded bg-light-subtle py-2 me-1"
+                                                asp-controller="PerformanceIndicator" asp-action="Index"
+                                                asp-route-showOnlyKey="true">
+                                                <i class="bi bi-star-fill text-success me-2"></i>KPI
+                                            </a>
+                                            <a class="dropdown-item rounded bg-light-subtle py-2 ms-1"
+                                                asp-controller="PerformanceIndicator" asp-action="Index"
+                                                asp-route-showOnlyKey="false">
+                                                <i class="bi bi-bar-chart-fill me-2"></i>PI
+                                            </a>
+                                        </li>
+                                        @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+                                        {
+                                            <li class="d-flex justify-content-between px-2 mb-2">
+                                                <a class="btn btn-sm btn-success w-100 me-1"
+                                                    asp-controller="PerformanceIndicator" asp-action="Create"
+                                                    asp-route-isKey="true">
+                                                    <i class="bi bi-plus-circle me-1"></i> Add KPI
+                                                </a>
+                                                <a class="btn btn-sm btn-primary w-100 ms-1"
+                                                    asp-controller="PerformanceIndicator" asp-action="Create"
+                                                    asp-route-isKey="false">
+                                                    <i class="bi bi-plus-circle me-1"></i> Add PI
+                                                </a>
+                                            </li>
+                                        }
+                                        <li>
+                                            <hr class="dropdown-divider opacity-50">
+                                        </li>
+                                        <!-- Result Indicators Section -->
+                                        <li>
+                                            <h6 class="dropdown-header text-danger fw-bold"><i
+                                                    class="bi bi-pie-chart-fill me-1"></i> Result Indicators</h6>
+                                        </li>
+                                        <li class="d-flex justify-content-between px-2 mb-2">
+                                            <a class="dropdown-item rounded bg-light-subtle py-2 me-1"
+                                                asp-controller="ResultIndicator" asp-action="Index"
+                                                asp-route-showOnlyKey="true">
+                                                <i class="bi bi-bullseye text-danger me-2"></i> KRI
+                                            </a>
+                                            <a class="dropdown-item rounded bg-light-subtle py-2 ms-1"
+                                                asp-controller="ResultIndicator" asp-action="Index"
+                                                asp-route-showOnlyKey="false">
+                                                <i class="bi bi-pie-chart text-secondary me-2"></i> RI
+                                            </a>
+                                        </li>
+                                        @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+                                        {
+                                            <li class="d-flex justify-content-between px-2 mb-2">
+                                                <a class="btn btn-sm btn-danger w-100 me-1" asp-controller="ResultIndicator"
+                                                    asp-action="Create" asp-route-isKey="true">
+                                                    <i class="bi bi-plus-circle me-1"></i> Add KRI
+                                                </a>
+                                                <a class="btn btn-sm btn-secondary w-100 ms-1"
+                                                    asp-controller="ResultIndicator" asp-action="Create"
+                                                    asp-route-isKey="false">
+                                                    <i class="bi bi-plus-circle me-1"></i> Add RI
+                                                </a>
+                                            </li>
+                                        }
+                                        <li>
+                                            <hr class="dropdown-divider opacity-50">
+                                        </li>
+                                        <!-- Indicator Tree Section -->
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Indicator"
+                                                asp-action="Hierarchy">
+                                                <i class="bi bi-diagram-3 me-2"></i> Indicator Tree
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
                             </ul>
                         </li>
+
+                        <!-- Performance Dropdown -->
                         <li class="nav-item dropdown px-1">
-                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center @(new[] { "BusinessObjective", "Objective" }.Contains(currentController) ? "active" : "")"
-                                href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-bullseye me-2"></i>
-                                <span>Objective</span>
+                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center dropdown-toggle @(new[] { "Dashboard", "Measurement" }.Contains(currentController) ? "active" : "")"
+                                href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-graph-up-arrow me-2"></i> <!-- Changed icon -->
+                                <span>Performance</span>
                             </a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item py-2" asp-controller="Objective"
-                                        asp-action="Index">Objective Business</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown px-1">
-                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center @(currentController == "SuccessFactor" ? "active" : "")"
-                                href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-check-circle-fill me-2"></i>
-                                <span>Success Factor</span>
-                            </a>
-                            <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item py-2" asp-controller="SuccessFactor" asp-action="Index">Tất
-                                        cả yếu tố thành công</a></li>
-                                <li><a class="dropdown-item py-2" asp-controller="SuccessFactor"
-                                        asp-action="CriticalSuccessFactors">Critical Success Factor (CSF)</a></li>
-                                <li>
-                                    <hr class="dropdown-divider opacity-25">
-                                </li>
-                                <li><a class="dropdown-item py-2" asp-controller="SuccessFactor" asp-action="Create">
-                                        <i class="bi bi-plus-circle me-1"></i>Thêm yếu tố thành công</a></li>
-                                <li><a class="dropdown-item py-2" asp-controller="SuccessFactor" asp-action="Create"
-                                        asp-route-isCritical="true">
-                                        <i class="bi bi-plus-circle me-1"></i>Thêm yếu tố cốt lõi (CSF)</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown px-1">
-                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center @(new[] { "KPI", "PI", "KRI", "RI", "PerformanceIndicator", "ResultIndicator" }.Contains(currentController) ? "active" : "")"
-                                href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-graph-up me-2"></i>
-                                <span>Indicator</span>
-                            </a>
-                            <ul class="dropdown-menu shadow-sm border-0 p-2" style="min-width: 280px;">
-                                <!-- Performance Indicators Section -->
-                                <li>
-                                    <h6 class="dropdown-header text-primary fw-bold">
-                                        <i class="bi bi-graph-up-arrow me-1"></i> Performance Indicators
-                                    </h6>
-                                </li>
-                                <li class="d-flex justify-content-between px-2 mb-2">
-                                    <a class="dropdown-item rounded bg-light-subtle py-2 me-1"
-                                        asp-controller="PerformanceIndicator" asp-action="Index"
-                                        asp-route-showOnlyKey="true">
-                                        <i class="bi bi-star-fill text-success me-2"></i>KPI
+                                <!-- Dashboard Menu Item -->
+                                <li class="dropdown-submenu">
+                                    <a class="dropdown-item py-2 d-flex align-items-center" href="#">
+                                        <i class="bi bi-speedometer2 me-2"></i>
+                                        <span>Dashboard</span>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
                                     </a>
-                                    <a class="dropdown-item rounded bg-light-subtle py-2 ms-1"
-                                        asp-controller="PerformanceIndicator" asp-action="Index"
-                                        asp-route-showOnlyKey="false">
-                                        <i class="bi bi-bar-chart-fill text-primary me-2"></i>PI
+                                    <ul class="dropdown-menu dropdown-menu-start shadow-sm border-0">
+                                        <li><a class="dropdown-item py-2" asp-controller="Dashboard"
+                                                asp-action="Executive">Executive Dashboard</a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Dashboard"
+                                                asp-action="DepartmentDashboard">Department Dashboard</a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Dashboard"
+                                                asp-action="PersonalDashboard">Personal Dashboard</a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Dashboard"
+                                                asp-action="Custom">Custom Dashboard</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Measurement Menu Item -->
+                                <li class="dropdown-submenu">
+                                    <a class="dropdown-item py-2 d-flex align-items-center" href="#">
+                                        <i class="bi bi-rulers me-2"></i>
+                                        <span>Measurement</span>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
                                     </a>
-                                </li>
-                                @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
-                                {
-                                    <li class="d-flex justify-content-between px-2 mb-2">
-                                        <a class="btn btn-sm btn-success w-100 me-1" asp-controller="PerformanceIndicator"
-                                            asp-action="Create" asp-route-isKey="true">
-                                            <i class="bi bi-plus-circle me-1"></i> Thêm KPI
-                                        </a>
-                                        <a class="btn btn-sm btn-primary w-100 ms-1" asp-controller="PerformanceIndicator"
-                                            asp-action="Create" asp-route-isKey="false">
-                                            <i class="bi bi-plus-circle me-1"></i> Thêm PI
-                                        </a>
-                                    </li>
-                                }
-
-                                <li>
-                                    <hr class="dropdown-divider opacity-50">
-                                </li>
-
-                                <!-- Result Indicators Section -->
-                                <li>
-                                    <h6 class="dropdown-header text-danger fw-bold">
-                                        <i class="bi bi-pie-chart-fill me-1"></i> Result Indicators
-                                    </h6>
-                                </li>
-                                <li class="d-flex justify-content-between px-2 mb-2">
-                                    <a class="dropdown-item rounded bg-light-subtle py-2 me-1"
-                                        asp-controller="ResultIndicator" asp-action="Index"
-                                        asp-route-showOnlyKey="true">
-                                        <i class="bi bi-bullseye text-danger me-2"></i> KRI
-                                    </a>
-                                    <a class="dropdown-item rounded bg-light-subtle py-2 ms-1"
-                                        asp-controller="ResultIndicator" asp-action="Index"
-                                        asp-route-showOnlyKey="false">
-                                        <i class="bi bi-pie-chart text-secondary me-2"></i> RI
-                                    </a>
-                                </li>
-                                @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
-                                {
-                                    <li class="d-flex justify-content-between px-2 mb-2">
-                                        <a class="btn btn-sm btn-danger w-100 me-1" asp-controller="ResultIndicator"
-                                            asp-action="Create" asp-route-isKey="true">
-                                            <i class="bi bi-plus-circle me-1"></i> Thêm KRI
-                                        </a>
-                                        <a class="btn btn-sm btn-secondary w-100 ms-1" asp-controller="ResultIndicator"
-                                            asp-action="Create" asp-route-isKey="false">
-                                            <i class="bi bi-plus-circle me-1"></i> Thêm RI
-                                        </a>
-                                    </li>
-                                }
-
-                                <li>
-                                    <hr class="dropdown-divider opacity-50">
-                                </li>
-
-                                <!-- Indicator Tree Section -->
-                                <li>
-                                    <a class="dropdown-item py-2" asp-controller="Hierarchy" asp-action="Index">
-                                        <i class="bi bi-diagram-3 me-2"></i> Cây chỉ số
-                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-start shadow-sm border-0">
+                                        <li><a class="dropdown-item py-2" asp-controller="Measurement"
+                                                asp-action="Index">
+                                                <i class="bi bi-list-task me-2"></i>All Measurements
+                                            </a></li>
+                                        <li>
+                                            <hr class="dropdown-divider opacity-25">
+                                        </li>
+                                        <li>
+                                            <h6 class="dropdown-header fw-bold"><i
+                                                    class="bi bi-graph-up-arrow me-1"></i> By Performance Indicator</h6>
+                                        </li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Measurement"
+                                                asp-action="PerformanceIndicators">
+                                                <i class="bi bi-activity me-2"></i>View PI/KPI Measurements</a></li>
+                                        <li>
+                                            <hr class="dropdown-divider opacity-25">
+                                        </li>
+                                        <li>
+                                            <h6 class="dropdown-header text-danger fw-bold"><i
+                                                    class="bi bi-pie-chart-fill me-1"></i> By Result Indicator</h6>
+                                        </li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Measurement"
+                                                asp-action="ResultIndicators">
+                                                <i class="bi bi-clipboard-data me-2"></i>View RI/KRI Measurements</a>
+                                        </li>
+                                        @if (User.IsInRole("Administrator") || User.IsInRole("Manager") ||
+                                                                                User.IsInRole("Member"))
+                                        {
+                                            <li>
+                                                <hr class="dropdown-divider opacity-25">
+                                            </li>
+                                            <li>
+                                                <h6 class="dropdown-header text-success fw-bold"><i
+                                                        class="bi bi-plus-circle me-1"></i> Add New</h6>
+                                            </li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Measurement"
+                                                    asp-action="SelectIndicator">
+                                                    <i class="bi bi-calendar-plus me-2"></i>Add New Measurement</a></li>
+                                        }
+                                        <li>
+                                            <hr class="dropdown-divider opacity-25">
+                                        </li>
+                                        <li>
+                                            <h6 class="dropdown-header text-info fw-bold"><i
+                                                    class="bi bi-file-earmark-text me-1"></i> Reports</h6>
+                                        </li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Measurement"
+                                                asp-action="Report">
+                                                <i class="bi bi-file-text me-2"></i>Summary Report</a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Measurement"
+                                                asp-action="Chart">
+                                                <i class="bi bi-bar-chart-line me-2"></i>View Charts</a></li>
+                                    </ul>
                                 </li>
                             </ul>
                         </li>
+
+                        <!-- Organization Dropdown -->
                         <li class="nav-item dropdown px-1">
-                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center @(currentController == "Measurement" ? "active" : "")"
-                                href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-rulers me-2"></i>
-                                <span>Đo lường</span>
-                            </a>
-                            <ul class="dropdown-menu shadow-sm border-0">
-                                <li>
-                                    <h6 class="dropdown-header text-primary fw-bold">
-                                        <i class="bi bi-graph-up-arrow me-1"></i> Chỉ số hiệu suất
-                                    </h6>
-                                </li>
-                                <li><a class="dropdown-item py-2" asp-controller="Measurement"
-                                        asp-action="PerformanceIndicators">
-                                        <i class="bi bi-list-check me-2"></i>Đo lường PI/KPI</a></li>
-                                <li>
-                                    <hr class="dropdown-divider opacity-25">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header text-danger fw-bold">
-                                        <i class="bi bi-pie-chart-fill me-1"></i> Chỉ số kết quả
-                                    </h6>
-                                </li>
-                                <li><a class="dropdown-item py-2" asp-controller="Measurement"
-                                        asp-action="ResultIndicators">
-                                        <i class="bi bi-list-check me-2"></i>Đo lường RI/KRI</a></li>
-                                <li>
-                                    <hr class="dropdown-divider opacity-25">
-                                </li>
-                                <li>
-                                    <h6 class="dropdown-header text-success fw-bold">
-                                        <i class="bi bi-file-earmark-text me-1"></i> Báo cáo
-                                    </h6>
-                                </li>
-                                <li><a class="dropdown-item py-2" asp-controller="Measurement" asp-action="Report">
-                                        <i class="bi bi-file-text me-2"></i>Báo cáo tổng hợp</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown px-1">
-                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center @(currentController == "Department" ? "active" : "")"
-                                href="#" role="button" data-bs-toggle="dropdown">
+                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center dropdown-toggle @(currentController == "Department" ? "active" : "")"
+                                href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-building me-2"></i>
-                                <span>Department</span>
+                                <span>Organization</span>
                             </a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item py-2" asp-controller="Department" asp-action="Index">Danh
-                                        sách phòng ban</a></li>
-                                <li><a class="dropdown-item py-2" asp-controller="Department" asp-action="Tree">Cơ cấu
-                                        tổ chức</a></li>
-                                <li>
-                                    <hr class="dropdown-divider opacity-25">
+                                <!-- Department Menu Item -->
+                                <li class="dropdown-submenu">
+                                    <a class="dropdown-item py-2 d-flex align-items-center" href="#">
+                                        <i class="bi bi-diagram-3 me-2"></i> <!-- Changed Icon slightly -->
+                                        <span>Department</span>
+                                        <i class="bi bi-chevron-right ms-auto"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-start shadow-sm border-0">
+                                        <li><a class="dropdown-item py-2" asp-controller="Department"
+                                                asp-action="Index">
+                                                <i class="bi bi-list-ul me-2"></i>Department List
+                                            </a></li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Department" asp-action="Tree">
+                                                <i class="bi bi-diagram-3 me-2"></i>Department Hierarchy
+                                            </a></li>
+                                        @if (User.IsInRole("Administrator"))
+                                        {
+                                            <li>
+                                                <hr class="dropdown-divider opacity-25">
+                                            </li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Department"
+                                                    asp-action="Create">
+                                                    <i class="bi bi-plus-circle me-1"></i>Add New Department
+                                                </a></li>
+                                        }
+                                    </ul>
                                 </li>
-                                <li><a class="dropdown-item py-2" asp-controller="Department" asp-action="Create">Thêm
-                                        mới phòng ban</a></li>
+                                <!-- Could add Users/Roles here later if needed -->
                             </ul>
                         </li>
                     </ul>
@@ -268,22 +397,31 @@
                     <!-- User Menu -->
                     <div class="navbar-nav">
                         <div class="nav-item dropdown">
-                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center" href="#" role="button"
-                                data-bs-toggle="dropdown">
+                            <a class="nav-link rounded px-3 py-2 d-flex align-items-center @(currentController == "UserManagement" ? "active" : "")"
+                                href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-gear-fill me-2"></i>
-                                <span>Quản trị</span>
+                                <span>Administration</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
                                 <li><a class="dropdown-item py-2" asp-area="Identity"
-                                        asp-page="/Account/Manage/Index">Tài khoản</a></li>
-                                <li><a class="dropdown-item py-2" asp-controller="UserManagement"
-                                        asp-action="Index">Quản lý người dùng</a></li>
+                                        asp-page="/Account/Manage/Index"><i class="bi bi-person-circle me-2"></i>My
+                                        Account</a></li>
+                                @if (User.IsInRole("Administrator"))
+                                {
+                                    <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Index"><i
+                                                class="bi bi-people-fill me-2"></i>User Management</a></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Create"><i
+                                                class="bi bi-person-plus-fill me-2"></i>Add New User</a></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Roles"><i
+                                                class="bi bi-person-rolodex me-2"></i>Role Management</a></li>
+                                }
                                 <li>
                                     <hr class="dropdown-divider opacity-25">
                                 </li>
                                 <li>
                                     <form asp-area="Identity" asp-page="/Account/Logout" method="post">
-                                        <button type="submit" class="dropdown-item py-2 text-danger">Đăng xuất</button>
+                                        <button type="submit" class="dropdown-item py-2 text-danger"><i
+                                                class="bi bi-box-arrow-right me-2"></i>Logout</button>
                                     </form>
                                 </li>
                             </ul>
@@ -294,69 +432,18 @@
         </nav>
     </header>
 
-    <style>
-        .navbar {
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
-        }
-
-        .navbar .nav-link {
-            color: rgba(255, 255, 255, 0.85) !important;
-            transition: all 0.2s;
-        }
-
-        .navbar .nav-link:hover,
-        .navbar .nav-link.active {
-            color: #ffffff !important;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        @@media (max-width: 991.98px) {
-            .navbar-nav {
-                padding: 1rem 0;
-            }
-
-            .dropdown-menu {
-                background-color: rgba(0, 89, 153, 0.8) !important;
-                padding-left: 1rem !important;
-                border-radius: 8px !important;
-                margin-top: 0.5rem !important;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-            }
-
-            .dropdown-menu .dropdown-item {
-                color: #ffffff !important;
-                font-weight: 500 !important;
-            }
-
-            .dropdown-menu .dropdown-item:hover {
-                color: #ffffff !important;
-                background-color: rgba(255, 255, 255, 0.2) !important;
-            }
-
-            .dropdown-menu .dropdown-header {
-                color: rgba(255, 255, 255, 0.8) !important;
-                font-weight: 600 !important;
-            }
-
-            .dropdown-menu .dropdown-divider {
-                border-color: rgba(255, 255, 255, 0.2) !important;
-            }
-        }
-    </style>
-
-    <div class="container-fluid py-3">
-        <main role="main" class="container-fluid px-4 py-4">
-            @await Html.PartialAsync("~/Views/Shared/Common/_Alert.cshtml")
-            @await Html.PartialAsync("~/Views/Shared/Layout/_PageTemplate.cshtml")
+    <div>
+        <main role="main" class="px-4 py-4">
             @await Html.PartialAsync("~/Views/Shared/Layout/_Breadcrumb.cshtml")
+            @await Html.PartialAsync("~/Views/Shared/Common/_Alert.cshtml")
+            @await Html.PartialAsync("~/Views/Shared/Layout/_PageHeader.cshtml")
 
             @if (ViewData["ShowFilterPanel"] != null && IsSectionDefined("FilterContent"))
             {
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-transparent">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Bộ lọc</h5>
+                            <h5 class="mb-0">Filters</h5>
                             <button class="btn btn-link p-0" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#filterCollapse"
                                 aria-expanded="@(ViewData["ShowFilterPanel"] != null ? "true" : "false")">
@@ -381,9 +468,9 @@
             <div class="d-flex align-items-center justify-content-between small">
                 <div class="text-muted">Copyright &copy; Deha KPI Management System @DateTime.Now.Year</div>
                 <div>
-                    <a href="#" class="text-decoration-none small">Chính sách bảo mật</a>
+                    <a href="#" class="text-decoration-none small">Privacy Policy</a>
                     &middot;
-                    <a href="#" class="text-decoration-none small">Điều khoản sử dụng</a>
+                    <a href="#" class="text-decoration-none small">Terms of Use</a>
                 </div>
             </div>
         </div>
@@ -441,6 +528,37 @@
 
             // Sửa vị trí modal khi có navbar fixed
             $('.navbar.fixed-top').length && $('.modal').css('paddingTop', $('.navbar.fixed-top').outerHeight());
+
+            // --- Multi-level Dropdown JS ---
+            $('.dropdown-submenu > a').on("click", function (e) {
+                var $submenu = $(this).next('.dropdown-menu');
+
+                // Đóng tất cả các submenu khác cùng cấp
+                $(this).parent('.dropdown-submenu').siblings('.dropdown-submenu').find('.dropdown-menu').removeClass('show');
+
+                // Đóng các submenu cấp thấp hơn nếu có (khi click lại vào cha)
+                $submenu.find('.dropdown-menu').removeClass('show');
+
+                // Toggle (bật/tắt) hiển thị submenu hiện tại
+                $submenu.toggleClass('show');
+
+                // Ngăn chặn hành vi mặc định của link và không lan truyền sự kiện click lên các dropdown cha
+                e.stopPropagation();
+                e.preventDefault();
+            });
+
+            // Đóng tất cả submenu khi click ra ngoài dropdown
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('.navbar-nav').length) {
+                    $('.dropdown-submenu .dropdown-menu').removeClass('show');
+                }
+            });
+
+            // Đóng submenu khi dropdown chính đóng
+            $('.nav-item.dropdown').on('hidden.bs.dropdown', function () {
+                $(this).find('.dropdown-submenu .dropdown-menu').removeClass('show');
+            });
+            // --- End Multi-level Dropdown JS ---
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)

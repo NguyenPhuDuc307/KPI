@@ -1,0 +1,263 @@
+@model KPISolution.Models.ViewModels.Dashboard.DepartmentOverviewViewModel
+
+@{
+    ViewData["Title"] = "Dashboard phòng ban";
+    ViewData["Icon"] = "bi-building";
+    ViewData["ActiveMenu"] = "Dashboard";
+}
+
+<!-- Thông tin tổng quan -->
+<div class="row mb-4">
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Tổng số phòng ban</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalDepartments</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-building fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Phòng ban hoạt động tốt (>80%)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PerformingWellCount</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Phòng ban cần cải thiện (<60%) </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.RequiringAttentionCount</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hiệu suất của các phòng ban -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold">Hiệu suất của các phòng ban</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Tùy chọn:</div>
+                            <a class="dropdown-item" href="#"><i class="bi bi-download me-2"></i>Xuất báo cáo</a>
+                            <a class="dropdown-item" href="#"><i class="bi bi-printer me-2"></i>In báo cáo</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-bordered table-hover" id="departmentsTable" width="100%"
+                            cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Phòng ban</th>
+                                    <th>Quản lý</th>
+                                    <th>Số lượng chỉ số</th>
+                                    <th>Đạt mục tiêu</th>
+                                    <th>Tỷ lệ hoàn thành</th>
+                                    <th>Hiệu suất</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var department in Model.Departments)
+                                {
+                                    <tr>
+                                        <td><a asp-action="Department"
+                                                asp-route-id="@department.DepartmentId">@department.DepartmentName</a></td>
+                                        <td>@department.ManagerName</td>
+                                        <td>@department.TotalIndicators</td>
+                                        <td>@department.IndicatorsOnTarget / @department.TotalIndicators</td>
+                                        <td>
+                                            <div class="progress" style="height: 20px;">
+                                                @{
+                                                    string bgClass = department.PerformanceScore >= 80 ? "bg-success" :
+                                                    (department.PerformanceScore >= 60 ? "bg-warning" : "bg-danger");
+                                                }
+                                                <div class="progress-bar @bgClass" role="progressbar"
+                                                    style="width: @department.PerformanceScore%"
+                                                    aria-valuenow="@department.PerformanceScore" aria-valuemin="0"
+                                                    aria-valuemax="100">
+                                                    @department.PerformanceScore%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (department.PerformanceScore >= 80)
+                                            {
+                                                <span class="badge bg-success">Tốt</span>
+                                            }
+                                            else if (department.PerformanceScore >= 60)
+                                            {
+                                                <span class="badge bg-warning">Trung bình</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Cần cải thiện</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <a asp-action="Department" asp-route-id="@department.DepartmentId"
+                                                class="btn btn-sm btn-primary">
+                                                <i class="bi bi-graph-up me-1"></i>Chi tiết
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ hiệu suất phòng ban -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Biểu đồ hiệu suất phòng ban</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="departmentPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold">Phân bố hiệu suất</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="departmentStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@section Scripts {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            $(document).ready(function () {
+                // Khởi tạo DataTable
+                $('#departmentsTable').DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/vi.json'
+                    }
+                });
+
+                // Chuẩn bị dữ liệu cho biểu đồ hiệu suất phòng ban
+                const departmentNames = [@Html.Raw(string.Join(",", Model.Departments.Take(10).Select(d => $"'{d.DepartmentName}'")))];
+                const performanceScores = [@string.Join(",", Model.Departments.Take(10).Select(d => d.PerformanceScore))];
+
+                // Biểu đồ hiệu suất phòng ban
+                const ctxBar = document.getElementById('departmentPerformanceChart').getContext('2d');
+                new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: departmentNames,
+                        datasets: [{
+                            label: 'Hiệu suất (%)',
+                            data: performanceScores,
+                            backgroundColor: performanceScores.map(score =>
+                                score >= 80 ? 'rgba(40, 167, 69, 0.8)' :
+                                    score >= 60 ? 'rgba(255, 193, 7, 0.8)' :
+                                        'rgba(220, 53, 69, 0.8)'
+                            ),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Hiệu suất (%)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Phòng ban'
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Biểu đồ phân bố trạng thái
+                const ctxPie = document.getElementById('departmentStatusChart').getContext('2d');
+                new Chart(ctxPie, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Tốt (>80%)', 'Trung bình (60-80%)', 'Cần cải thiện (<60%)'],
+                        datasets: [{
+                            data: [
+                                                                                                    @Model.PerformingWellCount,
+                                                                                                    @(Model.TotalDepartments - Model.PerformingWellCount - Model.RequiringAttentionCount),
+                                @Model.RequiringAttentionCount
+                            ],
+                            backgroundColor: [
+                                'rgba(40, 167, 69, 0.8)',
+                                'rgba(255, 193, 7, 0.8)',
+                                'rgba(220, 53, 69, 0.8)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+}

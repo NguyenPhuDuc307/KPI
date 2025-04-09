@@ -3,8 +3,8 @@
 
 @{
     ViewData["Icon"] = "bi-plus-circle-fill";
-    ViewData["Title"] = "Tạo yếu tố thành công mới";
-    ViewData["PageDescription"] = "Tạo một yếu tố thành công mới";
+    ViewData["Title"] = "Create New Success Factor";
+    ViewData["PageDescription"] = "Create a new success factor";
     ViewData["ActiveMenu"] = "SuccessFactor";
 
     // Lấy ObjectiveId từ query string nếu có
@@ -21,17 +21,17 @@
 <div class="card shadow-sm">
     <div class="card-header bg-transparent">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Thông tin yếu tố thành công</h5>
+            <h5 class="mb-0">Success Factor Information</h5>
             <div>
                 @if (!string.IsNullOrEmpty(objectiveId))
                 {
                     <a asp-controller="Objective" asp-action="Details" asp-route-id="@objectiveId"
                         class="btn btn-sm btn-outline-secondary me-2">
-                        <i class="bi bi-arrow-left me-1"></i>Quay lại mục tiêu
+                        <i class="bi bi-arrow-left me-1"></i>Back to Objective
                     </a>
                 }
                 <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-list me-1"></i>Danh sách yếu tố
+                    <i class="bi bi-list me-1"></i>Success Factor List
                 </a>
             </div>
         </div>
@@ -41,7 +41,7 @@
         {
             <div class="alert alert-info mb-4">
                 <i class="bi bi-info-circle me-2"></i>
-                Bạn đang tạo yếu tố thành công cho mục tiêu: <strong>@ViewBag.ObjectiveName</strong>
+                You are creating a success factor for the objective: <strong>@ViewBag.ObjectiveName</strong>
             </div>
         }
 
@@ -49,7 +49,7 @@
             @if (!ViewData.ModelState.IsValid)
             {
                 <div class="alert alert-danger">
-                    <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Vui lòng sửa các lỗi sau:</h5>
+                    <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Please fix the following errors:</h5>
                     <div asp-validation-summary="All" class="text-danger"></div>
                 </div>
             }
@@ -61,32 +61,33 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label asp-for="Code" class="form-label required">Mã yếu tố</label>
+                        <label asp-for="Code" class="form-label required">Success Factor Code</label>
                         <div class="input-group">
                             <input asp-for="Code" class="form-control" required maxlength="20" id="successFactorCode" />
                             <button type="button" class="btn btn-outline-secondary" id="generateCodeBtn">
-                                <i class="bi bi-magic"></i> Tạo mã
+                                <i class="bi bi-magic"></i> Generate Code
                             </button>
                         </div>
                         <span asp-validation-for="Code" class="text-danger"></span>
-                        <div class="invalid-feedback">Vui lòng nhập mã yếu tố thành công</div>
-                        <div class="text-danger d-none" id="codeExistsError">Mã này đã tồn tại trong hệ thống</div>
-                        <small class="text-muted">Mã định danh duy nhất cho yếu tố này</small>
+                        <div class="invalid-feedback">Please enter a valid success factor code</div>
+                        <div class="text-danger d-none" id="codeExistsError">This code already exists in the system
+                        </div>
+                        <small class="text-muted">Unique identifier for this success factor</small>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Name" class="form-label required">Tên yếu tố</label>
+                        <label asp-for="Name" class="form-label required">Success Factor Name</label>
                         <input asp-for="Name" class="form-control" required maxlength="100" />
                         <span asp-validation-for="Name" class="text-danger"></span>
-                        <div class="invalid-feedback">Vui lòng nhập tên yếu tố thành công</div>
+                        <div class="invalid-feedback">Please enter a valid success factor name</div>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Description" class="form-label required">Mô tả</label>
+                        <label asp-for="Description" class="form-label required">Description</label>
                         <textarea asp-for="Description" class="form-control" rows="4" maxlength="500"
                             required></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
-                        <div class="invalid-feedback">Vui lòng nhập mô tả cho yếu tố thành công</div>
+                        <div class="invalid-feedback">Please enter a valid success factor description</div>
                     </div>
 
                     <div class="mb-3">
@@ -95,36 +96,37 @@
                                 id="isCriticalSwitch" />
                             <label asp-for="IsCritical" class="form-check-label">Critical Success Factor (CSF)</label>
                         </div>
-                        <small class="text-muted">Đánh dấu nếu đây là yếu tố cốt lõi cho thành công của mục tiêu</small>
+                        <small class="text-muted">Mark if this is a critical success factor for the objective</small>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label asp-for="ObjectiveId" class="form-label required">Mục tiêu liên quan</label>
+                        <label asp-for="ObjectiveId" class="form-label required">Related Objective</label>
                         <select asp-for="ObjectiveId" asp-items="ViewBag.Objectives" class="form-select" required>
-                            <option value="">-- Chọn mục tiêu --</option>
+                            <option value="">-- Select Objective --</option>
                         </select>
                         <span asp-validation-for="ObjectiveId" class="text-danger"></span>
-                        <div class="invalid-feedback">Vui lòng chọn mục tiêu liên quan</div>
+                        <div class="invalid-feedback">Please select a related objective</div>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="DepartmentId" class="form-label required">Phòng ban phụ trách</label>
+                        <label asp-for="DepartmentId" class="form-label required">Responsible Department</label>
                         <select asp-for="DepartmentId" asp-items="ViewBag.Departments" class="form-select" required>
-                            <option value="">-- Chọn phòng ban --</option>
+                            <option value="">-- Select Department --</option>
                         </select>
                         <span asp-validation-for="DepartmentId" class="text-danger"></span>
-                        <div class="invalid-feedback">Vui lòng chọn phòng ban phụ trách</div>
+                        <div class="invalid-feedback">Please select a responsible department</div>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="ParentId" class="form-label">Yếu tố cha</label>
+                        <label asp-for="ParentId" class="form-label">Parent Success Factor</label>
                         <select asp-for="ParentId" asp-items="ViewBag.ParentSuccessFactors" class="form-select">
-                            <option value="">-- Không có yếu tố cha --</option>
+                            <option value="">-- No Parent Success Factor --</option>
                         </select>
                         <span asp-validation-for="ParentId" class="text-danger"></span>
-                        <small class="text-muted">Chọn nếu yếu tố này là một phần của yếu tố thành công khác</small>
+                        <small class="text-muted">Select if this success factor is part of another success
+                            factor</small>
                     </div>
 
                     <div class="row">

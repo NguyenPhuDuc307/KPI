@@ -5,7 +5,7 @@ namespace KPISolution.Models.Mappings
         public SuccessFactorMappingProfile()
         {
             // Map từ ViewModel sang Entity
-            CreateMap<SuccessFactorCreateViewModel, SuccessFactor>()
+            this.CreateMap<SuccessFactorCreateViewModel, SuccessFactor>()
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
                 .ForMember(dest => dest.Code, opt => opt.MapFrom(src => src.Code))
@@ -29,10 +29,10 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.ResponsibleUser, opt => opt.Ignore());
 
             // Map từ Entity sang ViewModel
-            CreateMap<SuccessFactor, SuccessFactorViewModel>();
+            this.CreateMap<SuccessFactor, SuccessFactorViewModel>();
 
             // Map từ Entity sang chi tiết ViewModel
-            CreateMap<SuccessFactor, SuccessFactorDetailsViewModel>()
+            this.CreateMap<SuccessFactor, SuccessFactorDetailsViewModel>()
                 .ForMember(dest => dest.ParentName, opt => opt.MapFrom(src => src.Parent != null ? src.Parent.Name : string.Empty))
                 .ForMember(dest => dest.ObjectiveName, opt => opt.MapFrom(src => src.Objective != null ? src.Objective.Name : string.Empty))
                 .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : string.Empty))
@@ -41,11 +41,14 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.ResultIndicators, opt => opt.MapFrom(src => src.ResultIndicators))
                 .ForMember(dest => dest.ProgressHistory, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => src.CreatedAt))
-                .ForMember(dest => dest.LastUpdated, opt => opt.MapFrom(src => src.UpdatedAt ?? src.CreatedAt));
+                .ForMember(dest => dest.LastUpdated, opt => opt.MapFrom(src => src.UpdatedAt ?? src.CreatedAt))
+                .ForMember(dest => dest.Weight, opt => opt.MapFrom(src => src.Weight))
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate))
+                .ForMember(dest => dest.TargetDate, opt => opt.MapFrom(src => src.TargetDate));
 
             // Map cho Edit ViewModel
-            CreateMap<SuccessFactor, SuccessFactorEditViewModel>();
-            CreateMap<SuccessFactorEditViewModel, SuccessFactor>()
+            this.CreateMap<SuccessFactor, SuccessFactorEditViewModel>();
+            this.CreateMap<SuccessFactorEditViewModel, SuccessFactor>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.Children, opt => opt.Ignore())
@@ -58,12 +61,12 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.ResponsibleUser, opt => opt.Ignore());
 
             // Map cho List Item ViewModel
-            CreateMap<SuccessFactor, SuccessFactorListItemViewModel>()
+            this.CreateMap<SuccessFactor, SuccessFactorListItemViewModel>()
                 .ForMember(dest => dest.ObjectiveName, opt => opt.MapFrom(src => src.Objective != null ? src.Objective.Name : null))
                 .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.Name : null));
 
             // Map cho Progress ViewModel
-            CreateMap<SuccessFactor, SuccessFactorProgressViewModel>()
+            this.CreateMap<SuccessFactor, SuccessFactorProgressViewModel>()
                 .ForMember(dest => dest.SuccessFactorId, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.SuccessFactorName, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.ProgressPercentage, opt => opt.MapFrom(src => src.ProgressPercentage))

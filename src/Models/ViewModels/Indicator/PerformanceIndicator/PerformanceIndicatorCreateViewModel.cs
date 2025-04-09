@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Rendering;
-
 namespace KPISolution.Models.ViewModels.Indicator.PerformanceIndicator
 {
     public class PerformanceIndicatorCreateViewModel

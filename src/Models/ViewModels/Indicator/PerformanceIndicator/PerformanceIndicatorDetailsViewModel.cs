@@ -82,6 +82,10 @@ namespace KPISolution.Models.ViewModels.Indicator.PerformanceIndicator
         public string SuccessFactorName { get; set; } = string.Empty;
         public bool SuccessFactorIsCritical { get; set; }
 
+        [Display(Name = "Result Indicator")]
+        public Guid? ResultIndicatorId { get; set; }
+        public string? ResultIndicatorName { get; set; }
+
         [Display(Name = "Responsible Team Member")]
         public Guid? ResponsibleTeamMemberId { get; set; }
         public string? ResponsibleTeamMemberName { get; set; }

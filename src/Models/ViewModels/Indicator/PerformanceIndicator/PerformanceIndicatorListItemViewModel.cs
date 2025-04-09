@@ -96,7 +96,7 @@ namespace KPISolution.Models.ViewModels.Indicator.PerformanceIndicator
 
         public string GetStatusBadgeClass()
         {
-            var status = GetValueStatus();
+            var status = this.GetValueStatus();
             return status switch
             {
                 "Achieved" => "bg-success",
@@ -109,7 +109,7 @@ namespace KPISolution.Models.ViewModels.Indicator.PerformanceIndicator
 
         public string GetStatusDisplay()
         {
-            var status = GetValueStatus();
+            var status = this.GetValueStatus();
             return status switch
             {
                 "Achieved" => "Đạt",

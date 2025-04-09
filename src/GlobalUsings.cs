@@ -45,7 +45,6 @@ global using KPISolution.Models.Entities.Dashboard;
 global using KPISolution.Models.Entities.Measurement;
 global using KPISolution.Models.Entities.Notification;
 global using KPISolution.Models.Entities.Progress;
-
 // Enums - Base namespace
 global using KPISolution.Models.Enums.Indicator;
 global using KPISolution.Models.Enums.Measurement;
@@ -67,6 +66,8 @@ global using KPISolution.Models.ViewModels.Department;
 global using KPISolution.Models.ViewModels.Objective;
 global using KPISolution.Models.ViewModels.Users;
 global using KPISolution.Models.ViewModels.Measurement;
+// Add using for Widget ViewModels
+global using KPISolution.Models.ViewModels.Dashboard.Widgets;
 
 // Services
 global using KPISolution.Services.Email;

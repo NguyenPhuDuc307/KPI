@@ -82,6 +82,42 @@ namespace KPISolution.Models.ViewModels.Organization
 
         [Display(Name = "Trạng thái")]
         public string? Status { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets CSS class for status badge display
+        /// </summary>
+        public string StatusCssClass
+        {
+            get
+            {
+                return Status switch
+                {
+                    "Completed" => "bg-success",
+                    "InProgress" => "bg-primary",
+                    "Delayed" => "bg-warning",
+                    "AtRisk" => "bg-danger",
+                    "Cancelled" => "bg-secondary",
+                    _ => "bg-secondary"
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets CSS class for progress bar display
+        /// </summary>
+        public string ProgressCssClass
+        {
+            get
+            {
+                return ProgressPercentage switch
+                {
+                    >= 75 => "bg-success",
+                    >= 50 => "bg-info",
+                    >= 25 => "bg-warning",
+                    _ => "bg-danger"
+                };
+            }
+        }
     }
 
     /// <summary>
