@@ -1,0 +1,286 @@
+@using KPISolution.Models.Enums.Measurement
+@using KPISolution.Models.Enums.Object
+@using KPISolution.Models.Enums.Indicator
+@model KPISolution.Models.ViewModels.Indicator.ResultIndicator.ResultIndicatorEditViewModel
+
+@{
+    ViewData["Title"] = $"Edit {((Model?.IsKey ?? false) ? "Key Result Indicator" : "Result Indicator")}";
+    ViewData["Icon"] = "bi-graph-up";
+    ViewData["Subtitle"] = Model?.Name ?? "Unnamed Indicator";
+
+    var backAction = "Details";
+    var modelId = Model?.Id.ToString() ?? string.Empty;
+
+    ViewData["SecondaryButton"] = new ValueTuple<string, string, string, string, string>(
+    "Back to Details",
+    "ResultIndicator",
+    backAction + "?id=" + modelId,
+    "",
+    "bi-arrow-left"
+    );
+
+    // Configure Breadcrumb
+    var breadcrumbItems = new List<(string Text, string Controller, string Action, string Id)>();
+
+    breadcrumbItems.Add((
+    Model?.IsKey == true ? "Key Result Indicators" : "Result Indicators",
+    "ResultIndicator",
+    Model?.IsKey == true ? "KeyResultIndicators" : "Index",
+    string.Empty));
+
+    breadcrumbItems.Add((
+    Model?.Name ?? "Unnamed Indicator",
+    "ResultIndicator",
+    "Details",
+    modelId));
+
+    breadcrumbItems.Add((
+    "Edit",
+    "ResultIndicator",
+    "Edit",
+    modelId));
+
+    ViewData["BreadcrumbItems"] = breadcrumbItems;
+}
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-primary">
+            <i class="bi bi-pencil me-2"></i>@ViewData["Title"]
+        </h5>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="isKeyCheckbox" @(Model?.IsKey == true ? "checked" : "")>
+            <label class="form-check-label" for="isKeyCheckbox">Key Result Indicator (KRI)</label>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <form asp-action="Edit">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="IsKey" id="isKeyInput" value="@(Model?.IsKey ?? false)" />
+
+            <partial name="_ValidationSummary" />
+
+            <!-- Thông tin cơ bản -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Thông tin cơ bản</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Name" class="form-label">Tên chỉ số <span
+                                        class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" placeholder="Nhập tên chỉ số" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Code" class="form-label">Mã chỉ số <span
+                                        class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input asp-for="Code" class="form-control" id="codeInput" readonly
+                                        placeholder="@((Model?.IsKey ?? false) ? "KRI-YYMMDD-####" : "RI-YYMMDD-####")" />
+                                </div>
+                                <span asp-validation-for="Code" class="text-danger"></span>
+                                <div class="text-danger d-none" id="codeExistsError">Mã này đã tồn tại trong hệ thống
+                                </div>
+                                <div class="form-text">Định dạng: @((Model?.IsKey ?? false) ? "KRI-YYMM-###" :
+                                                                        "RI-YYMM-###")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label">Mô tả</label>
+                        <textarea asp-for="Description" class="form-control" rows="3"
+                            placeholder="Nhập mô tả chi tiết cho chỉ số"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phân loại -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-tag me-2"></i>Phân loại</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="SuccessFactorId" class="form-label">SuccessFactor <span
+                                        class="text-danger">*</span></label>
+                                <select asp-for="SuccessFactorId"
+                                    asp-items="@(Model?.SuccessFactorOptions ?? new List<SelectListItem>())"
+                                    class="form-select">
+                                    <option value="">-- Chọn yếu tố thành công --</option>
+                                </select>
+                                <span asp-validation-for="SuccessFactorId" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Khía cạnh kinh doanh <span
+                                        class="text-danger">*</span></label>
+                                <select name="BusinessPerspective" class="form-select"
+                                    asp-items="Html.GetEnumSelectList<BusinessPerspective>()">
+                                    <option value="">-- Chọn khía cạnh kinh doanh --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Loại chỉ số <span class="text-danger">*</span></label>
+                                <select name="IndicatorType" class="form-select"
+                                    asp-items="Html.GetEnumSelectList<BasicIndicatorType>()">
+                                    <option value="">-- Chọn loại chỉ số --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="ResponsibleUserId" class="form-label">Người phụ trách</label>
+                                <select asp-for="ResponsibleUserId" class="form-select"
+                                    asp-items="@(Model?.ResponsibleUserOptions ?? new List<SelectListItem>())">
+                                    <option value="">-- Chọn người phụ trách --</option>
+                                </select>
+                                @if (Model?.ResponsibleUserOptions == null || !Model.ResponsibleUserOptions.Any())
+                                {
+                                    <div class="text-danger mt-1">
+                                        <small><i class="bi bi-exclamation-circle"></i> Không có người dùng đang hoạt động
+                                            nào trong hệ thống</small>
+                                    </div>
+                                }
+                                <span asp-validation-for="ResponsibleUserId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Đo lường -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Thiết lập đo lường</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="TargetValue" class="form-label">Giá trị mục tiêu</label>
+                                <input asp-for="TargetValue" class="form-control" type="number" step="0.01" />
+                                <span asp-validation-for="TargetValue" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="Unit" class="form-label">Đơn vị <span
+                                        class="text-danger">*</span></label>
+                                <select asp-for="Unit" asp-items="@(Model?.UnitOptions ?? new List<SelectListItem>())"
+                                    class="form-select">
+                                    <option value="">-- Chọn đơn vị --</option>
+                                </select>
+                                <span asp-validation-for="Unit" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="Direction" class="form-label">Cách diễn giải giá trị</label>
+                                <select asp-for="Direction" class="form-select"
+                                    asp-items="Html.GetEnumSelectList<MeasurementDirection>()">
+                                    <option value="">-- Chọn cách diễn giải --</option>
+                                </select>
+                                <span asp-validation-for="Direction" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Frequency" class="form-label">Tần suất đo lường <span
+                                        class="text-danger">*</span></label>
+                                <select asp-for="Frequency" class="form-select"
+                                    asp-items="@(Model?.FrequencyOptions ?? new List<SelectListItem>())">
+                                    <option value="">-- Chọn tần suất --</option>
+                                </select>
+                                <span asp-validation-for="Frequency" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="ProcessArea" class="form-label">Phạm vi quy trình</label>
+                                <select asp-for="ProcessArea" class="form-select"
+                                    asp-items="@(Model?.ProcessAreaOptions ?? new List<SelectListItem>())">
+                                    <option value="">-- Chọn phạm vi quy trình --</option>
+                                </select>
+                                <span asp-validation-for="ProcessArea" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-flex justify-content-between">
+                <a asp-action="Delete" asp-route-id="@(Model?.Id)" class="btn btn-outline-danger"
+                    onclick="return confirm('Bạn có chắc muốn xóa ' + '@((Model?.IsKey ?? false) ? "KRI" : "RI")' + ' này? Thao tác này không thể hoàn tác.')">
+                    <i class="bi bi-trash me-1"></i>Xóa
+                </a>
+
+                <div>
+                    <a asp-action="Details" asp-route-id="@(Model?.Id)" class="btn btn-secondary me-2">
+                        <i class="bi bi-x-circle me-1"></i>Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var isKeyCheckbox = document.getElementById('isKeyCheckbox');
+            var isKeyInput = document.getElementById('isKeyInput');
+            var codeInput = document.getElementById('codeInput');
+            var isKey = @((Model?.IsKey ?? false).ToString().ToLower());
+
+            // Xử lý chuyển đổi RI/KRI khi checkbox thay đổi
+            if (isKeyCheckbox && isKeyInput && codeInput) {
+                isKeyCheckbox.addEventListener('change', function () {
+                    var isKey = this.checked;
+                    isKeyInput.value = isKey;
+
+                    // Lấy mã hiện tại
+                    var currentCode = codeInput.value;
+
+                    // Thay đổi tiền tố của mã
+                    if (currentCode) {
+                        var newCode = currentCode;
+                        if (isKey && currentCode.startsWith('RI-')) {
+                            newCode = 'KRI-' + currentCode.substring(3);
+                        } else if (!isKey && currentCode.startsWith('KRI-')) {
+                            newCode = 'RI-' + currentCode.substring(4);
+                        }
+                        codeInput.value = newCode;
+                    }
+                });
+            }
+        });
+    </script>
+}

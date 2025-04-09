@@ -1,0 +1,219 @@
+@model KPISolution.Models.ViewModels.Measurement.MeasurementViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết phép đo";
+    ViewData["Icon"] = "bi-rulers";
+    ViewData["Subtitle"] = "Xem chi tiết kết quả đo lường của chỉ số";
+}
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi bi-info-circle me-2"></i>Thông tin chung
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-sm btn-light">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <h5 class="text-primary">Thông tin chỉ số</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">Tên chỉ số:</dt>
+                        <dd class="col-sm-8">
+                            <a asp-controller="@(Model.IndicatorType == "RI" ? "ResultIndicator" : "PerformanceIndicator")"
+                                asp-action="Details" asp-route-id="@Model.IndicatorId"
+                                class="text-decoration-none fw-bold">
+                                @Model.IndicatorName
+                            </a>
+                            <span class="badge bg-primary ms-2">@Model.IndicatorType</span>
+                        </dd>
+
+                        <dt class="col-sm-4">Phòng ban:</dt>
+                        <dd class="col-sm-8">@Model.DepartmentName</dd>
+
+                        <dt class="col-sm-4">Giá trị mục tiêu:</dt>
+                        <dd class="col-sm-8">
+                            @(Model.TargetValue?.ToString("N2") ?? "Chưa đặt") @Model.IndicatorUnit
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <h5 class="text-primary">Thông tin phép đo</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">Ngày đo:</dt>
+                        <dd class="col-sm-8">@Model.MeasurementDate.ToString("dd/MM/yyyy")</dd>
+
+                        <dt class="col-sm-4">Giá trị đo được:</dt>
+                        <dd class="col-sm-8">
+                            <span class="fw-bold">@Model.Value.ToString("N2") @Model.IndicatorUnit</span>
+                        </dd>
+
+                        <dt class="col-sm-4">Trạng thái:</dt>
+                        <dd class="col-sm-8">
+                            @{
+                                string statusClass = Model.Status switch
+                                {
+                                    MeasurementStatus.Target => "bg-success",
+                                    MeasurementStatus.Expected => "bg-warning",
+                                    MeasurementStatus.Actual => "bg-primary",
+                                    MeasurementStatus.Threshold => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @statusClass">@Model.Status.ToString()</span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0 text-primary">
+                            <i class="bi bi-graph-up me-2"></i>Phân tích
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Phần trăm hoàn thành</h6>
+                                        @if (Model.TargetValue.HasValue)
+                                        {
+                                            <h2
+                                                class="mb-0 @(Model.AchievementPercentage >= 100 ? "text-success" : Model.AchievementPercentage >= 80 ? "text-warning" : "text-danger")">
+                                                @Model.AchievementPercentage.ToString("N2")%
+                                            </h2>
+                                        }
+                                        else
+                                        {
+                                            <h2 class="mb-0 text-muted">N/A</h2>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Sai lệch</h6>
+                                        @if (Model.TargetValue.HasValue)
+                                        {
+                                            <h2 class="mb-0 @(Model.Variance >= 0 ? "text-success" : "text-danger")">
+                                                @(Model.Variance >= 0 ? "+" : "")@Model.Variance.ToString("N2")
+                                                @Model.IndicatorUnit
+                                            </h2>
+                                        }
+                                        else
+                                        {
+                                            <h2 class="mb-0 text-muted">N/A</h2>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Đánh giá</h6>
+                                        @if (Model.TargetValue.HasValue)
+                                        {
+                                            @if (Model.AchievementPercentage >= 100)
+                                            {
+                                                <h2 class="mb-0 text-success">Đạt</h2>
+                                            }
+                                            else if (Model.AchievementPercentage >= 80)
+                                            {
+                                                <h2 class="mb-0 text-warning">Có nguy cơ</h2>
+                                            }
+                                            else
+                                            {
+                                                <h2 class="mb-0 text-danger">Không đạt</h2>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <h2 class="mb-0 text-muted">N/A</h2>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.Notes))
+        {
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0 text-primary">
+                                <i class="bi bi-journal-text me-2"></i>Ghi chú
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">@Model.Notes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0 text-primary">
+                            <i class="bi bi-info-circle me-2"></i>Thông tin hệ thống
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-2">Ngày tạo:</dt>
+                            <dd class="col-sm-4">@(Model.CreatedAt?.ToString("dd/MM/yyyy HH:mm:ss") ?? "N/A")</dd>
+
+                            <dt class="col-sm-2">Người tạo:</dt>
+                            <dd class="col-sm-4">@(Model.CreatedBy ?? "N/A")</dd>
+
+                            @if (Model.UpdatedAt.HasValue)
+                            {
+                                <dt class="col-sm-2">Cập nhật lần cuối:</dt>
+                                <dd class="col-sm-4">@Model.UpdatedAt?.ToString("dd/MM/yyyy HH:mm:ss")</dd>
+
+                                <dt class="col-sm-2">Người cập nhật:</dt>
+                                <dd class="col-sm-4">@(Model.UpdatedBy ?? "N/A")</dd>
+                            }
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer bg-transparent">
+        <div class="d-flex justify-content-between">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                <i class="bi bi-pencil me-1"></i>Chỉnh sửa
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,52 +1,102 @@
-# KPI Management System - System Patterns
+# System Patterns - KPI Management System
 
 ## System Architecture
+The KPI Management System follows a layered architecture pattern:
 
-The KPI Management System follows a clean architecture approach with distinct layers:
+1. **Presentation Layer**
+   - ASP.NET Core MVC
+   - Razor Views
+   - JavaScript/Chart.js
+   - Responsive Design
 
-```
-┌───────────────────────────────────────┐
-│             Presentation              │
-│  (Controllers, Views, View Models)    │
-├───────────────────────────────────────┤
-│             Service Layer             │
-│    (Business Logic, Validation)       │
-├───────────────────────────────────────┤
-│             Data Access               │
-│     (Repositories, DbContext)         │
-├───────────────────────────────────────┤
-│               Entities                │
-│      (Domain Models, Enums)           │
-└───────────────────────────────────────┘
-```
+2. **Application Layer**
+   - Controllers
+   - Services
+   - DTOs
+   - AutoMapper
 
-### Presentation Layer
+3. **Domain Layer**
+   - Models
+   - Business Logic
+   - Validation Rules
+   - Domain Events
 
-- ASP.NET Core MVC Controllers and Razor Views
-- View Models for presentation-specific data structures
-- UI Components using Bootstrap and jQuery
-- Visualization components using Chart.js
+4. **Infrastructure Layer**
+   - Entity Framework Core
+   - Repositories
+   - Unit of Work
+   - External Services
 
-### Service Layer
+## Key Technical Decisions
+1. **Database**
+   - SQL Server for production
+   - Entity Framework Core for ORM
+   - Code-first approach
+   - Migrations for schema changes
 
-- Business logic encapsulated in service classes
-- Input validation and business rule enforcement
-- Transaction management for complex operations
-- Integration with external systems (email, etc.)
+2. **Authentication/Authorization**
+   - ASP.NET Core Identity
+   - Role-based access control
+   - Custom authorization handlers
+   - Two-factor authentication
 
-### Data Access Layer
+3. **Logging**
+   - Serilog for structured logging
+   - File and console sinks
+   - Log rotation
+   - Error tracking
 
-- Repository pattern for data access abstraction
-- Unit of Work pattern for transaction management
-- Entity Framework Core for ORM capabilities
-- Custom queries for performance-critical operations
+4. **Data Processing**
+   - Batch processing for imports
+   - Background jobs for calculations
+   - Caching for performance
+   - Validation pipelines
 
-### Entity Layer
+## Design Patterns
+1. **Repository Pattern**
+   - Generic repository interface
+   - Entity-specific repositories
+   - Unit of Work for transactions
+   - Query specifications
 
-- Domain models representing core business concepts
-- Rich domain models with behavior where appropriate
-- Clear relationships between entity types
-- Enum types for consistent categorization
+2. **Service Layer**
+   - Business logic encapsulation
+   - Transaction management
+   - Validation rules
+   - Error handling
+
+3. **Factory Pattern**
+   - Report generation
+   - Notification creation
+   - Data import processing
+   - Export format handling
+
+4. **Observer Pattern**
+   - Event handling
+   - Notification system
+   - Alert triggers
+   - Status updates
+
+## Component Relationships
+1. **KPI Management**
+   - KPI ↔ CSF (Many-to-Many)
+   - KPI ↔ Measurement (One-to-Many)
+   - KPI ↔ Department (Many-to-Many)
+
+2. **User Management**
+   - User ↔ Role (Many-to-Many)
+   - User ↔ Department (Many-to-One)
+   - User ↔ Notification (One-to-Many)
+
+3. **Data Collection**
+   - Measurement ↔ KPI (Many-to-One)
+   - Measurement ↔ User (Many-to-One)
+   - Measurement ↔ Validation (One-to-Many)
+
+4. **Reporting**
+   - Report ↔ Template (Many-to-One)
+   - Report ↔ Export (One-to-Many)
+   - Report ↔ User (Many-to-One)
 
 ## Cấu trúc phân cấp của chỉ số (Indicator Hierarchy)
 

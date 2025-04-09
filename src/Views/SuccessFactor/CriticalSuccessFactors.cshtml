@@ -1,0 +1,252 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using KPISolution.Models.Enums.SuccessFactor
+@using KPISolution.Models.Enums.Indicator
+@model SuccessFactorListViewModel
+
+@{
+    ViewData["Title"] = "SuccessFactor cốt lõi (CSF)";
+    ViewData["Icon"] = "bi-star-fill";
+    ViewData["Subtitle"] = "Quản lý các yếu tố thành công cốt lõi (Critical Success Factors) của tổ chức";
+    ViewData["PrimaryButton"] = new ValueTuple<string, string, string, string, string>("Thêm mới CSF", "SuccessFactor",
+    "Create", "?isCritical=true", "bi-plus-circle");
+    ViewData["SecondaryButton"] = new ValueTuple<string, string, string, string, string>("Xem tất cả yếu tố",
+    "SuccessFactor", "Index", "", "bi-list");
+
+    // Cấu hình Breadcrumb
+    ViewData["BreadcrumbItems"] = new List<(string Text, string Controller, string Action, string Id)>
+{
+("SuccessFactor", "SuccessFactor", "Index", ""),
+("Critical Success Factor (CSF)", "SuccessFactor", "CriticalSuccessFactors", "")
+};
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-search me-2"></i>Tìm kiếm yếu tố cốt lõi (CSF)</h5>
+    </div>
+    <div class="card-body p-4">
+        <form method="get" asp-action="CriticalSuccessFactors" id="searchForm">
+            <input type="hidden" name="IsCritical" value="true" />
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label asp-for="SearchTerm" class="form-label"></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                            <input asp-for="SearchTerm" class="form-control"
+                                placeholder="Tìm theo tên, mã hoặc mô tả" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label asp-for="SelectedDepartmentId" class="form-label"></label>
+                        <select asp-for="SelectedDepartmentId" asp-items="@ViewBag.Departments" class="form-select">
+                            <option value="">-- Tất cả phòng ban --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label asp-for="SelectedStatus" class="form-label"></label>
+                        <select asp-for="SelectedStatus" asp-items="@Html.GetEnumSelectList<SuccessFactorStatus>()"
+                            class="form-select">
+                            <option value="">-- Tất cả trạng thái --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label asp-for="SelectedCategory" class="form-label"></label>
+                        <select asp-for="SelectedCategory" asp-items="@Html.GetEnumSelectList<SuccessFactorCategory>()"
+                            class="form-select">
+                            <option value="">-- Tất cả danh mục --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label asp-for="SelectedObjectiveId" class="form-label"></label>
+                        <select asp-for="SelectedObjectiveId" asp-items="@ViewBag.Objectives" class="form-select">
+                            <option value="">-- Tất cả mục tiêu --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="mb-3 w-100">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search me-1"></i> Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" asp-for="CurrentPage" id="currentPage" />
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    @if (Model.Items != null && Model.Items.Any())
+    {
+        foreach (var item in Model.Items)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-star-fill me-2"></i>
+                            <span class="badge bg-light text-dark me-2">@item.Code</span>
+                            @item.Name
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">@(string.IsNullOrEmpty(item.Description) ? "Không có mô tả" : item.Description)
+                        </p>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Danh mục:</small>
+                            <span class="badge @item.GetCategoryBadgeClass()">@item.Category</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Phòng ban:</small>
+                            <span>@item.DepartmentName</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Trạng thái:</small>
+                            <span class="@item.StatusBadgeClass">@item.Status</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Mức độ rủi ro:</small>
+                            <span class="@item.RiskBadgeClass">@item.RiskLevel</span>
+                        </div>
+
+                        <div class="mb-2">
+                            <small class="text-muted">Tiến độ:</small>
+                            <div class="progress mt-1" style="height: 20px;">
+                                <div class="@item.ProgressBarClass" role="progressbar" style="width: @item.ProgressPercentage%"
+                                    aria-valuenow="@item.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                                    @item.ProgressPercentage%
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (item.IndicatorCount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2">
+                                <small class="text-muted">Số chỉ số liên kết:</small>
+                                <span class="badge bg-info">@item.IndicatorCount</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="btn-group w-100" role="group">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                <i class="bi bi-info-circle me-1"></i>Chi tiết
+                            </a>
+                            <a asp-action="UpdateProgress" asp-route-id="@item.Id" class="btn btn-sm btn-success">
+                                <i class="bi bi-arrow-up-right me-1"></i>Cập nhật
+                            </a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
+                                <i class="bi bi-pencil me-1"></i>Sửa
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">Không tìm thấy yếu tố thành công cốt lõi (CSF) nào phù hợp với tiêu chí tìm
+                        kiếm.</p>
+                    <a asp-action="Create" asp-route-isCritical="true" class="btn btn-primary mt-2">
+                        <i class="bi bi-plus-circle me-1"></i>Thêm mới CSF
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (Model.TotalCount > 0)
+{
+    <div class="card shadow-sm mt-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    Hiển thị <b>@((Model.CurrentPage - 1) * Model.PageSize + 1)</b> đến
+                    <b>@Math.Min(Model.TotalCount, Model.CurrentPage * Model.PageSize)</b> của <b>@Model.TotalCount</b> yếu
+                    tố thành công cốt lõi
+                </div>
+                <div>
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mb-0">
+                            @if (Model.HasPreviousPage)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link page-number" href="#" data-page="1"><i
+                                            class="bi bi-chevron-double-left"></i></a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link page-number" href="#" data-page="@(Model.CurrentPage - 1)"><i
+                                            class="bi bi-chevron-left"></i></a>
+                                </li>
+                            }
+
+                            @{
+                                int startPage = Math.Max(1, Model.CurrentPage - 2);
+                                int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                                if (endPage - startPage < 4 && startPage > 1)
+                                {
+                                    startPage = Math.Max(1, endPage - 4);
+                                }
+                            }
+
+                            @for (int i = startPage; i <= endPage; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link page-number" href="#" data-page="@i">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.HasNextPage)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link page-number" href="#" data-page="@(Model.CurrentPage + 1)"><i
+                                            class="bi bi-chevron-right"></i></a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link page-number" href="#" data-page="@Model.TotalPages"><i
+                                            class="bi bi-chevron-double-right"></i></a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.page-number').click(function (e) {
+                e.preventDefault();
+                if (document.getElementById('currentPage')) {
+                    document.getElementById('currentPage').value = $(this).data('page');
+                    $('#searchForm').submit();
+                }
+            });
+        });
+    </script>
+}

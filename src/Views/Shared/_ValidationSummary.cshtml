@@ -1,0 +1,7 @@
+@if (!ViewData.ModelState.IsValid)
+{
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-circle me-2"></i>Đã xảy ra lỗi. Vui lòng kiểm tra thông tin nhập vào.
+            <div asp-validation-summary="ModelOnly" class="text-danger mt-2 mb-0"></div>
+        </div>
+}

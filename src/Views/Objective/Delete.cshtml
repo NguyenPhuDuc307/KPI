@@ -1,0 +1,176 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model ObjectiveViewModel
+
+@{
+    ViewData["Icon"] = "bi-trash-fill";
+    ViewData["Title"] = "Delete Objective";
+    ViewData["PageDescription"] = "Confirm deletion of the objective";
+    ViewData["ActiveMenu"] = "Objective";
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-transparent">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0">Xác nhận xóa</h5>
+                <span class="badge ms-2 bg-danger">Nguy hiểm</span>
+            </div>
+            <div>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary me-1">
+                    <i class="bi bi-arrow-left me-1"></i>Quay lại chi tiết
+                </a>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-list me-1"></i>Danh sách
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <div class="d-flex">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-2"></i>
+                <div>
+                    <h5 class="alert-heading">Cảnh báo!</h5>
+                    <p>Bạn đang chuẩn bị xóa mục tiêu này. Thao tác này không thể hoàn tác và sẽ xóa vĩnh viễn mục tiêu khỏi hệ thống.</p>
+                    <hr>
+                    <p class="mb-0">Đảm bảo rằng bạn đã xem xét kỹ lưỡng và hiểu tác động của việc xóa mục tiêu này.</p>
+                </div>
+            </div>
+        </div>
+
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Thông tin mục tiêu</h6>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Tên mục tiêu:</dt>
+                            <dd class="col-sm-8 fw-semibold">@Model.Name</dd>
+
+                            <dt class="col-sm-4">Mô tả:</dt>
+                            <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả" : Model.Description)</dd>
+
+                            <dt class="col-sm-4">Trạng thái:</dt>
+                            <dd class="col-sm-8">
+                                <span class="badge @(Model.Status switch {
+                                    ObjectiveStatus.Completed => "bg-success",
+                                    ObjectiveStatus.InProgress => "bg-primary",
+                                    ObjectiveStatus.Delayed => "bg-warning",
+                                    ObjectiveStatus.AtRisk => "bg-danger",
+                                    ObjectiveStatus.Cancelled => "bg-secondary",
+                                    _ => "bg-light text-dark"
+                                })">
+                                    @Model.Status
+                                </span>
+                            </dd>
+
+                            <dt class="col-sm-4">Tiến độ:</dt>
+                            <dd class="col-sm-8">
+                                <div class="progress" style="height: 6px; width: 100px;">
+                                    <div class="progress-bar @(Model.ProgressPercentage switch {
+                                        >= 75 => "bg-success",
+                                        >= 50 => "bg-info",
+                                        >= 25 => "bg-warning",
+                                        _ => "bg-danger"
+                                    })" style="width: @Model.ProgressPercentage%;"></div>
+                                </div>
+                                <small>@Model.ProgressPercentage%</small>
+                            </dd>
+
+                            <dt class="col-sm-4">Phòng ban:</dt>
+                            <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Department) ? "Không có" : Model.Department)</dd>
+
+                            <dt class="col-sm-4">Thời gian:</dt>
+                            <dd class="col-sm-8">@Model.StartDate.ToString("dd/MM/yyyy") - @Model.EndDate.ToString("dd/MM/yyyy")</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0">Kiểm tra phụ thuộc</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6>Các mục tiêu con:</h6>
+                            @if (Model.ChildObjectives != null && Model.ChildObjectives.Any())
+                            {
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-x-circle me-2"></i>Mục tiêu này có @Model.ChildObjectives.Count mục tiêu con. Hãy xóa hoặc chuyển các mục tiêu con trước khi xóa mục tiêu này.
+                                </div>
+                                <ul class="list-group list-group-flush small">
+                                    @foreach (var child in Model.ChildObjectives.Take(3))
+                                    {
+                                        <li class="list-group-item ps-0 border-0">
+                                            <i class="bi bi-arrow-right me-1"></i>@child.Name
+                                        </li>
+                                    }
+                                    @if (Model.ChildObjectives.Count > 3)
+                                    {
+                                        <li class="list-group-item ps-0 border-0 text-muted">
+                                            <i class="bi bi-three-dots me-1"></i>Và @(Model.ChildObjectives.Count - 3) mục tiêu khác
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="alert alert-success">
+                                    <i class="bi bi-check-circle me-2"></i>Mục tiêu này không có mục tiêu con.
+                                </div>
+                            }
+                        </div>
+
+                        <div>
+                            <h6>Các yếu tố thành công:</h6>
+                            @if (Model.SuccessFactors != null && Model.SuccessFactors.Any())
+                            {
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-x-circle me-2"></i>Mục tiêu này có @Model.SuccessFactors.Count yếu tố thành công. Hãy gỡ liên kết các yếu tố này trước khi xóa.
+                                </div>
+                                <ul class="list-group list-group-flush small">
+                                    @foreach (var sf in Model.SuccessFactors.Take(3))
+                                    {
+                                        <li class="list-group-item ps-0 border-0">
+                                            <i class="bi bi-arrow-right me-1"></i>@sf.Name
+                                        </li>
+                                    }
+                                    @if (Model.SuccessFactors.Count > 3)
+                                    {
+                                        <li class="list-group-item ps-0 border-0 text-muted">
+                                            <i class="bi bi-three-dots me-1"></i>Và @(Model.SuccessFactors.Count - 3) yếu tố khác
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="alert alert-success">
+                                    <i class="bi bi-check-circle me-2"></i>Mục tiêu này không có yếu tố thành công.
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post" class="mt-4">
+            <input type="hidden" asp-for="Id" />
+            <div class="d-flex justify-content-between">
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Hủy
+                </a>
+                <button type="submit" class="btn btn-danger" @((Model.ChildObjectives != null && Model.ChildObjectives.Any()) || (Model.SuccessFactors != null && Model.SuccessFactors.Any()) ? "disabled" : "")>
+                    <i class="bi bi-trash me-1"></i>Xác nhận xóa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

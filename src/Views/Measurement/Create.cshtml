@@ -1,0 +1,153 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model MeasurementCreateViewModel
+
+@{
+    ViewData["Title"] = "Record Measurement Result";
+    ViewData["Icon"] = "bi-check2-circle";
+    ViewData["Subtitle"] = "Record new measurement value for the indicator";
+}
+
+<div class="container-fluid p-0">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>@ViewData["Title"]</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Ghi nhận giá trị đo lường mới cho chỉ số</p>
+
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index"><i
+                                class="fas fa-home me-1"></i>Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Measurement" asp-action="Index">Measurement</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </nav>
+
+            <form asp-action="Create" method="post" class="needs-validation" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="IndicatorId" />
+                <input type="hidden" asp-for="PerformanceIndicatorId" />
+                <input type="hidden" asp-for="ResultIndicatorId" />
+                <input type="hidden" asp-for="SuccessFactorId" />
+                <input type="hidden" asp-for="Type" />
+
+                <div class="row">
+                    <!-- Thông tin chỉ số -->
+                    <div class="col-md-5">
+                        <div class="card border-primary h-100">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Thông tin chỉ số</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Mã chỉ số</label>
+                                    <div class="form-control-plaintext">
+                                        <a asp-controller="PerformanceIndicator" asp-action="Details"
+                                            asp-route-id="@Model.IndicatorId"
+                                            class="text-primary fw-bold">@Model.IndicatorCode</a>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Tên chỉ số</label>
+                                    <div class="form-control-plaintext">@Model.IndicatorName</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Giá trị mục tiêu</label>
+                                    <div class="form-control-plaintext">
+                                        @(Model.TargetValue.HasValue ? Model.TargetValue.ToString() : "-")
+                                        <span class="text-muted">@Model.Unit</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Ngưỡng cảnh báo</label>
+                                    <div class="form-control-plaintext">
+                                        @if (Model.MinAlertThreshold.HasValue || Model.MaxAlertThreshold.HasValue)
+                                        {
+                                            @if (Model.MinAlertThreshold.HasValue)
+                                            {
+                                                <div class="mb-1">
+                                                    <span class="badge bg-warning">Tối thiểu</span>
+                                                    <span class="ms-2">@Model.MinAlertThreshold.Value.ToString("N2")
+                                                        @Model.Unit</span>
+                                                </div>
+                                            }
+                                            @if (Model.MaxAlertThreshold.HasValue)
+                                            {
+                                                <div>
+                                                    <span class="badge bg-danger">Tối đa</span>
+                                                    <span class="ms-2">@Model.MaxAlertThreshold.Value.ToString("N2")
+                                                        @Model.Unit</span>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted"><i>Chưa thiết lập ngưỡng cảnh báo</i></span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nhập kết quả đo lường -->
+                    <div class="col-md-7">
+                        <div class="card border-success h-100">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">Nhập kết quả đo lường</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="MeasurementDate" class="form-label fw-bold">Ngày đo
+                                            lường</label>
+                                        <input asp-for="MeasurementDate" type="date" class="form-control" required />
+                                        <span asp-validation-for="MeasurementDate" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="ActualValue" class="form-label fw-bold">Giá trị đo được</label>
+                                        <div class="input-group">
+                                            <input asp-for="ActualValue" type="text" class="form-control" required />
+                                            <span class="input-group-text">@Model.Unit</span>
+                                        </div>
+                                        <span asp-validation-for="ActualValue" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Notes" class="form-label fw-bold">Ghi chú</label>
+                                    <textarea asp-for="Notes" class="form-control" rows="4"
+                                        placeholder="Nhập ghi chú về kết quả đo lường (nếu có)"></textarea>
+                                    <span asp-validation-for="Notes" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12 text-end">
+                        <a asp-controller="PerformanceIndicator" asp-action="Details" asp-route-id="@Model.IndicatorId"
+                            class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Hủy bỏ
+                        </a>
+                        <button type="submit" class="btn btn-primary ms-2">
+                            <i class="fas fa-save me-1"></i>Lưu kết quả đo lường
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

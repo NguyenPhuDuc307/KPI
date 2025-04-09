@@ -1,0 +1,385 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Icon"] = "bi-speedometer";
+    ViewData["Subtitle"] = "Overview of your KPI performance";
+}
+
+<!-- Bảng điều khiển nhanh -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm dashboard-card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <h5 class="mb-0"><i class="bi bi-speedometer2 me-2" style="color: var(--deha-blue);"></i>Tổng quan
+                    hiệu suất</h5>
+                <a asp-controller="Dashboard" asp-action="Executive" class="btn btn-sm btn-outline-primary">Xem chi
+                    tiết</a>
+            </div>
+            <div class="card-body">
+                <div class="row mt-2">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="bg-light p-3 rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
+                                    style="width: 70px; height: 70px;">
+                                    <i class="bi bi-graph-up-arrow fs-1" style="color: var(--deha-blue);"></i>
+                                </div>
+                                <h3 class="display-6 fw-bold">16</h3>
+                                <p class="text-muted">KPIs hiện có</p>
+                                <a asp-controller="KPI" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem
+                                    chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="bg-light p-3 rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
+                                    style="width: 70px; height: 70px;">
+                                    <i class="bi bi-check2-all fs-1" style="color: var(--deha-green);"></i>
+                                </div>
+                                <h3 class="display-6 fw-bold">@ViewBag.SuccessFactorCount</h3>
+                                <p class="text-muted">Success Factors</p>
+                                <a asp-controller="SuccessFactor" asp-action="Index"
+                                    class="btn btn-sm btn-outline-success">Xem
+                                    chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="bg-light p-3 rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
+                                    style="width: 70px; height: 70px;">
+                                    <i class="bi bi-bullseye fs-1" style="color: #fd7e14;"></i>
+                                </div>
+                                <h3 class="display-6 fw-bold">@ViewBag.ObjectiveCount</h3>
+                                <p class="text-muted">Objectives</p>
+                                <a asp-controller="Objective" asp-action="Index"
+                                    class="btn btn-sm btn-outline-warning">Xem chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <div class="bg-light p-3 rounded-circle d-inline-flex justify-content-center align-items-center mb-3"
+                                    style="width: 70px; height: 70px;">
+                                    <i class="bi bi-building fs-1" style="color: var(--deha-blue-dark);"></i>
+                                </div>
+                                <h3 class="display-6 fw-bold">@ViewBag.DepartmentCount</h3>
+                                <p class="text-muted">Phòng ban tham gia</p>
+                                <a asp-controller="Department" asp-action="Index"
+                                    class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Biểu đồ và Success Factors gần đến hạn -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4 mb-md-0">
+        <div class="card shadow-sm h-100 dashboard-card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart-fill me-2" style="color: var(--deha-blue);"></i>Tình
+                    trạng Indicators</h5>
+                <a asp-controller="PerformanceIndicator" asp-action="Index" class="btn btn-sm btn-outline-primary">Xem
+                    tất cả</a>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height:250px;">
+                    <canvas id="indicatorStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100 dashboard-card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle-fill me-2" style="color: var(--deha-green);"></i>Success
+                    Factors gần đến hạn</h5>
+                <a asp-controller="SuccessFactor" asp-action="Index" class="btn btn-sm btn-outline-success">Xem tất
+                    cả</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @foreach (var sf in ViewBag.UpcomingSuccessFactors)
+                    {
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">@sf.Code: @sf.Name</h6>
+                                <span class="badge bg-@sf.StatusCssClass">@sf.DaysRemaining ngày</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 8px;">
+                                <div class="progress-bar bg-@sf.StatusCssClass" role="progressbar"
+                                    style="width: @sf.ProgressPercentage%;" aria-valuenow="@sf.ProgressPercentage"
+                                    aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted d-block mt-1">Tiến độ: @sf.ProgressPercentage%</small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cấu trúc phân cấp -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm dashboard-card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <h5 class="mb-0"><i class="bi bi-diagram-3 me-2" style="color: var(--deha-blue);"></i>Cấu trúc phân
+                    cấp</h5>
+                <a asp-controller="Dashboard" asp-action="TreeView" class="btn btn-sm btn-outline-primary">Xem biểu đồ
+                    cây</a>
+            </div>
+            <div class="card-body">
+                <div class="hierarchy-chart mt-2">
+                    <div class="row text-center">
+                        <div class="col-md-12 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h5 class="mb-0">Objectives</h5>
+                                    <p class="text-muted small mb-0">Mục tiêu chiến lược của tổ chức</p>
+                                    <a asp-controller="Objective" asp-action="Index" class="stretched-link"></a>
+                                </div>
+                            </div>
+                            <i class="bi bi-arrow-down fs-3" style="color: var(--deha-blue);"></i>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <h5 class="mb-0">Success Factors</h5>
+                                    <p class="text-muted small mb-0">Yếu tố thành công, hỗ trợ đạt được Objectives</p>
+                                    <a asp-controller="SuccessFactor" asp-action="Index" class="stretched-link"></a>
+                                </div>
+                            </div>
+                            <i class="bi bi-arrow-down fs-3" style="color: var(--deha-blue);"></i>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-warning mb-3">
+                                        <div class="card-body">
+                                            <h5 class="mb-0">Result Indicators</h5>
+                                            <p class="text-muted small mb-0">Chỉ số kết quả</p>
+                                            <a asp-controller="ResultIndicator" asp-action="Index"
+                                                class="stretched-link"></a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-warning mb-3">
+                                        <div class="card-body">
+                                            <h5 class="mb-0">Performance Indicators</h5>
+                                            <p class="text-muted small mb-0">Chỉ số hiệu suất</p>
+                                            <a asp-controller="PerformanceIndicator" asp-action="Index"
+                                                class="stretched-link"></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Truy cập nhanh -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm dashboard-card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <h5 class="mb-0"><i class="bi bi-lightning-fill me-2" style="color: var(--deha-blue);"></i>Truy cập
+                    nhanh</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a asp-controller="Dashboard" asp-action="Executive" class="text-decoration-none">
+                            <div class="card h-100 border-0 shadow-sm text-center p-4 hover-lift">
+                                <i class="bi bi-speedometer2 fs-1 mb-3" style="color: var(--deha-blue);"></i>
+                                <h5>Dashboard</h5>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a asp-controller="Measurement" asp-action="Index" class="text-decoration-none">
+                            <div class="card h-100 border-0 shadow-sm text-center p-4 hover-lift">
+                                <i class="bi bi-graph-up fs-1 mb-3" style="color: var(--deha-green);"></i>
+                                <h5>Measurements</h5>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a asp-controller="Department" asp-action="Index" class="text-decoration-none">
+                            <div class="card h-100 border-0 shadow-sm text-center p-4 hover-lift">
+                                <i class="bi bi-building fs-1 mb-3" style="color: var(--deha-blue-dark);"></i>
+                                <h5>Departments</h5>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a asp-controller="UserManagement" asp-action="Index" class="text-decoration-none">
+                            <div class="card h-100 border-0 shadow-sm text-center p-4 hover-lift">
+                                <i class="bi bi-people fs-1 mb-3" style="color: var(--deha-purple);"></i>
+                                <h5>Users</h5>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Thao tác nhanh -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Thao tác nhanh</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
+                    {
+                        <div class="col-md-3 col-6">
+                            <a asp-controller="KPI" asp-action="Create"
+                                class="btn btn-light btn-lg w-100 d-flex flex-column align-items-center py-3 border">
+                                <i class="bi bi-plus-circle text-primary fs-2 mb-2"></i>
+                                <span>Thêm KPI mới</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a asp-controller="KRI" asp-action="Create"
+                                class="btn btn-light btn-lg w-100 d-flex flex-column align-items-center py-3 border">
+                                <i class="bi bi-plus-circle text-danger fs-2 mb-2"></i>
+                                <span>Thêm KRI mới</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a asp-controller="RI" asp-action="Create"
+                                class="btn btn-light btn-lg w-100 d-flex flex-column align-items-center py-3 border">
+                                <i class="bi bi-plus-circle text-info fs-2 mb-2"></i>
+                                <span>Thêm RI mới</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a asp-controller="PI" asp-action="Create"
+                                class="btn btn-light btn-lg w-100 d-flex flex-column align-items-center py-3 border">
+                                <i class="bi bi-plus-circle text-success fs-2 mb-2"></i>
+                                <span>Thêm PI mới</span>
+                            </a>
+                        </div>
+                    }
+                    <div class="col-md-3 col-6">
+                        <a asp-controller="KPI" asp-action="Index"
+                            class="btn btn-light btn-lg w-100 d-flex flex-column align-items-center py-3 border">
+                            <i class="bi bi-bar-chart text-primary fs-2 mb-2"></i>
+                            <span>Danh sách KPI</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a asp-controller="Dashboard" asp-action="Executive"
+                            class="btn btn-light btn-lg w-100 d-flex flex-column align-items-center py-3 border">
+                            <i class="bi bi-speedometer2 text-warning fs-2 mb-2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a asp-controller="Measurement" asp-action="Create"
+                            class="btn btn-light btn-lg w-100 d-flex flex-column align-items-center py-3 border">
+                            <i class="bi bi-rulers text-secondary fs-2 mb-2"></i>
+                            <span>Đo lường mới</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a asp-controller="KPI" asp-action="TreeView"
+                            class="btn btn-light btn-lg w-100 d-flex flex-column align-items-center py-3 border">
+                            <i class="bi bi-diagram-3 text-dark fs-2 mb-2"></i>
+                            <span>Cây chỉ số</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize chart with real data
+        var ctx = document.getElementById('indicatorStatusChart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['On Target', 'At Risk', 'Below Target', 'Not Measured'],
+                datasets: [{
+                    data: [
+                                    @ViewBag.IndicatorsOnTarget,
+                                    @ViewBag.IndicatorsAtRisk,
+                                    @ViewBag.IndicatorsBelowTarget,
+                        @ViewBag.IndicatorsNotMeasured
+                    ],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(220, 53, 69, 0.8)',
+                        'rgba(108, 117, 125, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+}
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .hierarchy-chart .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hierarchy-chart .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .card-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 0.75rem 1.25rem;
+    }
+</style>

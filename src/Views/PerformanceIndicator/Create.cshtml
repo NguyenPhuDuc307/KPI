@@ -1,0 +1,420 @@
+@using KPISolution.Models.Enums.Measurement
+@using KPISolution.Models.Enums.Object
+@using KPISolution.Models.Enums.Indicator
+@model KPISolution.Models.ViewModels.Indicator.PerformanceIndicator.PerformanceIndicatorCreateViewModel
+
+@{
+    var isKeyResultIndicator = ViewBag.IsKey ?? false;
+
+    ViewData["Title"] = isKeyResultIndicator ? "Create Key Performance Indicator" : "Create Performance Indicator";
+    ViewData["Icon"] = "bi-bar-chart";
+    ViewData["Subtitle"] = isKeyResultIndicator
+    ? "Create new Key Performance Indicator"
+    : "Create new Performance Indicator";
+
+    var backAction = isKeyResultIndicator ? "KeyPerformanceIndicators" : "Index";
+
+    ViewData["SecondaryButton"] = new ValueTuple<string, string, string, string, string>(
+    "Quay lại danh sách",
+    "PerformanceIndicator",
+    backAction,
+    "",
+    "bi-arrow-left"
+    );
+
+    // Configure Breadcrumb
+    ViewData["BreadcrumbItems"] = new List<(string Text, string Controller, string Action, string Id)>
+{
+(isKeyResultIndicator ? "Chỉ số hiệu suất chính" : "Chỉ số hiệu suất", "PerformanceIndicator", isKeyResultIndicator ?
+"KeyPerformanceIndicators" : "Index", ""),
+("Tạo mới", "PerformanceIndicator", "Create", "")
+};
+}
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0 text-primary">
+            <i class="bi bi-plus-circle me-2"></i>@ViewData["Title"]
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <form asp-action="Create" method="post">
+            <input type="hidden" name="IsKey" value="@isKeyResultIndicator" />
+
+            @if (ViewBag.ResultIndicatorId != null)
+            {
+                <input type="hidden" asp-for="ResultIndicatorId" value="@ViewBag.ResultIndicatorId" />
+            }
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <!-- Thông tin cơ bản -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Thông tin cơ bản</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Name" class="form-label">Tên chỉ số <span
+                                        class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" placeholder="Enter indicator name" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Code" class="form-label" for="codeInput">Mã chỉ số <span
+                                        class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input asp-for="Code" class="form-control" id="codeInput" autocomplete="off"
+                                        placeholder="PI-YYMMDD-####" />
+                                    <button type="button" id="generateCodeBtn" class="btn btn-outline-secondary">
+                                        <i class="bi bi-magic me-1"></i> Tạo mã
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Code" class="text-danger"></span>
+                                <div class="text-danger d-none" id="codeExistsError">Mã này đã tồn tại trong hệ thống
+                                </div>
+                                <div class="form-text">Định dạng: <span id="codeFormat">PI-YYMMDD-####</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Description" class="form-label">Mô tả <span class="text-danger">*</span></label>
+                        <textarea asp-for="Description" class="form-control" rows="3"
+                            placeholder="Nhập mô tả chi tiết về chỉ số này"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phân loại và Liên kết -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-tag me-2"></i>Phân loại và Liên kết</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="ResultIndicatorId" class="form-label">Chỉ số kết quả</label>
+                                <select asp-for="ResultIndicatorId" class="form-select"
+                                    asp-items="ViewBag.ResultIndicators">
+                                    <option value="">-- Chọn chỉ số kết quả --</option>
+                                </select>
+                                <span asp-validation-for="ResultIndicatorId" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="SuccessFactorId" class="form-label">SuccessFactor</label>
+                                <select asp-for="SuccessFactorId" class="form-select"
+                                    asp-items="ViewBag.SuccessFactors">
+                                    <option value="">-- Chọn yếu tố thành công --</option>
+                                </select>
+                                <span asp-validation-for="SuccessFactorId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="ActivityType" class="form-label">Loại hoạt động <span
+                                        class="text-danger">*</span></label>
+                                <select asp-for="ActivityType" class="form-select" asp-items="ViewBag.ActivityTypes">
+                                    <option value="">-- Chọn loại hoạt động --</option>
+                                </select>
+                                <span asp-validation-for="ActivityType" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thiết lập đo lường -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Thiết lập đo lường</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Formula" class="form-label">Công thức tính</label>
+                                <input asp-for="Formula" class="form-control"
+                                    placeholder="Ví dụ: (Tổng doanh thu / Số lượng nhân viên)" />
+                                <span asp-validation-for="Formula" class="text-danger"></span>
+                                <div class="form-text">Cách chỉ số này được tính toán hoặc đo lường</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="Unit" class="form-label">Đơn vị đo <span
+                                        class="text-danger">*</span></label>
+                                <select asp-for="Unit" asp-items="ViewBag.MeasurementUnits" class="form-select">
+                                    <option value="">-- Chọn đơn vị đo --</option>
+                                </select>
+                                <span asp-validation-for="Unit" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="TargetValue" class="form-label">Giá trị mục tiêu <span
+                                        class="text-danger">*</span></label>
+                                <input asp-for="TargetValue" class="form-control" type="number" step="0.01" min="0"
+                                    placeholder="Nhập giá trị mục tiêu" />
+                                <span asp-validation-for="TargetValue" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="MinAlertThreshold" class="form-label">Ngưỡng cảnh báo tối thiểu</label>
+                                <input asp-for="MinAlertThreshold" class="form-control" type="number" step="0.01"
+                                    min="0" placeholder="Nhập ngưỡng cảnh báo tối thiểu" />
+                                <span asp-validation-for="MinAlertThreshold" class="text-danger"></span>
+                                <div class="form-text">Giá trị để kích hoạt cảnh báo khi chỉ số thấp hơn ngưỡng này
+                                </div>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label asp-for="MaxAlertThreshold" class="form-label">Ngưỡng cảnh báo tối đa</label>
+                                <input asp-for="MaxAlertThreshold" class="form-control" type="number" step="0.01"
+                                    min="0" placeholder="Nhập ngưỡng cảnh báo tối đa" />
+                                <span asp-validation-for="MaxAlertThreshold" class="text-danger"></span>
+                                <div class="form-text">Giá trị để kích hoạt cảnh báo khi chỉ số vượt quá ngưỡng này
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="Frequency" class="form-label">Tần suất đo <span
+                                        class="text-danger">*</span></label>
+                                <select asp-for="Frequency" asp-items="ViewBag.MeasurementFrequencies"
+                                    class="form-select">
+                                    <option value="">-- Chọn tần suất đo --</option>
+                                </select>
+                                <span asp-validation-for="Frequency" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="ReviewFrequency" class="form-label">Tần suất đánh giá <span
+                                        class="text-danger">*</span></label>
+                                <select asp-for="ReviewFrequency" asp-items="ViewBag.ReviewFrequencies"
+                                    class="form-select">
+                                    <option value="">-- Chọn tần suất đánh giá --</option>
+                                </select>
+                                <span asp-validation-for="ReviewFrequency" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label asp-for="ControlLevel" class="form-label">Mức kiểm soát <span
+                                        class="text-danger">*</span></label>
+                                <select asp-for="ControlLevel" asp-items="ViewBag.ControlLevels" class="form-select">
+                                    <option value="">-- Chọn mức kiểm soát --</option>
+                                </select>
+                                <span asp-validation-for="ControlLevel" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quản lý và Thu thập dữ liệu -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-person me-2"></i>Quản lý và Thu thập dữ liệu</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="DataCollectionMethod" class="form-label">Phương pháp thu thập dữ liệu
+                                    <span class="text-danger">*</span></label>
+                                <select asp-for="DataCollectionMethod" asp-items="ViewBag.DataCollectionMethods"
+                                    class="form-select">
+                                    <option value="">-- Chọn phương pháp thu thập --</option>
+                                </select>
+                                <span asp-validation-for="DataCollectionMethod" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label asp-for="ResponsibleTeamMemberId" class="form-label">Người phụ trách</label>
+                                <select asp-for="ResponsibleTeamMemberId" class="form-select"
+                                    asp-items="ViewBag.ResponsibleTeamMembers">
+                                    <option value="">-- Chọn người phụ trách --</option>
+                                </select>
+                                <span asp-validation-for="ResponsibleTeamMemberId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kế hoạch hành động -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Kế hoạch hành động</h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="ActionPlan" class="form-label">Kế hoạch hành động</label>
+                        <textarea asp-for="ActionPlan" class="form-control" rows="3"
+                            placeholder="Mô tả kế hoạch hành động để đạt được mục tiêu của chỉ số này"></textarea>
+                        <span asp-validation-for="ActionPlan" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <a asp-action="@backAction" class="btn btn-secondary me-2">
+                    <i class="bi bi-x-circle me-1"></i>Hủy bỏ
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>Tạo mới @(isKeyResultIndicator ? "KPI" : "PI")
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var isKeyCheckbox = document.getElementById('isKeyCheckbox');
+            var isKeyInput = document.getElementById('isKeyInput');
+            var codeInput = document.getElementById('codeInput');
+            var codeFormat = document.getElementById('codeFormat');
+            var generateCodeBtn = document.getElementById('generateCodeBtn');
+            var codeExistsError = document.getElementById('codeExistsError');
+
+            // Regular expression để kiểm tra định dạng mã
+            var codePattern = isKeyCheckbox && isKeyCheckbox.checked
+                ? /^KPI-\d{6}-\d{4}$/
+                : /^PI-\d{6}-\d{4}$/;
+
+            // Hàm kiểm tra mã
+            function validateCode() {
+                if (!codeInput) return;
+
+                var code = codeInput.value.trim();
+                // Bỏ qua validation pattern nếu mã dài hơn 10 ký tự
+                if (code && (code.length > 10 || codePattern.test(code))) {
+                    codeInput.classList.add('is-valid');
+                    codeInput.classList.remove('is-invalid');
+                } else {
+                    codeInput.classList.remove('is-valid');
+                    if (code) {
+                        codeInput.classList.add('is-invalid');
+                    }
+                }
+            }
+
+            // Kiểm tra ngay khi tải trang
+            validateCode();
+
+            // Kiểm tra khi người dùng nhập
+            if (codeInput) {
+                codeInput.addEventListener('input', validateCode);
+                codeInput.addEventListener('change', validateCode);
+
+                // Kiểm tra mã đã tồn tại
+                codeInput.addEventListener('change', function () {
+                    var code = codeInput.value.trim();
+                    if (code) {
+                        fetch(`/PerformanceIndicator/CheckCodeExists?code=${encodeURIComponent(code)}`)
+                            .then(response => response.json())
+                            .then(exists => {
+                                if (exists && codeExistsError && codeInput) {
+                                    codeExistsError.classList.remove('d-none');
+                                    codeInput.classList.add('is-invalid');
+                                    codeInput.classList.remove('is-valid');
+                                } else {
+                                    if (codeExistsError) codeExistsError.classList.add('d-none');
+                                    validateCode();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error checking code:', error);
+                            });
+                    }
+                });
+            }
+
+            if (generateCodeBtn) {
+                generateCodeBtn.addEventListener('click', function () {
+                    var prefix = isKeyCheckbox && isKeyCheckbox.checked ? 'KPI-' : 'PI-';
+
+                    // Gọi API để tạo mã
+                    fetch(`/PerformanceIndicator/GenerateCode?prefix=${encodeURIComponent(prefix)}`)
+                        .then(response => response.text())
+                        .then(generatedCode => {
+                            if (!codeInput) return;
+
+                            // Gán mã vào input
+                            codeInput.value = generatedCode;
+
+                            // Kiểm tra và hiển thị dấu tích
+                            if (codeExistsError) codeExistsError.classList.add('d-none');
+                            codeInput.classList.add('is-valid');
+                            codeInput.classList.remove('is-invalid');
+
+                            // Thêm hiệu ứng highlight để người dùng dễ nhận biết
+                            codeInput.classList.add('bg-light');
+                            setTimeout(function () {
+                                codeInput.classList.remove('bg-light');
+                            }, 300);
+                        })
+                        .catch(error => {
+                            console.error('Error generating code:', error);
+                            if (!codeInput) return;
+
+                            // Nếu có lỗi, tạo mã theo cách cũ
+                            var now = new Date();
+                            var year = now.getFullYear() % 100;
+                            var month = (now.getMonth() + 1).toString().padStart(2, '0');
+                            var day = now.getDate().toString().padStart(2, '0');
+                            var randomNum = Math.floor(Math.random() * 9000) + 1000;
+                            var fallbackCode = prefix + year + month + day + '-' + randomNum;
+                            codeInput.value = fallbackCode;
+                        });
+                });
+            }
+
+            // Cập nhật giá trị IsKey khi checkbox thay đổi
+            if (isKeyCheckbox && isKeyInput) {
+                isKeyCheckbox.addEventListener('change', function () {
+                    var isKey = this.checked;
+                    isKeyInput.value = isKey;
+
+                    // Cập nhật định dạng mã
+                    var format = isKey ? 'KPI-YYMMDD-####' : 'PI-YYMMDD-####';
+                    if (codeFormat) codeFormat.textContent = format;
+                    if (codeInput) codeInput.placeholder = format;
+
+                    // Cập nhật pattern kiểm tra mã
+                    codePattern = isKey
+                        ? /^KPI-\d{6}-\d{4}$/
+                        : /^PI-\d{6}-\d{4}$/;
+
+                    // Kiểm tra lại mã hiện tại
+                    validateCode();
+                });
+            }
+        });
+    </script>
+}

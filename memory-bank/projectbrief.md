@@ -1,8 +1,65 @@
-# KPI Management System - Project Brief
+# Project Brief - KPI Management System
 
 ## Project Overview
+The KPI Management System is a comprehensive web application built with ASP.NET Core 9.0, designed to help organizations manage and track Key Performance Indicators (KPIs) and Critical Success Factors (CSFs). The system provides features for KPI definition, measurement, reporting, and analysis.
 
-The KPI Management System is a comprehensive web application built with ASP.NET Core MVC to track, measure, and analyze Key Performance Indicators (KPIs) and Critical Success Factors (CSFs) across an organization. The system allows for granular management of performance metrics at various organizational levels, with dashboards, reports, and analytics features for decision-making.
+## Core Requirements
+1. KPI Management
+   - Define and track KPIs
+   - Set targets and thresholds
+   - Monitor progress
+   - Link KPIs to CSFs
+
+2. Data Collection
+   - Manual data entry
+   - Batch import from Excel
+   - Automated data collection
+   - Data validation
+
+3. Reporting and Analysis
+   - Standard reports
+   - Custom report builder
+   - Trend analysis
+   - Performance analytics
+   - Export to PDF, Excel, CSV
+
+4. Dashboard
+   - Executive dashboard
+   - Departmental dashboards
+   - Custom dashboard builder
+   - Real-time KPI status
+
+5. Notification System
+   - Email notifications
+   - In-app notifications
+   - Alert management
+   - Threshold monitoring
+
+## Technical Stack
+- ASP.NET Core 9.0
+- Entity Framework Core
+- SQL Server
+- Identity Framework
+- AutoMapper
+- Chart.js
+- EPPlus
+- DinkToPdf
+- Serilog
+
+## Project Phases
+1. Phase 3: KPI Management Features
+2. Phase 4: Data Collection and Measurement
+3. Phase 5: Reporting and Analysis
+4. Phase 6: Notification and Alert System
+5. Phase 7: Testing and Quality Assurance
+6. Phase 8: Documentation and Deployment
+
+## Success Criteria
+1. Complete implementation of all core features
+2. Successful deployment to production
+3. Comprehensive test coverage
+4. Complete documentation in Vietnamese
+5. User training and support
 
 ## Core Goals
 

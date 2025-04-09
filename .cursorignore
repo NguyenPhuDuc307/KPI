@@ -1,2 +1,4 @@
-KPI/bin/
-KPI/obj/
+src/bin/
+src/obj/
+src/wwwroot/
+src/wwwroot/lib/

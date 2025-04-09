@@ -1,0 +1,84 @@
+@model KPISolution.Models.ViewModels.Measurement.MeasurementChartViewModel
+
+@{
+    ViewData["Title"] = Model.ChartTitle;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">@Model.ChartTitle</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="measurementChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('measurementChart').getContext('2d');
+
+            const data = {
+                labels: @Json.Serialize(Model.Labels),
+                datasets: [
+                    {
+                        label: 'Giá trị thực tế',
+                        data: @Json.Serialize(Model.ActualValues),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    },
+                    @if (Model.TargetValue.HasValue)
+                    {
+                        <text>
+                            {
+                                label: 'Giá trị mục tiêu',
+                            data: Array(@Model.Labels.Count).fill(@Model.TargetValue),
+                            borderColor: 'rgb(255, 99, 132)',
+                            borderDash: [5, 5],
+                            tension: 0
+                                }
+                        </text>
+                        }
+                    ]
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '@Model.ChartTitle'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '@Model.YAxisLabel'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Thời gian'
+                            }
+                        }
+                    }
+                }
+            };
+
+            new Chart(ctx, config);
+        });
+    </script>
+}
