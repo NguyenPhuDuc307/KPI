@@ -20,6 +20,10 @@
             }).attr('data-bs-toggle', 'modal')
                 .attr('data-bs-target', '#addWidgetModal')
                 .attr('href', 'javascript:void(0);');
+
+            // Hiển thị số lượng CSF có sẵn
+            var csfCount = $('#csfSelect option').length - 1; // Trừ đi option "-- Chọn CSF --"
+            $('#csfInfo').text('Có ' + csfCount + ' CSF sẵn sàng');
         });
     </script>
 
@@ -121,6 +125,11 @@
                     widgetData.DataConfiguration = JSON.stringify({ dataSource: dataSourceValue });
                 } else if (widgetType === 'CsfProgress') {
                     const csfSelectValue = document.getElementById('csfSelect').value;
+
+                    // Thêm log để debug
+                    console.log("CSF dropdown value:", csfSelectValue);
+                    console.log("CSF select options:", document.getElementById('csfSelect').options.length);
+
                     widgetData.SuccessFactorId = csfSelectValue ? csfSelectValue : null; // Send Guid as string or null
                 } else if (widgetType === 'Text') {
                     const textContentValue = document.getElementById('textContent').value;
@@ -165,12 +174,17 @@
             // IMPORTANT: Adjust these integer values based on your actual enum definitions!
             function mapWidgetTypeToEnumInt(typeString) {
                 switch (typeString) {
-                    case 'KpiCard': return 0;
-                    case 'KpiTable': return 1;
-                    case 'Chart': return 2;
-                    case 'CsfProgress': return 3;
-                    case 'Text': return 4;
-                    default: return 0; // Default or handle error
+                    case 'Chart': return 1;
+                    case 'KpiCard':
+                    case 'IndicatorCard': return 2;
+                    case 'Table': return 3;
+                    case 'ProgressBar': return 4;
+                    case 'Metric': return 5;
+                    case 'CustomWidget': return 6;
+                    case 'Text': return 7;
+                    case 'Image': return 8;
+                    case 'CsfProgress': return 9;
+                    default: return 1; // Default to Chart
                 }
             }
 
@@ -378,222 +392,231 @@
                 </button>
             </div>
         }
-</div>
+    </div>
 
-<!-- Add Widget Modal -->
-<div class="modal fade" id="addWidgetModal" tabindex="-1" aria-labelledby="addWidgetModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addWidgetModalLabel">Thêm widget mới</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100 widget-type-card" data-widget-type="KpiCard">
-                            <div class="card-body text-center p-4">
-                                    <i class="bi bi-credit-card-2-front fs-1 mb-3"></i>
-                                <h5 class="card-title">KPI Card</h5>
-                                <p class="small text-muted">Hiển thị thông tin KPI dạng thẻ</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100 widget-type-card" data-widget-type="KpiTable">
-                            <div class="card-body text-center p-4">
-                                <i class="bi bi-table fs-1 text-success mb-3"></i>
-                                <h5 class="card-title">KPI Table</h5>
-                                <p class="small text-muted">Hiển thị danh sách KPI dạng bảng</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100 widget-type-card" data-widget-type="Chart">
-                            <div class="card-body text-center p-4">
-                                <i class="bi bi-bar-chart-line fs-1 text-info mb-3"></i>
-                                <h5 class="card-title">Chart</h5>
-                                <p class="small text-muted">Hiển thị dữ liệu KPI dạng biểu đồ</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100 widget-type-card" data-widget-type="CsfProgress">
-                            <div class="card-body text-center p-4">
-                                <i class="bi bi-check2-square fs-1 text-warning mb-3"></i>
-                                <h5 class="card-title">CSF Progress</h5>
-                                <p class="small text-muted">Hiển thị tiến độ của các CSF</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100 widget-type-card" data-widget-type="Text">
-                            <div class="card-body text-center p-4">
-                                <i class="bi bi-textarea-t fs-1 text-secondary mb-3"></i>
-                                <h5 class="card-title">Text</h5>
-                                <p class="small text-muted">Hiển thị văn bản tùy chỉnh</p>
-                            </div>
-                        </div>
-                    </div>
+    <!-- Add Widget Modal -->
+    <div class="modal fade" id="addWidgetModal" tabindex="-1" aria-labelledby="addWidgetModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addWidgetModalLabel">Thêm widget mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
-                <div id="widgetConfigForm" class="mt-4 d-none">
-                    <hr>
-                    <h5 class="mb-3">Cấu hình widget</h5>
-
-                    <form id="widgetForm">
-                        <input type="hidden" id="widgetType" name="widgetType" />
-
-                        <div class="mb-3">
-                            <label for="widgetTitle" class="form-label">Tiêu đề</label>
-                            <input type="text" class="form-control" id="widgetTitle" name="widgetTitle" required>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col">
-                                <label for="widgetWidth" class="form-label">Độ rộng</label>
-                                <select class="form-select" id="widgetWidth" name="widgetWidth">
-                                    <option value="4">Nhỏ (1/3)</option>
-                                    <option value="6">Vừa (1/2)</option>
-                                    <option value="8">Rộng (2/3)</option>
-                                    <option value="12">Đầy đủ</option>
-                                </select>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 widget-type-card" data-widget-type="KpiCard">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-credit-card-2-front fs-1 mb-3"></i>
+                                    <h5 class="card-title">KPI Card</h5>
+                                    <p class="small text-muted">Hiển thị thông tin KPI dạng thẻ</p>
+                                </div>
                             </div>
-                            <div class="col">
-                                <label for="widgetOrder" class="form-label">Vị trí</label>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 widget-type-card" data-widget-type="KpiTable">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-table fs-1 text-success mb-3"></i>
+                                    <h5 class="card-title">KPI Table</h5>
+                                    <p class="small text-muted">Hiển thị danh sách KPI dạng bảng</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 widget-type-card" data-widget-type="Chart">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-bar-chart-line fs-1 text-info mb-3"></i>
+                                    <h5 class="card-title">Chart</h5>
+                                    <p class="small text-muted">Hiển thị dữ liệu KPI dạng biểu đồ</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 widget-type-card" data-widget-type="CsfProgress">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-check2-square fs-1 text-warning mb-3"></i>
+                                    <h5 class="card-title">CSF Progress</h5>
+                                    <p class="small text-muted">Hiển thị tiến độ của các CSF</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 widget-type-card" data-widget-type="Text">
+                                <div class="card-body text-center p-4">
+                                    <i class="bi bi-textarea-t fs-1 text-secondary mb-3"></i>
+                                    <h5 class="card-title">Text</h5>
+                                    <p class="small text-muted">Hiển thị văn bản tùy chỉnh</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="widgetConfigForm" class="mt-4 d-none">
+                        <hr>
+                        <h5 class="mb-3">Cấu hình widget</h5>
+
+                        <form id="widgetForm">
+                            <input type="hidden" id="widgetType" name="widgetType" />
+
+                            <div class="mb-3">
+                                <label for="widgetTitle" class="form-label">Tiêu đề</label>
+                                <input type="text" class="form-control" id="widgetTitle" name="widgetTitle" required>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label for="widgetWidth" class="form-label">Độ rộng</label>
+                                    <select class="form-select" id="widgetWidth" name="widgetWidth">
+                                        <option value="4">Nhỏ (1/3)</option>
+                                        <option value="6">Vừa (1/2)</option>
+                                        <option value="8">Rộng (2/3)</option>
+                                        <option value="12">Đầy đủ</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label for="widgetOrder" class="form-label">Vị trí</label>
                                     <input type="number" class="form-control" id="widgetOrder" name="widgetOrder"
                                         min="0" value="0">
-                            </div>
-                        </div>
-
-                        <!-- KPI Card Config -->
-                        <div id="kpiCardConfig" class="widget-config d-none">
-                            <div class="mb-3">
-                                <label for="kpiSelect" class="form-label">Chọn KPI</label>
-                                <select class="form-select" id="kpiSelect" name="kpiId">
-                                    <option value="">-- Chọn KPI --</option>
-                                    @foreach (var kpi in Model.AvailableIndicators)
-                                    {
-                                        <option value="@kpi.Id">@kpi.Code - @kpi.Name</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- KPI Table Config -->
-                        <div id="kpiTableConfig" class="widget-config d-none">
-                            <div class="mb-3">
-                                <label class="form-label">Loại KPI</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="KRI" id="kpiTypeKRI"
-                                        name="kpiTypes" checked>
-                                    <label class="form-check-label" for="kpiTypeKRI">KRIs</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="PI" id="kpiTypePI"
-                                        name="kpiTypes">
-                                    <label class="form-check-label" for="kpiTypePI">PIs</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="RI" id="kpiTypeRI"
-                                        name="kpiTypes">
-                                    <label class="form-check-label" for="kpiTypeRI">RIs</label>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="tableRowCount" class="form-label">Số hàng hiển thị</label>
-                                <input type="number" class="form-control" id="tableRowCount" name="rowCount" min="1"
-                                    max="20" value="5">
-                            </div>
-                        </div>
 
-                        <!-- Chart Config -->
-                        <div id="chartConfig" class="widget-config d-none">
-                            <div class="mb-3">
-                                <label for="chartType" class="form-label">Loại biểu đồ</label>
-                                <select class="form-select" id="chartType" name="chartType">
-                                    <option value="line">Đường</option>
-                                    <option value="bar">Cột</option>
-                                    <option value="pie">Tròn</option>
-                                    <option value="doughnut">Vòng</option>
-                                </select>
+                            <!-- KPI Card Config -->
+                            <div id="kpiCardConfig" class="widget-config d-none">
+                                <div class="mb-3">
+                                    <label for="kpiSelect" class="form-label">Chọn KPI</label>
+                                    <select class="form-select" id="kpiSelect" name="kpiId">
+                                        <option value="">-- Chọn KPI --</option>
+                                        @foreach (var kpi in Model.AvailableIndicators)
+                                        {
+                                            <option value="@kpi.Id">@kpi.Code - @kpi.Name</option>
+                                        }
+                                    </select>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="dataSource" class="form-label">Nguồn dữ liệu</label>
-                                <select class="form-select" id="dataSource" name="dataSource">
-                                    <option value="kpiStatus">Trạng thái KPI</option>
-                                    <option value="kpiTrend">Xu hướng KPI</option>
-                                    <option value="departmentPerformance">Hiệu suất phòng ban</option>
-                                </select>
-                            </div>
-                        </div>
 
-                        <!-- CSF Progress Config -->
-                        <div id="csfProgressConfig" class="widget-config d-none">
-                            <div class="mb-3">
-                                <label for="csfSelect" class="form-label">Chọn CSF</label>
-                                <select class="form-select" id="csfSelect" name="csfId">
-                                    <option value="">-- Chọn CSF --</option>
-                                    @foreach (var csf in Model.AvailableSuccessFactors)
-                                    {
-                                        <option value="@csf.Id">@csf.Code - @csf.Name</option>
-                                    }
-                                </select>
+                            <!-- KPI Table Config -->
+                            <div id="kpiTableConfig" class="widget-config d-none">
+                                <div class="mb-3">
+                                    <label class="form-label">Loại KPI</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="KRI" id="kpiTypeKRI"
+                                            name="kpiTypes" checked>
+                                        <label class="form-check-label" for="kpiTypeKRI">KRIs</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="PI" id="kpiTypePI"
+                                            name="kpiTypes">
+                                        <label class="form-check-label" for="kpiTypePI">PIs</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="RI" id="kpiTypeRI"
+                                            name="kpiTypes">
+                                        <label class="form-check-label" for="kpiTypeRI">RIs</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="tableRowCount" class="form-label">Số hàng hiển thị</label>
+                                    <input type="number" class="form-control" id="tableRowCount" name="rowCount" min="1"
+                                        max="20" value="5">
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Text Config -->
-                        <div id="textConfig" class="widget-config d-none">
-                            <div class="mb-3">
-                                <label for="textContent" class="form-label">Nội dung</label>
+                            <!-- Chart Config -->
+                            <div id="chartConfig" class="widget-config d-none">
+                                <div class="mb-3">
+                                    <label for="chartType" class="form-label">Loại biểu đồ</label>
+                                    <select class="form-select" id="chartType" name="chartType">
+                                        <option value="line">Đường</option>
+                                        <option value="bar">Cột</option>
+                                        <option value="pie">Tròn</option>
+                                        <option value="doughnut">Vòng</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dataSource" class="form-label">Nguồn dữ liệu</label>
+                                    <select class="form-select" id="dataSource" name="dataSource">
+                                        <option value="kpiStatus">Trạng thái KPI</option>
+                                        <option value="kpiTrend">Xu hướng KPI</option>
+                                        <option value="departmentPerformance">Hiệu suất phòng ban</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- CSF Progress Config -->
+                            <div id="csfProgressConfig" class="widget-config d-none">
+                                <div class="mb-3">
+                                    <label for="csfSelect" class="form-label">Chọn CSF</label>
+                                    <select class="form-select" id="csfSelect" name="csfId">
+                                        <option value="">-- Chọn CSF --</option>
+                                        @if (Model.AvailableSuccessFactors != null &&
+                                                                                Model.AvailableSuccessFactors.Any())
+                                        {
+                                            @foreach (var csf in Model.AvailableSuccessFactors)
+                                            {
+                                                <option value="@csf.Id">@csf.Code - @csf.Name</option>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <option value="" disabled>Không có CSF nào</option>
+                                        }
+                                    </select>
+                                    <div id="csfInfo" class="mt-2 small text-muted"></div>
+                                </div>
+                            </div>
+
+                            <!-- Text Config -->
+                            <div id="textConfig" class="widget-config d-none">
+                                <div class="mb-3">
+                                    <label for="textContent" class="form-label">Nội dung</label>
                                     <textarea class="form-control" id="textContent" name="textContent"
                                         rows="4"></textarea>
+                                </div>
                             </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" id="addWidgetBtn" disabled>Thêm widget</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Dashboard Modal -->
-<div class="modal fade" id="editDashboardModal" tabindex="-1" aria-labelledby="editDashboardModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editDashboardModalLabel">Chỉnh sửa bảng điều khiển</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label asp-for="Title" class="form-label">Tiêu đề</label>
-                        <input asp-for="Title" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Description" class="form-label">Mô tả</label>
-                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input asp-for="IsDefault" class="form-check-input" type="checkbox">
-                                <label asp-for="IsDefault" class="form-check-label">Đặt làm bảng điều khiển mặc
-                                    định</label>
-                        </div>
+                        </form>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <button type="button" class="btn btn-primary" id="addWidgetBtn" disabled>Thêm widget</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Edit Dashboard Modal -->
+    <div class="modal fade" id="editDashboardModal" tabindex="-1" aria-labelledby="editDashboardModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDashboardModalLabel">Chỉnh sửa bảng điều khiển</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Tiêu đề</label>
+                            <input asp-for="Title" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Mô tả</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsDefault" class="form-check-input" type="checkbox">
+                                <label asp-for="IsDefault" class="form-check-label">Đặt làm bảng điều khiển mặc
+                                    định</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>

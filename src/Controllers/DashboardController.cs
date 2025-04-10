@@ -668,6 +668,18 @@ namespace KPISolution.Controllers
 
                 // Thêm code để lấy danh sách Success Factors cho widget CSF Progress
                 var criticalSuccessFactors = await this._unitOfWork.SuccessFactors.GetAllAsync(sf => sf.IsCritical);
+
+                // Thêm log để kiểm tra số lượng CSF tìm được
+                this._logger.LogInformation("Found {Count} critical success factors", criticalSuccessFactors.Count());
+
+                // Nếu không có CSF nào, lấy tất cả Success Factors thay vì chỉ lấy Critical
+                if (!criticalSuccessFactors.Any())
+                {
+                    this._logger.LogWarning("No critical success factors found, getting all success factors instead");
+                    criticalSuccessFactors = await this._unitOfWork.SuccessFactors.GetAllAsync();
+                    this._logger.LogInformation("Found {Count} total success factors", criticalSuccessFactors.Count());
+                }
+
                 viewModel.AvailableSuccessFactors = criticalSuccessFactors.Select(csf => new SuccessFactorSummaryViewModel
                 {
                     Id = csf.Id,
@@ -681,6 +693,9 @@ namespace KPISolution.Controllers
                     Owner = csf.ResponsibleUser?.UserName ?? string.Empty,
                     TargetDate = csf.TargetDate
                 }).ToList();
+
+                // Ghi log số lượng CSF được thêm vào viewModel
+                this._logger.LogInformation("Added {Count} success factors to view model", viewModel.AvailableSuccessFactors.Count);
 
                 return this.View(viewModel);
             }
@@ -1139,7 +1154,9 @@ namespace KPISolution.Controllers
                         Y = item.Y,
                         Order = item.Order,
                         ItemType = (DashboardItemType)item.ItemType,
-                        WidgetType = ((DashboardItemType)item.ItemType).ToString(),
+                        IndicatorId = item.IndicatorId,
+                        SuccessFactorId = item.SuccessFactorId,
+                        WidgetType = GetWidgetTypeDisplay((DashboardItemType)item.ItemType),
                         ShowLegend = item.ShowLegend,
                         ChartType = (DashboardItemType)item.ItemType == DashboardItemType.Chart ? (ChartType)item.ChartType : default,
                         TimePeriod = (DashboardItemType)item.ItemType == DashboardItemType.Chart ? (TimePeriod)item.TimePeriod : default,
@@ -1222,6 +1239,60 @@ namespace KPISolution.Controllers
                         this._logger.LogWarning("Widget data creation not implemented for Text. ItemId: {ItemId}", item.Id);
                         // TODO: Implement Text data fetching
                         break;
+                    case DashboardItemType.CsfProgress:
+                        this._logger.LogInformation("Creating CSF Progress widget data for item {ItemId}", item.Id);
+                        if (item.SuccessFactorId.HasValue)
+                        {
+                            var csf = await this._unitOfWork.SuccessFactors.GetByIdAsync(item.SuccessFactorId.Value);
+                            if (csf != null)
+                            {
+                                var progressUpdates = await this._unitOfWork.ProgressUpdates
+                                    .GetAllAsync(up => up.SuccessFactorId == csf.Id);
+
+                                var widgetData = new SuccessFactorProgressWidgetData
+                                {
+                                    Id = csf.Id,
+                                    Code = csf.Code,
+                                    Name = csf.Name,
+                                    Description = csf.Description,
+                                    ProgressPercentage = csf.ProgressPercentage,
+                                    Status = csf.Status.ToString(),
+                                    Owner = csf.ResponsibleUser?.UserName ?? string.Empty,
+                                    TargetDate = csf.TargetDate,
+                                    IsCritical = csf.IsCritical,
+                                    ShowHeader = true,
+                                    ShowDetails = true,
+                                    ShowActions = true
+                                };
+
+                                if (progressUpdates.Any())
+                                {
+                                    widgetData.RecentUpdates = progressUpdates
+                                        .OrderByDescending(u => u.UpdateDate)
+                                        .Take(3)
+                                        .Select(u => new SuccessFactorUpdateItem
+                                        {
+                                            Title = $"{u.Status} - {u.ProgressPercentage}%",
+                                            Description = u.Comments,
+                                            Date = u.UpdateDate,
+                                            Author = u.UpdatedBy ?? string.Empty
+                                        })
+                                        .ToList();
+                                }
+
+                                this._logger.LogInformation("Successfully created CSF Progress widget data for item {ItemId}", item.Id);
+                                return widgetData;
+                            }
+                            else
+                            {
+                                this._logger.LogWarning("Success Factor not found for CSF Progress widget. SuccessFactorId: {SuccessFactorId}", item.SuccessFactorId.Value);
+                            }
+                        }
+                        else
+                        {
+                            this._logger.LogWarning("SuccessFactorId is null for CSF Progress widget. ItemId: {ItemId}", item.Id);
+                        }
+                        break;
                     // Default case or handle other item types
                     default:
                         this._logger.LogWarning("Unhandled DashboardItemType: {ItemType} for item {ItemId}", item.ItemType, item.Id);
@@ -1285,6 +1356,26 @@ namespace KPISolution.Controllers
                 SuccessFactorStatus.InProgress => "bg-primary",
                 SuccessFactorStatus.Cancelled => "bg-dark",
                 _ => "bg-secondary"
+            };
+        }
+
+        /// <summary>
+        /// Trả về tên hiển thị của loại widget
+        /// </summary>
+        private string GetWidgetTypeDisplay(DashboardItemType itemType)
+        {
+            return itemType switch
+            {
+                DashboardItemType.Chart => "Chart",
+                DashboardItemType.IndicatorCard => "KpiCard",
+                DashboardItemType.Table => "KpiTable",
+                DashboardItemType.ProgressBar => "ProgressBar",
+                DashboardItemType.Metric => "Metric",
+                DashboardItemType.CustomWidget => "CustomWidget",
+                DashboardItemType.Text => "Text",
+                DashboardItemType.Image => "Image",
+                DashboardItemType.CsfProgress => "CsfProgress",
+                _ => "Chart"
             };
         }
     }

@@ -123,7 +123,13 @@ namespace KPISolution.Models.Enums.Visualization
         /// Hình ảnh
         /// </summary>
         [Display(Name = "Hình ảnh")]
-        Image = 8
+        Image = 8,
+
+        /// <summary>
+        /// Tiến độ của yếu tố thành công then chốt
+        /// </summary>
+        [Display(Name = "Tiến độ CSF")]
+        CsfProgress = 9
     }
 
     /// <summary>

@@ -1,102 +1,118 @@
 # System Patterns - KPI Management System
 
 ## System Architecture
+
 The KPI Management System follows a layered architecture pattern:
 
 1. **Presentation Layer**
-   - ASP.NET Core MVC
-   - Razor Views
-   - JavaScript/Chart.js
-   - Responsive Design
+
+    - ASP.NET Core MVC
+    - Razor Views
+    - JavaScript/Chart.js
+    - Responsive Design
 
 2. **Application Layer**
-   - Controllers
-   - Services
-   - DTOs
-   - AutoMapper
+
+    - Controllers
+    - Services
+    - DTOs
+    - AutoMapper
 
 3. **Domain Layer**
-   - Models
-   - Business Logic
-   - Validation Rules
-   - Domain Events
+
+    - Models
+    - Business Logic
+    - Validation Rules
+    - Domain Events
 
 4. **Infrastructure Layer**
-   - Entity Framework Core
-   - Repositories
-   - Unit of Work
-   - External Services
+    - Entity Framework Core
+    - Repositories
+    - Unit of Work
+    - External Services
 
 ## Key Technical Decisions
+
 1. **Database**
-   - SQL Server for production
-   - Entity Framework Core for ORM
-   - Code-first approach
-   - Migrations for schema changes
+
+    - SQL Server for production
+    - Entity Framework Core for ORM
+    - Code-first approach
+    - Migrations for schema changes
 
 2. **Authentication/Authorization**
-   - ASP.NET Core Identity
-   - Role-based access control
-   - Custom authorization handlers
-   - Two-factor authentication
+
+    - ASP.NET Core Identity
+    - Role-based access control
+    - Custom authorization handlers
+    - Two-factor authentication
 
 3. **Logging**
-   - Serilog for structured logging
-   - File and console sinks
-   - Log rotation
-   - Error tracking
+
+    - Serilog for structured logging
+    - File and console sinks
+    - Log rotation
+    - Error tracking
 
 4. **Data Processing**
-   - Batch processing for imports
-   - Background jobs for calculations
-   - Caching for performance
-   - Validation pipelines
+    - Batch processing for imports
+    - Background jobs for calculations
+    - Caching for performance
+    - Validation pipelines
 
 ## Design Patterns
+
 1. **Repository Pattern**
-   - Generic repository interface
-   - Entity-specific repositories
-   - Unit of Work for transactions
-   - Query specifications
+
+    - Generic repository interface
+    - Entity-specific repositories
+    - Unit of Work for transactions
+    - Query specifications
 
 2. **Service Layer**
-   - Business logic encapsulation
-   - Transaction management
-   - Validation rules
-   - Error handling
+
+    - Business logic encapsulation
+    - Transaction management
+    - Validation rules
+    - Error handling
 
 3. **Factory Pattern**
-   - Report generation
-   - Notification creation
-   - Data import processing
-   - Export format handling
+
+    - Report generation
+    - Notification creation
+    - Data import processing
+    - Export format handling
 
 4. **Observer Pattern**
-   - Event handling
-   - Notification system
-   - Alert triggers
-   - Status updates
+    - Event handling
+    - Notification system
+    - Alert triggers
+    - Status updates
 
 ## Component Relationships
+
 1. **KPI Management**
-   - KPI ↔ CSF (Many-to-Many)
-   - KPI ↔ Measurement (One-to-Many)
-   - KPI ↔ Department (Many-to-Many)
+
+    - KPI ↔ CSF (Many-to-Many)
+    - KPI ↔ Measurement (One-to-Many)
+    - KPI ↔ Department (Many-to-Many)
 
 2. **User Management**
-   - User ↔ Role (Many-to-Many)
-   - User ↔ Department (Many-to-One)
-   - User ↔ Notification (One-to-Many)
+
+    - User ↔ Role (Many-to-Many)
+    - User ↔ Department (Many-to-One)
+    - User ↔ Notification (One-to-Many)
 
 3. **Data Collection**
-   - Measurement ↔ KPI (Many-to-One)
-   - Measurement ↔ User (Many-to-One)
-   - Measurement ↔ Validation (One-to-Many)
+
+    - Measurement ↔ KPI (Many-to-One)
+    - Measurement ↔ User (Many-to-One)
+    - Measurement ↔ Validation (One-to-Many)
 
 4. **Reporting**
-   - Report ↔ Template (Many-to-One)
-   - Report ↔ Export (One-to-Many)
-   - Report ↔ User (Many-to-One)
+    - Report ↔ Template (Many-to-One)
+    - Report ↔ Export (One-to-Many)
+    - Report ↔ User (Many-to-One)
 
 ## Cấu trúc phân cấp của chỉ số (Indicator Hierarchy)
 
@@ -135,17 +151,17 @@ Theo yêu cầu, hệ thống sẽ triển khai cấu trúc phân cấp đầy �
 
 ### Mô tả cấu trúc phân cấp gộp
 
-- **Objective (Mục tiêu)**: Mục tiêu chiến lược của tổ chức
-- **SuccessFactor**: Entity dùng chung cho tất cả các yếu tố thành công
-  - **Success Factor** - IsCritical = false: Yếu tố thành công, hỗ trợ đạt được Objective
-  - **Success Factor** - IsCritical = true: Yếu tố thành công quan trọng
-- **ResultIndicator**: Entity dùng chung cho các chỉ số đo lường kết quả
-  - **Result Indicator (RI)** - IsKey = false: Chỉ số kết quả, đo lường kết quả liên quan đến Success Factor
-  - **Result Indicator (RI)** - IsKey = true: Chỉ số kết quả quan trọng
-- **PerformanceIndicator**: Entity dùng chung cho các chỉ số đo lường hiệu suất
-  - **Performance Indicator (PI)** - IsKey = false: Chỉ số hiệu suất, đo lường hiệu suất liên quan đến Success Factor
-  - **Performance Indicator (PI)** - IsKey = true: Chỉ số hiệu suất quan trọng
-- **Measurement**: Bảng đo lường chung cho tất cả các loại chỉ số
+-   **Objective (Mục tiêu)**: Mục tiêu chiến lược của tổ chức
+-   **SuccessFactor**: Entity dùng chung cho tất cả các yếu tố thành công
+    -   **Success Factor** - IsCritical = false: Yếu tố thành công, hỗ trợ đạt được Objective
+    -   **Success Factor** - IsCritical = true: Yếu tố thành công quan trọng
+-   **ResultIndicator**: Entity dùng chung cho các chỉ số đo lường kết quả
+    -   **Result Indicator (RI)** - IsKey = false: Chỉ số kết quả, đo lường kết quả liên quan đến Success Factor
+    -   **Result Indicator (RI)** - IsKey = true: Chỉ số kết quả quan trọng
+-   **PerformanceIndicator**: Entity dùng chung cho các chỉ số đo lường hiệu suất
+    -   **Performance Indicator (PI)** - IsKey = false: Chỉ số hiệu suất, đo lường hiệu suất liên quan đến Success Factor
+    -   **Performance Indicator (PI)** - IsKey = true: Chỉ số hiệu suất quan trọng
+-   **Measurement**: Bảng đo lường chung cho tất cả các loại chỉ số
 
 ## Key Design Patterns
 
@@ -353,50 +369,50 @@ public enum MeasurementType
 
 1. **Strategic Management**
 
-   - Objective Management
-   - SF (Success Factor) Management
-   - SuccessFactor Management
+    - Objective Management
+    - SF (Success Factor) Management
+    - SuccessFactor Management
 
 2. **Indicator Management**
 
-   - RI (Result Indicator) Management
-   - PI (Performance Indicator) Management
-   - Result Indicator (RI) Management
-   - Performance Indicator (PI) Management
+    - RI (Result Indicator) Management
+    - PI (Performance Indicator) Management
+    - Result Indicator (RI) Management
+    - Performance Indicator (PI) Management
 
 3. **Measurement & Tracking**
 
-   - Indicator Measurement
-   - Target Setting
-   - Progress Tracking
-   - Threshold Alerts
+    - Indicator Measurement
+    - Target Setting
+    - Progress Tracking
+    - Threshold Alerts
 
 4. **Organization Structure**
 
-   - Departments
-   - Units
-   - Positions
-   - Employees
+    - Departments
+    - Units
+    - Positions
+    - Employees
 
 5. **Dashboard & Reporting**
 
-   - Executive Dashboards
-   - Department Dashboards
-   - Custom Reports
-   - Trend Analysis
+    - Executive Dashboards
+    - Department Dashboards
+    - Custom Reports
+    - Trend Analysis
 
 6. **User & Security**
 
-   - Authentication
-   - Authorization
-   - Audit Trails
-   - User Preferences
+    - Authentication
+    - Authorization
+    - Audit Trails
+    - User Preferences
 
 7. **Notification System**
-   - Alerts
-   - Reminders
-   - Subscriptions
-   - Email Templates
+    - Alerts
+    - Reminders
+    - Subscriptions
+    - Email Templates
 
 ## Data Flow Architecture
 
@@ -412,107 +428,107 @@ public enum MeasurementType
 
 ## Integration Points
 
-- **Email Notifications**: SMTP integration for alerts and reminders
-- **Excel Import/Export**: EPPlus library for data exchange
-- **PDF Generation**: DinkToPdf for report generation
-- **Authentication**: ASP.NET Core Identity with external provider support
-- **Logging**: Serilog for structured logging
-- **Mapping**: AutoMapper profiles cho các entity và ViewModel
-  - Cập nhật từ `CsfMappingProfile` thành `SuccessFactorMappingProfile`
-  - Cập nhật các model từ `KpiViewModel` thành `IndicatorViewModel`
+-   **Email Notifications**: SMTP integration for alerts and reminders
+-   **Excel Import/Export**: EPPlus library for data exchange
+-   **PDF Generation**: DinkToPdf for report generation
+-   **Authentication**: ASP.NET Core Identity with external provider support
+-   **Logging**: Serilog for structured logging
+-   **Mapping**: AutoMapper profiles cho các entity và ViewModel
+    -   Cập nhật từ `CsfMappingProfile` thành `SuccessFactorMappingProfile`
+    -   Cập nhật các model từ `KpiViewModel` thành `IndicatorViewModel`
 
 ## Security Patterns
 
-- **Authentication**: ASP.NET Core Identity with multi-factor support
-- **Authorization**: Policy-based with both role and resource checks
-  - **Chuẩn hóa tên Policy**: Đổi từ `CanViewCsfs` thành `CanViewSuccessFactors`, `CanManageCsfs` thành `CanManageSuccessFactors`
-  - **Chuẩn hóa tên Handler**: Đổi từ `CsfAuthorizationHandler` thành `SuccessFactorAuthorizationHandler`
-- **Data Protection**: Encryption of sensitive data
-- **Input Validation**: Server-side validation with ModelState
-- **CSRF Protection**: Anti-forgery tokens
-- **SSL/TLS**: HTTPS enforcement
-- **Password Policy**: Strong password requirements
-- **Account Lockout**: Prevents brute force attacks
+-   **Authentication**: ASP.NET Core Identity with multi-factor support
+-   **Authorization**: Policy-based with both role and resource checks
+    -   **Chuẩn hóa tên Policy**: Đổi từ `CanViewCsfs` thành `CanViewSuccessFactors`, `CanManageCsfs` thành `CanManageSuccessFactors`
+    -   **Chuẩn hóa tên Handler**: Đổi từ `CsfAuthorizationHandler` thành `SuccessFactorAuthorizationHandler`
+-   **Data Protection**: Encryption of sensitive data
+-   **Input Validation**: Server-side validation with ModelState
+-   **CSRF Protection**: Anti-forgery tokens
+-   **SSL/TLS**: HTTPS enforcement
+-   **Password Policy**: Strong password requirements
+-   **Account Lockout**: Prevents brute force attacks
 
 ## Scalability Considerations
 
-- **Caching**: Strategic caching of dashboard and report data
-- **Query Optimization**: Efficient database queries with pagination
-- **Asynchronous Processing**: Async/await pattern throughout
-- **Background Processing**: For report generation and notifications
-- **Database Indexing**: Strategic indexes for performance
+-   **Caching**: Strategic caching of dashboard and report data
+-   **Query Optimization**: Efficient database queries with pagination
+-   **Asynchronous Processing**: Async/await pattern throughout
+-   **Background Processing**: For report generation and notifications
+-   **Database Indexing**: Strategic indexes for performance
 
 ## UI and Design Patterns
 
 ### Bootstrap Integration
 
-- The application uses Bootstrap 5 as its primary UI framework
-- Custom CSS is minimized in favor of Bootstrap's utility classes
-- Common Bootstrap components used throughout the application:
-  - Cards for content organization
-  - Badges for status and priority indicators
-  - Progress bars for visual representation of completion
-  - Dropdowns for navigation and action menus
-  - Forms with consistent styling and validation
+-   The application uses Bootstrap 5 as its primary UI framework
+-   Custom CSS is minimized in favor of Bootstrap's utility classes
+-   Common Bootstrap components used throughout the application:
+    -   Cards for content organization
+    -   Badges for status and priority indicators
+    -   Progress bars for visual representation of completion
+    -   Dropdowns for navigation and action menus
+    -   Forms with consistent styling and validation
 
 ### Layout Patterns
 
-- Base layout defined in `_Layout.cshtml` with a responsive navbar
-- Page titles use `_PageTitle.cshtml` partial view that supports command buttons via ViewData
-- Command buttons follow a consistent pattern:
-  - Primary buttons for main actions (create, save)
-  - Secondary buttons for navigation (back to list)
-  - Danger buttons for destructive actions (delete)
-- Forms follow a consistent structure:
-  - Required fields are visually highlighted
-  - Validation messages appear below form fields
-  - Submit buttons at the bottom of forms
+-   Base layout defined in `_Layout.cshtml` with a responsive navbar
+-   Page titles use `_PageTitle.cshtml` partial view that supports command buttons via ViewData
+-   Command buttons follow a consistent pattern:
+    -   Primary buttons for main actions (create, save)
+    -   Secondary buttons for navigation (back to list)
+    -   Danger buttons for destructive actions (delete)
+-   Forms follow a consistent structure:
+    -   Required fields are visually highlighted
+    -   Validation messages appear below form fields
+    -   Submit buttons at the bottom of forms
 
 ### Component Styling Standards
 
-- Progress bars: Use Bootstrap's `progress` and `progress-bar` classes with contextual colors
-- Badges: Use Bootstrap's `badge` class with `bg-*` colors
-- Cards: Use `card`, `card-header`, and `card-body` with border colors to differentiate types
-- Form controls: Use Bootstrap's `form-control`, `form-select`, and `form-range` classes
-- Buttons: Use Bootstrap's `btn` class with `btn-*` contextual colors
+-   Progress bars: Use Bootstrap's `progress` and `progress-bar` classes with contextual colors
+-   Badges: Use Bootstrap's `badge` class with `bg-*` colors
+-   Cards: Use `card`, `card-header`, and `card-body` with border colors to differentiate types
+-   Form controls: Use Bootstrap's `form-control`, `form-select`, and `form-range` classes
+-   Buttons: Use Bootstrap's `btn` class with `btn-*` contextual colors
 
 ### Responsive Design
 
-- Mobile-first approach with responsive breakpoints
-- Navbar collapses to hamburger menu on smaller screens
-- Grid system used for layout with appropriate column sizes for different screen sizes
-- Tables are responsive using Bootstrap's `table-responsive` class
+-   Mobile-first approach with responsive breakpoints
+-   Navbar collapses to hamburger menu on smaller screens
+-   Grid system used for layout with appropriate column sizes for different screen sizes
+-   Tables are responsive using Bootstrap's `table-responsive` class
 
 ### UI Scaling Pattern
 
-- Custom solution for adjusting overall interface scale:
+-   Custom solution for adjusting overall interface scale:
 
-  ```
-  ┌────────────────┐      ┌───────────────────┐      ┌───────────────┐
-  │ Scale Controls │─────►│ CSS Custom Props  │─────►│ HTML Attribute│
-  └────────────────┘      └───────────────────┘      └───────┬───────┘
-         ▲                                                    │
-         │                                                    ▼
-  ┌──────┴───────┐                                     ┌─────────────┐
-  │ LocalStorage │◄────────────────────────────────────┤ zoom/scale  │
-  └──────────────┘                                     └─────────────┘
-  ```
+    ```
+    ┌────────────────┐      ┌───────────────────┐      ┌───────────────┐
+    │ Scale Controls │─────►│ CSS Custom Props  │─────►│ HTML Attribute│
+    └────────────────┘      └───────────────────┘      └───────┬───────┘
+           ▲                                                    │
+           │                                                    ▼
+    ┌──────┴───────┐                                     ┌─────────────┐
+    │ LocalStorage │◄────────────────────────────────────┤ zoom/scale  │
+    └──────────────┘                                     └─────────────┘
+    ```
 
-- Implementation details:
+-   Implementation details:
 
-  - CSS custom properties (`--ui-scale`) for storing scale factor
-  - HTML data attribute (`data-scale`) to trigger scaling mechanism
-  - CSS classes (`ui-scale-*`) to define preset scale factors (75%, 80%, 90%, 100%)
-  - LocalStorage persistence for user preference
-  - Fixed-position UI control element for easily adjusting scale
-  - Self-correcting scale for UI controls to ensure they remain usable
+    -   CSS custom properties (`--ui-scale`) for storing scale factor
+    -   HTML data attribute (`data-scale`) to trigger scaling mechanism
+    -   CSS classes (`ui-scale-*`) to define preset scale factors (75%, 80%, 90%, 100%)
+    -   LocalStorage persistence for user preference
+    -   Fixed-position UI control element for easily adjusting scale
+    -   Self-correcting scale for UI controls to ensure they remain usable
 
-- Benefits:
-  - Allows users to optimize interface density based on preference
-  - Maintains aspect ratios and proportions consistently
-  - Preserves all functionality at any scale
-  - Provides sensible defaults while allowing customization
-  - Solves the problem of oversized interface without sacrificing readability
+-   Benefits:
+    -   Allows users to optimize interface density based on preference
+    -   Maintains aspect ratios and proportions consistently
+    -   Preserves all functionality at any scale
+    -   Provides sensible defaults while allowing customization
+    -   Solves the problem of oversized interface without sacrificing readability
 
 ## Enum Structure
 
@@ -831,3 +847,76 @@ public class BusinessObjective : Objective
 ```
 
 The inheritance hierarchy allows BusinessObjective to leverage all properties from the base Objective class while adding business-specific attributes.
+
+## Dashboard Widget Architecture
+
+### Widget Infrastructure
+
+-   **DashboardItemType Enum**: Định nghĩa các loại widget (`Chart`, `IndicatorCard`, `Table`, `ProgressBar`, `Metric`, `CustomWidget`, `Text`, `Image`, `CsfProgress`)
+-   **DashboardItem Entity**: Lưu trữ thông tin cấu hình widget bao gồm loại, vị trí, kích thước, dữ liệu
+-   **JavaScript Mapping**: Sử dụng `mapWidgetTypeToEnumInt()` để chuyển đổi giữa tên widget trong JavaScript và giá trị enum trong C#
+
+### Widget Creation Process
+
+1. Người dùng chọn loại widget từ modal
+2. Client-side JavaScript tạo đối tượng widgetData với các thuộc tính cần thiết
+3. Controller nhận và xác thực dữ liệu
+4. Entity được tạo và lưu vào database
+5. Khi hiển thị, phương thức `CreateWidgetData()` tạo đối tượng ViewModel cho partial view tương ứng
+
+### CSF Progress Widget
+
+-   **Model**: `SuccessFactorProgressWidgetData` chứa thông tin CSF và tiến độ
+-   **Controller Logic**: Lấy dữ liệu CSF và cập nhật tiến độ từ `ProgressUpdates`
+-   **View**: Partial view `_CsfProgressWidget.cshtml` hiển thị tiến độ, trạng thái và cập nhật gần đây
+-   **Data Source**: Dữ liệu từ bảng `SuccessFactors` và `ProgressUpdates`
+
+### Widget Rendering Pattern
+
+```csharp
+// DashboardController.cs
+switch ((DashboardItemType)item.ItemType)
+{
+    case DashboardItemType.CsfProgress:
+        if (item.SuccessFactorId.HasValue)
+        {
+            var csf = await this._unitOfWork.SuccessFactors.GetByIdAsync(item.SuccessFactorId.Value);
+            if (csf != null)
+            {
+                var progressUpdates = await this._unitOfWork.ProgressUpdates
+                    .GetAllAsync(up => up.SuccessFactorId == csf.Id);
+
+                var widgetData = new SuccessFactorProgressWidgetData
+                {
+                    Id = csf.Id,
+                    Code = csf.Code,
+                    Name = csf.Name,
+                    // ... other properties
+                };
+
+                return widgetData;
+            }
+        }
+        break;
+}
+```
+
+Dashboard sử dụng hệ thống partial view để render từng loại widget:
+
+```csharp
+// Custom.cshtml
+string partialName = item.WidgetType switch
+{
+    "KpiCard" => "_KpiCardWidget",
+    "KpiTable" => "_KpiTableWidget",
+    "Chart" => "_ChartWidget",
+    "CsfProgress" => "_CsfProgressWidget",
+    "Text" => "_TextWidget",
+    _ => "_EmptyWidget"
+};
+
+@if (item.WidgetData != null)
+{
+    <partial name="@partialName" model="@item.WidgetData" />
+}
+```
