@@ -24,5 +24,10 @@ namespace KPISolution.Models.ViewModels.Dashboard.Widgets
         /// Có phải là HTML không
         /// </summary>
         public bool IsHtml { get; set; } = false;
+
+        /// <summary>
+        /// Hiển thị viền xung quanh widget
+        /// </summary>
+        public bool ShowBorder { get; set; } = true;
     }
 }

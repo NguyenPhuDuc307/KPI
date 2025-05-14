@@ -29,7 +29,7 @@ namespace KPISolution
             // Add services to the container.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString)
+                options.UseSqlite(connectionString)
                        .ConfigureWarnings(warnings =>
                             warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();

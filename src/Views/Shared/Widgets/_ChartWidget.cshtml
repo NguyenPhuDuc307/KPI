@@ -1,4 +1,4 @@
-@model ChartWidgetData
+@model KPISolution.Models.ViewModels.Dashboard.Widgets.ChartWidgetData
 
 <div class="card shadow-sm mb-4">
     <div class="card-header py-3">
@@ -15,31 +15,23 @@
     </div>
 </div>
 
-@if (Model.Options.ShowLegend && Model.ChartType != "pie" && Model.ChartType != "doughnut")
+@if (Model.ShowLegend && Model.ChartType.ToString() != "Pie" && Model.ChartType.ToString() != "Doughnut")
 {
     <div class="chart-legend mt-2 small d-flex flex-wrap justify-content-center">
-        @for (int i = 0; i < Model.Datasets?.Count; i++)
+        @if (Model.Datasets != null)
         {
-            var dataset = Model.Datasets[i];
-            var color = dataset.BackgroundColor;
-            if (color != null && !(color is string))
+            for (int i = 0; i < Model.Datasets.Length; i++)
             {
-                color = "#6c757d";
+                var dataset = Model.Datasets[i];
+                var color = dataset.BackgroundColor;
+
+                <div class="me-3 mb-1 d-flex align-items-center">
+                    <span class="legend-color me-1"
+                        style="background-color: @color; width: 10px; height: 10px; display: inline-block;"></span>
+                    <span>@dataset.Label</span>
+                </div>
             }
-
-            <div class="me-3 mb-1 d-flex align-items-center">
-                <span class="legend-color me-1"
-                    style="background-color: @color; width: 10px; height: 10px; display: inline-block;"></span>
-                <span>@dataset.Label</span>
-            </div>
         }
-    </div>
-}
-
-@if (!string.IsNullOrEmpty(Model.DataSource))
-{
-    <div class="chart-source text-muted small text-end mt-2">
-        <span>Nguồn: @Model.DataSource</span>
     </div>
 }
 
@@ -56,13 +48,13 @@
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: @(Model.StartFromZero.ToString().ToLower())
+                    beginAtZero: true
                 }
             },
             plugins: {
                 legend: {
-                    display: @(Model.ShowLegend.ToString().ToLower()),
-                    position: '@Model.Options.LegendPosition'
+                    display: @Model.ShowLegend.ToString().ToLowerInvariant(),
+                    position: 'top'
                 },
                 tooltip: {
                     enabled: true
@@ -71,7 +63,7 @@
         };
 
         new Chart(ctx, {
-            type: '@Model.ChartType.ToLower()',
+            type: '@Model.ChartType.ToString().ToLowerInvariant()',
             data: chartData,
             options: options
         });

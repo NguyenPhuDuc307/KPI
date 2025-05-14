@@ -122,11 +122,11 @@
                     All</a>
             </div>
             <div class="card-body">
-                @if (upcomingSuccessFactors != null && (upcomingSuccessFactors is System.Collections.IEnumerable) &&
+                @if (upcomingSuccessFactors != null && upcomingSuccessFactors is System.Collections.IEnumerable &&
                                 ((System.Collections.IEnumerable)upcomingSuccessFactors).Cast<object>().Any())
                 {
                     <ul class="list-group list-group-flush">
-                        @foreach (dynamic sf in upcomingSuccessFactors)
+                        @foreach (dynamic sf in (System.Collections.IEnumerable)upcomingSuccessFactors)
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>

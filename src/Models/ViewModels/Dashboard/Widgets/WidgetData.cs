@@ -148,40 +148,6 @@ namespace KPISolution.Models.ViewModels.Dashboard.Widgets
         public string ColorClass { get; set; } = string.Empty;
     }
 
-    public class ChartWidgetData : WidgetData
-    {
-        public string ChartType { get; set; } = string.Empty; // line, bar, pie, doughnut, etc.
-        public List<string> Labels { get; set; } = [];
-        public List<ChartDataset> Datasets { get; set; } = [];
-        public ChartOptions Options { get; set; } = new ChartOptions();
-
-        // Properties to maintain backward compatibility
-        public bool ShowLegend => this.Options?.ShowLegend ?? true;
-        public string DataSource { get; set; } = string.Empty;
-        public bool StartFromZero { get; set; } = true;
-    }
-
-    public class ChartDataset
-    {
-        public string Label { get; set; } = string.Empty;
-        public List<double> Data { get; set; } = [];
-        public string BorderColor { get; set; } = string.Empty;
-        public string BackgroundColor { get; set; } = string.Empty;
-        public bool Fill { get; set; }
-        public int BorderWidth { get; set; } = 1;
-    }
-
-    public class ChartOptions
-    {
-        public bool Responsive { get; set; } = true;
-        public bool MaintainAspectRatio { get; set; } = false;
-        public int? SuggestedMin { get; set; }
-        public int? SuggestedMax { get; set; }
-        public bool ShowLegend { get; set; } = true;
-        public string LegendPosition { get; set; } = "top";
-        public bool StartFromZero { get; set; } = true;
-    }
-
     public class TableWidgetData : WidgetData
     {
         public List<string> Headers { get; set; } = [];

@@ -1,0 +1,108 @@
+@model KPISolution.Models.ViewModels.Dashboard.Widgets.KpiTableWidgetData
+
+<div class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">@Model.Title</h5>
+        <div class="dropdown">
+            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#"><i class="bi bi-info-circle me-2"></i>Xem chi tiết</a></li>
+                <li><a class="dropdown-item" href="#"><i class="bi bi-download me-2"></i>Tải xuống</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.KpiItems != null && Model.KpiItems.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Chỉ số</th>
+                            <th>Đơn vị</th>
+                            <th class="text-end">Giá trị</th>
+                            <th class="text-end">Mục tiêu</th>
+                            <th class="text-end">% Hoàn thành</th>
+                            <th>Xu hướng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var kpi in Model.KpiItems)
+                        {
+                            decimal completionPercentage = 0;
+                            string statusClass = "";
+
+                            if (kpi.Target.HasValue && kpi.Target.Value != 0)
+                            {
+                                completionPercentage = Math.Min(100, Math.Max(0, (decimal)kpi.Value / (decimal)kpi.Target.Value * 100));
+
+                                if (completionPercentage >= 75)
+                                    statusClass = "text-success";
+                                else if (completionPercentage >= 50)
+                                    statusClass = "text-warning";
+                                else
+                                    statusClass = "text-danger";
+                            }
+
+                            <tr>
+                                <td>@kpi.Name</td>
+                                <td>@kpi.Unit</td>
+                                <td class="text-end">@kpi.Value.ToString("N1")</td>
+                                <td class="text-end">@(kpi.Target.HasValue? kpi.Target.Value.ToString("N1") : "-")</td>
+                                <td class="text-end @statusClass">
+                                    @if (kpi.Target.HasValue && kpi.Target.Value != 0)
+                                    {
+                                        @completionPercentage.ToString("N1")
+                            
+                                        @:%
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (kpi.Trend.HasValue)
+                                    {
+                                        string trendIcon = kpi.Trend.Value switch
+                                        {
+                                            > 0 => "bi-arrow-up-right",
+                                            < 0 => "bi-arrow-down-right",
+                                            _ => "bi-arrow-right"
+                                        };
+
+                                        string trendClass = kpi.Trend.Value switch
+                                        {
+                                            > 0 => "text-success",
+                                            < 0 => "text-danger",
+                                            _ => "text-muted"
+                                        };
+
+                                        <i class="bi @trendIcon @trendClass"></i>
+                                        <small class="@trendClass">@Math.Abs(kpi.Trend.Value).ToString("P1")</small>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4">
+                <i class="bi bi-bar-chart-line fs-3 text-muted"></i>
+                <p class="mt-2">Không có dữ liệu KPI để hiển thị</p>
+            </div>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.TimePeriod))
+    {
+        <div class="card-footer text-muted">
+            <small>@Model.TimePeriod</small>
+        </div>
+    }
+</div>

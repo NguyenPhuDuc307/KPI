@@ -306,40 +306,46 @@ namespace KPISolution.Models.ViewModels.Dashboard
     public enum TimePeriod
     {
         /// <summary>
+        /// Custom time period
+        /// </summary>
+        [Display(Name = "Custom")]
+        Custom = 0,
+
+        /// <summary>
         /// Today only
         /// </summary>
         [Display(Name = "Today")]
         Today = 1,
 
         /// <summary>
+        /// Yesterday only
+        /// </summary>
+        [Display(Name = "Yesterday")]
+        Yesterday = 2,
+
+        /// <summary>
         /// This week
         /// </summary>
         [Display(Name = "This Week")]
-        ThisWeek = 2,
+        ThisWeek = 3,
+
+        /// <summary>
+        /// Last week
+        /// </summary>
+        [Display(Name = "Last Week")]
+        LastWeek = 4,
 
         /// <summary>
         /// This month
         /// </summary>
         [Display(Name = "This Month")]
-        ThisMonth = 3,
+        ThisMonth = 5,
 
         /// <summary>
-        /// This quarter
+        /// Last month
         /// </summary>
-        [Display(Name = "This Quarter")]
-        ThisQuarter = 4,
-
-        /// <summary>
-        /// This year
-        /// </summary>
-        [Display(Name = "This Year")]
-        ThisYear = 5,
-
-        /// <summary>
-        /// Last 7 days
-        /// </summary>
-        [Display(Name = "Last 7 Days")]
-        Last7Days = 6,
+        [Display(Name = "Last Month")]
+        LastMonth = 6,
 
         /// <summary>
         /// Last 30 days
@@ -348,21 +354,33 @@ namespace KPISolution.Models.ViewModels.Dashboard
         Last30Days = 7,
 
         /// <summary>
-        /// Last 90 days
+        /// This quarter
         /// </summary>
-        [Display(Name = "Last 90 Days")]
-        Last90Days = 8,
+        [Display(Name = "This Quarter")]
+        ThisQuarter = 8,
 
         /// <summary>
-        /// Last 12 months
+        /// Last quarter
         /// </summary>
-        [Display(Name = "Last 12 Months")]
-        Last12Months = 9,
+        [Display(Name = "Last Quarter")]
+        LastQuarter = 9,
 
         /// <summary>
-        /// Custom date range
+        /// This year
         /// </summary>
-        [Display(Name = "Custom Range")]
-        Custom = 10
+        [Display(Name = "This Year")]
+        ThisYear = 10,
+
+        /// <summary>
+        /// Last year
+        /// </summary>
+        [Display(Name = "Last Year")]
+        LastYear = 11,
+
+        /// <summary>
+        /// Year to date
+        /// </summary>
+        [Display(Name = "Year to Date")]
+        YearToDate = 12
     }
 }

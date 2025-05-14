@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using KPISolution.Models.ViewModels.Department;
 using KPISolution.Models.ViewModels.Dashboard;
+using Newtonsoft.Json;
+
 namespace KPISolution.Controllers
 {
     /// <summary>
@@ -1153,13 +1155,13 @@ namespace KPISolution.Controllers
                         X = item.X,
                         Y = item.Y,
                         Order = item.Order,
-                        ItemType = (DashboardItemType)item.ItemType,
+                        ItemType = (DashboardItemType)(int)item.ItemType,
                         IndicatorId = item.IndicatorId,
                         SuccessFactorId = item.SuccessFactorId,
                         WidgetType = GetWidgetTypeDisplay((DashboardItemType)item.ItemType),
                         ShowLegend = item.ShowLegend,
                         ChartType = (DashboardItemType)item.ItemType == DashboardItemType.Chart ? (ChartType)item.ChartType : default,
-                        TimePeriod = (DashboardItemType)item.ItemType == DashboardItemType.Chart ? (TimePeriod)item.TimePeriod : default,
+                        TimePeriod = (TimePeriod)(int)item.TimePeriod,
 
                         // Process DataConfiguration and create WidgetData
                         // Cannot use await here anymore
@@ -1228,16 +1230,85 @@ namespace KPISolution.Controllers
                         // TODO: Implement Table data fetching
                         break;
                     case DashboardItemType.Chart:
-                        this._logger.LogWarning("Widget data creation not implemented for Chart. ItemId: {ItemId}", item.Id);
-                        // TODO: Implement Chart data fetching
+                        this._logger.LogInformation("Creating Chart widget data for item {ItemId}", item.Id);
+                        try
+                        {
+                            // Tạo dữ liệu mẫu cho biểu đồ
+                            var chartWidgetData = new ChartWidgetData
+                            {
+                                Id = item.Id,
+                                ChartType = (ChartType)item.ChartType,
+                                Title = item.Title ?? "Chart",
+                                ShowLegend = item.ShowLegend,
+                                TimePeriod = (DisplayTimePeriod)(int)item.TimePeriod,
+                                Labels = new[] { "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12" },
+                                Datasets = new[]
+                                {
+                                    new ChartDataset
+                                    {
+                                        Label = "Dữ liệu 1",
+                                        Data = new double[] { 65, 59, 80, 81, 56, 55, 40, 45, 60, 70, 75, 80 },
+                                        BorderColor = "#36a2eb",
+                                        BackgroundColor = "#36a2eb50"
+                                    },
+                                    new ChartDataset
+                                    {
+                                        Label = "Dữ liệu 2",
+                                        Data = new double[] { 28, 48, 40, 19, 86, 27, 90, 65, 59, 80, 81, 56 },
+                                        BorderColor = "#ff6384",
+                                        BackgroundColor = "#ff638450"
+                                    }
+                                }
+                            };
+
+                            this._logger.LogInformation("Successfully created Chart widget data for item {ItemId}", item.Id);
+                            return chartWidgetData;
+                        }
+                        catch (Exception ex)
+                        {
+                            this._logger.LogError(ex, "Error creating Chart widget data for item {ItemId}", item.Id);
+                        }
                         break;
                     case DashboardItemType.ProgressBar:
                         this._logger.LogWarning("Widget data creation not implemented for ProgressBar. ItemId: {ItemId}", item.Id);
                         // TODO: Implement ProgressBar data fetching
                         break;
                     case DashboardItemType.Text:
-                        this._logger.LogWarning("Widget data creation not implemented for Text. ItemId: {ItemId}", item.Id);
-                        // TODO: Implement Text data fetching
+                        this._logger.LogInformation("Creating Text widget data for item {ItemId}", item.Id);
+                        try
+                        {
+                            // Parse the DataConfiguration to get the text content
+                            if (!string.IsNullOrEmpty(item.DataConfiguration))
+                            {
+                                var config = JsonConvert.DeserializeObject<Dictionary<string, string>>(item.DataConfiguration)
+                                    ?? new Dictionary<string, string>();
+                                if (config.TryGetValue("text", out string textContent))
+                                {
+                                    var widgetData = new TextWidgetData
+                                    {
+                                        Content = textContent,
+                                        IsHtml = textContent.Contains("<") && textContent.Contains(">"),
+                                        ShowBorder = true
+                                    };
+                                    this._logger.LogInformation("Successfully created Text widget data for item {ItemId}", item.Id);
+                                    return widgetData;
+                                }
+                                else
+                                {
+                                    this._logger.LogWarning("Failed to parse text content from DataConfiguration for Text widget. ItemId: {ItemId}", item.Id);
+                                }
+                            }
+                            else
+                            {
+                                this._logger.LogWarning("DataConfiguration is null or empty for Text widget. ItemId: {ItemId}", item.Id);
+                                // Return an empty text widget data to avoid null
+                                return new TextWidgetData { Content = "No content available", ShowBorder = true };
+                            }
+                        }
+                        catch (Newtonsoft.Json.JsonException ex)
+                        {
+                            this._logger.LogError(ex, "Error parsing DataConfiguration for Text widget. ItemId: {ItemId}", item.Id);
+                        }
                         break;
                     case DashboardItemType.CsfProgress:
                         this._logger.LogInformation("Creating CSF Progress widget data for item {ItemId}", item.Id);
@@ -1249,36 +1320,27 @@ namespace KPISolution.Controllers
                                 var progressUpdates = await this._unitOfWork.ProgressUpdates
                                     .GetAllAsync(up => up.SuccessFactorId == csf.Id);
 
-                                var widgetData = new SuccessFactorProgressWidgetData
+                                var widgetData = new CsfProgressWidgetData
                                 {
-                                    Id = csf.Id,
-                                    Code = csf.Code,
-                                    Name = csf.Name,
-                                    Description = csf.Description,
-                                    ProgressPercentage = csf.ProgressPercentage,
-                                    Status = csf.Status.ToString(),
-                                    Owner = csf.ResponsibleUser?.UserName ?? string.Empty,
-                                    TargetDate = csf.TargetDate,
-                                    IsCritical = csf.IsCritical,
+                                    Title = csf.Name ?? string.Empty,
+                                    Description = csf.Description ?? string.Empty,
                                     ShowHeader = true,
                                     ShowDetails = true,
-                                    ShowActions = true
-                                };
-
-                                if (progressUpdates.Any())
-                                {
-                                    widgetData.RecentUpdates = progressUpdates
-                                        .OrderByDescending(u => u.UpdateDate)
-                                        .Take(3)
-                                        .Select(u => new SuccessFactorUpdateItem
+                                    ShowActions = true,
+                                    CsfItems = new List<CsfItem>
+                                    {
+                                        new CsfItem
                                         {
-                                            Title = $"{u.Status} - {u.ProgressPercentage}%",
-                                            Description = u.Comments,
-                                            Date = u.UpdateDate,
-                                            Author = u.UpdatedBy ?? string.Empty
-                                        })
-                                        .ToList();
-                                }
+                                            Id = csf.Id,
+                                            Code = csf.Code ?? string.Empty,
+                                            Name = csf.Name ?? string.Empty,
+                                            CompletionPercentage = csf.ProgressPercentage,
+                                            Status = csf.Status.ToString(),
+                                            UpdatedDate = progressUpdates.OrderByDescending(u => u.UpdateDate).FirstOrDefault()?.UpdateDate,
+                                            DetailLink = $"/SuccessFactors/Details/{csf.Id}"
+                                        }
+                                    }
+                                };
 
                                 this._logger.LogInformation("Successfully created CSF Progress widget data for item {ItemId}", item.Id);
                                 return widgetData;
@@ -1377,6 +1439,22 @@ namespace KPISolution.Controllers
                 DashboardItemType.CsfProgress => "CsfProgress",
                 _ => "Chart"
             };
+        }
+
+        /// <summary>
+        /// Chuyển đổi từ TimePeriod của ViewModel sang DisplayTimePeriod của Entity
+        /// </summary>
+        private static DisplayTimePeriod ToDisplayTimePeriod(TimePeriod period)
+        {
+            return (DisplayTimePeriod)(int)period;
+        }
+
+        /// <summary>
+        /// Chuyển đổi từ DisplayTimePeriod của Entity sang TimePeriod của ViewModel
+        /// </summary>
+        private static TimePeriod ToTimePeriod(DisplayTimePeriod period)
+        {
+            return (TimePeriod)(int)period;
         }
     }
 }

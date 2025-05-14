@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  kpi-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=db;Database=KPI;User Id=sa;Password=Password.1;TrustServerCertificate=True;
+    networks:
+      - kpi-network
+    restart: unless-stopped
+
+  db:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Password.1
+      - MSSQL_PID=Developer
+      # Chỉ định đường dẫn cho các tập tin database
+      - MSSQL_DATA_DIR=/var/opt/mssql/data
+      - MSSQL_LOG_DIR=/var/opt/mssql/log
+      - MSSQL_BACKUP_DIR=/var/opt/mssql/backup
+    user: root
+    ports:
+      - "1433:1433"
+    volumes:
+      - kpi-sqldata:/var/opt/mssql
+      # Thêm khởi tạo dữ liệu cho database
+      - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      - kpi-network
+    restart: unless-stopped
+    command: /bin/bash -c "/opt/mssql/bin/sqlservr & /docker-entrypoint-initdb.d/entrypoint.sh"
+
+networks:
+  kpi-network:
+    driver: bridge
+
+volumes:
+  kpi-sqldata:
+    driver: local 

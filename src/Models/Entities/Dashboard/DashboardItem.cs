@@ -1,3 +1,6 @@
+using KPISolution.Models.Enums.Visualization;
+using KPISolution.Models.ViewModels.Dashboard;
+
 namespace KPISolution.Models.Entities.Dashboard
 {
     /// <summary>
