@@ -5,6 +5,7 @@ using Serilog;
 using Serilog.Events;
 using KPISolution.Models.Mappings;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Security.Claims;
 
 namespace KPISolution
 {
@@ -60,6 +61,25 @@ namespace KPISolution
                 .AddRoles<IndicatorRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
+
+            // Cấu hình xác thực bên ngoài - Google
+            builder.Services.AddAuthentication()
+                .AddGoogle(googleOptions =>
+                {
+                    var googleConfig = builder.Configuration.GetSection("Authentication:Google");
+                    googleOptions.ClientId = googleConfig["ClientId"] ?? throw new InvalidOperationException("Google ClientId not found in configuration");
+                    googleOptions.ClientSecret = googleConfig["ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not found in configuration");
+
+                    // Cấu hình scope cơ bản
+                    googleOptions.Scope.Add("email");
+                    googleOptions.Scope.Add("profile");
+
+                    // Cấu hình callback URL
+                    googleOptions.CallbackPath = "/signin-google";
+
+                    // Lưu token để sử dụng trong tương lai nếu cần
+                    googleOptions.SaveTokens = true;
+                });
 
             // Đăng ký và cấu hình các chính sách ủy quyền
             builder.Services.AddIndicatorPolicies();
