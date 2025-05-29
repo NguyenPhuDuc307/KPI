@@ -1,0 +1,19 @@
+services:
+    kpi-app:
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - ASPNETCORE_URLS=http://+:80
+        volumes:
+            - ./src:/app/src:ro
+            - ./logs:/app/logs
+        ports:
+            - "5001:80"
+
+    mysql:
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: kpi
+            MYSQL_USER: kpiuser
+            MYSQL_PASSWORD: kpipassword
+        ports:
+            - "3307:3306"

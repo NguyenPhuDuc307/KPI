@@ -1,21 +1,50 @@
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-COPY ["KPI.sln", "./"]
-COPY ["src/KPISolution.csproj", "src/"]
-RUN dotnet restore
-COPY . .
-WORKDIR "/src/src"
-RUN dotnet build "KPISolution.csproj" -c Release -o /app/build
 
+# Copy csproj and restore dependencies
+COPY src/KPISolution.csproj src/
+RUN dotnet restore src/KPISolution.csproj
+
+# Install Entity Framework tools
+RUN dotnet tool install --global dotnet-ef
+
+# Copy source code
+COPY src/ src/
+
+# Build application
+WORKDIR /src/src
+RUN dotnet build KPISolution.csproj -c Release -o /app/build
+
+# Publish stage
 FROM build AS publish
-RUN dotnet publish "KPISolution.csproj" -c Release -o /app/publish
+RUN dotnet publish KPISolution.csproj -c Release -o /app/publish /p:UseAppHost=false
 
-FROM base AS final
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
+
+# Install wkhtmltopdf for DinkToPdf and netcat for database wait
+RUN apt-get update && apt-get install -y \
+    wkhtmltopdf \
+    xvfb \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy published app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "KPISolution.dll"] 
+
+# Copy startup script
+COPY src/docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+
+# Create logs directory
+RUN mkdir -p logs
+
+# Set environment
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=http://+:80
+
+EXPOSE 80
+
+ENTRYPOINT ["./docker-entrypoint.sh"]

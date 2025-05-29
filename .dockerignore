@@ -1,27 +1,63 @@
-**/.dockerignore
-**/.DS_Store
-**/.env
-**/.git
-**/.gitignore
-**/.project
-**/.settings
-**/.toolstarget
-**/.vs
-**/.vscode
-**/.idea
-**/*.*proj.user
-**/*.dbmdl
-**/*.jfm
-**/azds.yaml
-**/bin
-**/charts
-**/docker-compose*
-**/compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
-**/secrets.dev.yaml
-**/values.dev.yaml
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
 LICENSE
-README.md 
+*.md
+
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+**/TestResults/
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.userprefs
+*.DotSettings
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment files (except production)
+.env
+.env.local
+.env.development
+
+# Node modules (if any frontend tools)
+node_modules/
+npm-debug.log
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Database
+*.db
+*.sqlite
+
+# Temporary files
+temp/
+tmp/
+
+# Package files
+*.nupkg
+*.snupkg
+
+# Test coverage
+coverage/
+
+# Migrations (will be recreated in container)
+**/Migrations/

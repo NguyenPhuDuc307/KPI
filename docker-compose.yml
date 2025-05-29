@@ -1,48 +1,52 @@
-version: '3.9'
-
 services:
-  kpi-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:80"
-      - "8443:443"
-    depends_on:
-      - db
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Server=db;Database=KPI;User Id=sa;Password=Password.1;TrustServerCertificate=True;
-    networks:
-      - kpi-network
-    restart: unless-stopped
+    # MySQL Database Service
+    mysql:
+        image: mysql:8.0
+        container_name: kpi-mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_DATABASE: kpi
+            MYSQL_USER: kpiuser
+            MYSQL_PASSWORD: kpipassword
+        command: --default-authentication-plugin=mysql_native_password
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
+            - ./mysql-init:/docker-entrypoint-initdb.d
+        networks:
+            - kpi-network
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            timeout: 20s
+            retries: 10
 
-  db:
-    image: mcr.microsoft.com/azure-sql-edge:latest
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=Password.1
-      - MSSQL_PID=Developer
-      # Chỉ định đường dẫn cho các tập tin database
-      - MSSQL_DATA_DIR=/var/opt/mssql/data
-      - MSSQL_LOG_DIR=/var/opt/mssql/log
-      - MSSQL_BACKUP_DIR=/var/opt/mssql/backup
-    user: root
-    ports:
-      - "1433:1433"
-    volumes:
-      - kpi-sqldata:/var/opt/mssql
-      # Thêm khởi tạo dữ liệu cho database
-      - ./sql:/docker-entrypoint-initdb.d
-    networks:
-      - kpi-network
-    restart: unless-stopped
-    command: /bin/bash -c "/opt/mssql/bin/sqlservr & /docker-entrypoint-initdb.d/entrypoint.sh"
+    # KPI Application Service
+    kpi-app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: kpi-application
+        restart: unless-stopped
+        depends_on:
+            mysql:
+                condition: service_healthy
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Production
+            - ASPNETCORE_URLS=http://+:80
+            - ConnectionStrings__DefaultConnection=Server=mysql;Database=kpi;Uid=kpiuser;Pwd=kpipassword;SslMode=none;
+        ports:
+            - "8080:80"
+        networks:
+            - kpi-network
+        volumes:
+            - ./logs:/app/logs
 
 networks:
-  kpi-network:
-    driver: bridge
+    kpi-network:
+        driver: bridge
 
 volumes:
-  kpi-sqldata:
-    driver: local 
+    mysql_data:
+        driver: local

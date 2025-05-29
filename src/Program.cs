@@ -6,6 +6,7 @@ using Serilog.Events;
 using KPISolution.Models.Mappings;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace KPISolution
 {
@@ -30,7 +31,7 @@ namespace KPISolution
             // Add services to the container.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite(connectionString)
+                options.UseMySql(connectionString, ServerVersion.Parse("8.0.0"))
                        .ConfigureWarnings(warnings =>
                             warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -221,6 +222,25 @@ namespace KPISolution
                 app.UseStatusCodePagesWithReExecute("/Error/{0}");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
+
+                // Production environment - run migrations
+                using var scope = app.Services.CreateScope();
+                var services = scope.ServiceProvider;
+                var context = services.GetRequiredService<ApplicationDbContext>();
+                try
+                {
+                    await context.Database.MigrateAsync();
+                    Log.Information("Production database schema updated");
+
+                    // Initialize seed data for production
+                    await SeedData.InitializeAsync(services);
+                    Log.Information("Production seed data initialized");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Production migration error: {Message}", ex.Message);
+                    Log.Warning("Continuing with existing database state");
+                }
             }
 
             // Add global error handling middleware
@@ -340,29 +360,55 @@ namespace KPISolution
             {
                 Log.Information("Starting Indicator Management System");
 
-                // Seed the database
+                // Seed the database - run in all environments for Docker
+                // Ensure database schema is created via migrations
+                using (var scope = app.Services.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    context.Database.Migrate(); // Use Migrate() instead of EnsureCreated() when migrations exist
+                    Log.Information("Database migrations applied");
+
+                    // Get services first
+                    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IndicatorRole>>();
+
+                    // Khởi tạo các vai trò hệ thống
+                    await RoleInitializer.InitializeRolesAsync(app.Services);
+                    Log.Information("Roles initialized");
+
+                    // If no admin is found, create a default one
+                    string adminEmail = builder.Configuration["AdminSettings:Email"] ?? "admin@indicatorapp.com";
+
+                    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+                    if (adminUser == null)
+                    {
+                        adminUser = new ApplicationUser
+                        {
+                            UserName = adminEmail,
+                            Email = adminEmail,
+                            EmailConfirmed = true,
+                            FirstName = "System",
+                            LastName = "Administrator",
+                            IsActive = true
+                        };
+
+                        var createResult = await userManager.CreateAsync(adminUser, "Admin@123");
+                        if (createResult.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(adminUser, "SuperAdmin");
+                            Log.Information("Default admin user created: {Email}", adminEmail);
+                        }
+                        else
+                        {
+                            Log.Error("Failed to create admin user: {Errors}", string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                        }
+                    }
+                }
+
+                // Comment out the seed data initialization to avoid foreign key constraint errors only in development
                 if (app.Environment.IsDevelopment())
                 {
-                    // Ensure database schema is created
-                    using (var scope = app.Services.CreateScope())
-                    {
-                        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                        context.Database.EnsureCreated();
-                        Log.Information("Database schema created or verified");
-
-                        // Khởi tạo các vai trò hệ thống
-                        await RoleInitializer.InitializeRolesAsync(app.Services);
-
-                        // If no admin is found, create a default one
-                        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IndicatorRole>>();
-
-                        string adminEmail = builder.Configuration["AdminSettings:Email"] ?? "admin@indicatorapp.com";
-
-                        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-                    }
-
-                    // Comment out the seed data initialization to avoid foreign key constraint errors
                     // await SeedData.InitializeAsync(app.Services);
                 }
 

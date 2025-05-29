@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.Design;
+using Pomelo.EntityFrameworkCore.MySql;
 
 namespace KPISolution.Data
 {
@@ -21,7 +22,7 @@ namespace KPISolution.Data
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             var connectionString = configuration.GetConnectionString("DefaultConnection");
-            optionsBuilder.UseSqlite(connectionString);
+            optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 
             return new ApplicationDbContext(optionsBuilder.Options);
         }
