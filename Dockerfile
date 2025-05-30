@@ -24,11 +24,12 @@ RUN dotnet publish KPISolution.csproj -c Release -o /app/publish /p:UseAppHost=f
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
-# Install wkhtmltopdf for DinkToPdf and netcat for database wait
+# Install wkhtmltopdf for DinkToPdf, netcat for database wait, and mysql-client for connection testing
 RUN apt-get update && apt-get install -y \
     wkhtmltopdf \
     xvfb \
     netcat-openbsd \
+    default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy published app

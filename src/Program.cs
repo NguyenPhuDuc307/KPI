@@ -193,27 +193,6 @@ namespace KPISolution
                 // Development environment configuration
                 app.UseDeveloperExceptionPage();
                 app.UseMigrationsEndPoint();
-
-                // Seed data for development only
-                using var scope = app.Services.CreateScope();
-                var services = scope.ServiceProvider;
-
-                // Ensure the database schema is created
-                var context = services.GetRequiredService<ApplicationDbContext>();
-                try
-                {
-                    await context.Database.MigrateAsync();
-                    Log.Information("Database schema created or verified");
-
-                    // Seed initial data
-                    await SeedData.InitializeAsync(services);
-                    Log.Information("Database seeded with initial data");
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning($"Migration error: {ex.Message}");
-                    Log.Warning("Continuing without migration");
-                }
             }
             else
             {
@@ -222,26 +201,11 @@ namespace KPISolution
                 app.UseStatusCodePagesWithReExecute("/Error/{0}");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
-
-                // Production environment - run migrations
-                using var scope = app.Services.CreateScope();
-                var services = scope.ServiceProvider;
-                var context = services.GetRequiredService<ApplicationDbContext>();
-                try
-                {
-                    await context.Database.MigrateAsync();
-                    Log.Information("Production database schema updated");
-
-                    // Initialize seed data for production
-                    await SeedData.InitializeAsync(services);
-                    Log.Information("Production seed data initialized");
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Production migration error: {Message}", ex.Message);
-                    Log.Warning("Continuing with existing database state");
-                }
             }
+
+            // Ensure database migrations and seed data are applied before starting the application
+            await EnsureDatabaseMigratedAsync(app.Services);
+            Log.Information("Database migrations and seed data completed successfully");
 
             // Add global error handling middleware
             app.Use(async (context, next) =>
@@ -313,16 +277,6 @@ namespace KPISolution
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Re-enable the seed data initialization with error handling
-            try
-            {
-                await SeedData.InitializeAsync(app.Services);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error initializing seed data. Application will continue without full seed data.");
-            }
-
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Landing}/{action=Index}/{id?}");
@@ -361,21 +315,15 @@ namespace KPISolution
                 Log.Information("Starting Indicator Management System");
 
                 // Seed the database - run in all environments for Docker
-                // Ensure database schema is created via migrations
+                // Database migrations and initialization are now handled earlier in the pipeline
                 using (var scope = app.Services.CreateScope())
                 {
-                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    context.Database.Migrate(); // Use Migrate() instead of EnsureCreated() when migrations exist
-                    Log.Information("Database migrations applied");
-
-                    // Get services first
-                    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IndicatorRole>>();
-
-                    // Khởi tạo các vai trò hệ thống
+                    // Initialize roles and admin user after migrations are complete
                     await RoleInitializer.InitializeRolesAsync(app.Services);
                     Log.Information("Roles initialized");
 
+                    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                    
                     // If no admin is found, create a default one
                     string adminEmail = builder.Configuration["AdminSettings:Email"] ?? "admin@indicatorapp.com";
 
@@ -406,10 +354,15 @@ namespace KPISolution
                     }
                 }
 
-                // Comment out the seed data initialization to avoid foreign key constraint errors only in development
-                if (app.Environment.IsDevelopment())
+                // Initialize seed data in all environments
+                try
                 {
-                    // await SeedData.InitializeAsync(app.Services);
+                    await SeedData.InitializeAsync(app.Services);
+                    Log.Information("Seed data initialized successfully");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to initialize seed data - application will continue with empty database");
                 }
 
                 await app.RunAsync();
@@ -421,6 +374,73 @@ namespace KPISolution
             finally
             {
                 Log.CloseAndFlush();
+            }
+        }
+
+        /// <summary>
+        /// Ensures database migrations are applied with proper error handling
+        /// </summary>
+        private static async Task EnsureDatabaseMigratedAsync(IServiceProvider serviceProvider)
+        {
+            const int maxRetries = 5;
+            const int delayBetweenRetriesMs = 2000;
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    using var scope = serviceProvider.CreateScope();
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    
+                    Log.Information("Attempting to apply database migrations (attempt {Attempt}/{MaxRetries})", attempt, maxRetries);
+                    
+                    // Test database connection first
+                    var connectionString = context.Database.GetConnectionString();
+                    var displayConnectionString = connectionString?.Length > 50 ? 
+                        connectionString.Substring(0, 50) + "..." : connectionString;
+                    Log.Information("Testing database connection to: {ConnectionString}", displayConnectionString);
+                    
+                    var canConnect = await context.Database.CanConnectAsync();
+                    if (!canConnect)
+                    {
+                        throw new InvalidOperationException("Cannot establish connection to the database");
+                    }
+                    Log.Information("Database connection established successfully");
+                    
+                    // Apply migrations
+                    var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+                    if (pendingMigrations.Any())
+                    {
+                        Log.Information("Found {Count} pending migrations: {Migrations}", 
+                            pendingMigrations.Count(), string.Join(", ", pendingMigrations));
+                        
+                        await context.Database.MigrateAsync();
+                        Log.Information("Database migrations applied successfully");
+                    }
+                    else
+                    {
+                        Log.Information("No pending migrations found, database is up to date");
+                    }
+                    
+                    // Verify critical tables exist by trying to count roles
+                    var roleCount = await context.Roles.CountAsync();
+                    Log.Information("Database verification successful - AspNetRoles table exists with {Count} roles", roleCount);
+                    
+                    return; // Success, exit the retry loop
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Database migration attempt {Attempt}/{MaxRetries} failed: {Message}", attempt, maxRetries, ex.Message);
+                    
+                    if (attempt == maxRetries)
+                    {
+                        Log.Fatal("All database migration attempts failed. Application cannot start without a properly configured database.");
+                        throw new InvalidOperationException("Database migration failed after all retry attempts", ex);
+                    }
+                    
+                    Log.Information("Waiting {Delay}ms before retry attempt {NextAttempt}", delayBetweenRetriesMs, attempt + 1);
+                    await Task.Delay(delayBetweenRetriesMs);
+                }
             }
         }
     }
