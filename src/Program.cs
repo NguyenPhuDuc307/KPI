@@ -407,6 +407,29 @@ namespace KPISolution
                     }
                     Log.Information("Database connection established successfully");
                     
+                    // Check if migration history table exists and has corrupt state
+                    try
+                    {
+                        var roleCount = await context.Roles.CountAsync();
+                        Log.Information("Database is already properly migrated - AspNetRoles table exists with {Count} roles", roleCount);
+                        return; // Database is properly set up
+                    }
+                    catch (Exception ex) when (ex.Message.Contains("doesn't exist"))
+                    {
+                        Log.Warning("Tables don't exist but migration history might be corrupted. Forcing migration reset.");
+                        
+                        // Reset migration history to force fresh migration
+                        try
+                        {
+                            await context.Database.ExecuteSqlRawAsync("DROP TABLE IF EXISTS __EFMigrationsHistory");
+                            Log.Information("Dropped corrupted migration history table");
+                        }
+                        catch (Exception dropEx)
+                        {
+                            Log.Warning(dropEx, "Could not drop migration history table");
+                        }
+                    }
+                    
                     // Apply migrations
                     var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
                     if (pendingMigrations.Any())
@@ -419,12 +442,15 @@ namespace KPISolution
                     }
                     else
                     {
-                        Log.Information("No pending migrations found, database is up to date");
+                        Log.Information("No pending migrations found, forcing database creation");
+                        // If no pending migrations but tables don't exist, force create
+                        await context.Database.EnsureCreatedAsync();
+                        Log.Information("Database schema created using EnsureCreated");
                     }
                     
                     // Verify critical tables exist by trying to count roles
-                    var roleCount = await context.Roles.CountAsync();
-                    Log.Information("Database verification successful - AspNetRoles table exists with {Count} roles", roleCount);
+                    var finalRoleCount = await context.Roles.CountAsync();
+                    Log.Information("Database verification successful - AspNetRoles table exists with {Count} roles", finalRoleCount);
                     
                     return; // Success, exit the retry loop
                 }
