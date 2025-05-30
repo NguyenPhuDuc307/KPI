@@ -7,6 +7,7 @@ using KPISolution.Models.Mappings;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace KPISolution
 {
@@ -85,6 +86,24 @@ namespace KPISolution
             // Đăng ký và cấu hình các chính sách ủy quyền
             builder.Services.AddIndicatorPolicies();
 
+            // Fix: Persist Data Protection keys in production to avoid login loop
+            if (builder.Environment.IsProduction())
+            {
+                var keysPath = Path.Combine("/app", "keys");
+                Directory.CreateDirectory(keysPath);
+                builder.Services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+                    .SetApplicationName("KPI-System")
+                    .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
+                Log.Information("Data Protection keys persisted to: {KeysPath}", keysPath);
+            }
+            else
+            {
+                builder.Services.AddDataProtection()
+                    .SetApplicationName("KPI-System-Dev");
+                Log.Information("Data Protection configured for development");
+            }
+
             // Cấu hình cookie
             builder.Services.ConfigureApplicationCookie(options =>
             {
@@ -94,13 +113,41 @@ namespace KPISolution
                 options.LogoutPath = "/Identity/Account/Logout";
                 options.AccessDeniedPath = "/Identity/Account/AccessDenied";
                 options.SlidingExpiration = true;
-                options.Cookie.Name = "Indicator.Identity";
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.Name = "KPI.Auth";
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                // Add logging for authentication events
+                options.Events.OnSigningIn = context =>
+                {
+                    Log.Information("User {UserId} signing in", context.Principal?.Identity?.Name ?? "Unknown");
+                    return Task.CompletedTask;
+                };
+                options.Events.OnSignedIn = context =>
+                {
+                    Log.Information("User {UserId} signed in", context.Principal?.Identity?.Name ?? "Unknown");
+                    return Task.CompletedTask;
+                };
+                options.Events.OnSigningOut = context =>
+                {
+                    Log.Information("User {UserId} signing out", context.HttpContext.User?.Identity?.Name ?? "Unknown");
+                    return Task.CompletedTask;
+                };
+                options.Events.OnValidatePrincipal = context =>
+                {
+                    if (context.Principal?.Identity?.IsAuthenticated == true)
+                        Log.Debug("Cookie validated for user {UserId}", context.Principal?.Identity?.Name ?? "Unknown");
+                    else
+                        Log.Warning("Cookie validation failed");
+                    return Task.CompletedTask;
+                };
             });
 
-            // Cấu hình xác thực hai yếu tố
+            // Cấu hình xác thực Identity - tắt xác thực email để tránh chặn login khi chưa cấu hình email
             builder.Services.Configure<IdentityOptions>(options =>
             {
+                options.SignIn.RequireConfirmedAccount = false;
+                options.SignIn.RequireConfirmedEmail = false;
+
                 // Cấu hình token providers
                 options.Tokens.EmailConfirmationTokenProvider = "Email";
                 options.Tokens.PasswordResetTokenProvider = "Email";
@@ -323,7 +370,7 @@ namespace KPISolution
                     Log.Information("Roles initialized");
 
                     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-                    
+
                     // If no admin is found, create a default one
                     string adminEmail = builder.Configuration["AdminSettings:Email"] ?? "admin@indicatorapp.com";
 
@@ -391,22 +438,22 @@ namespace KPISolution
                 {
                     using var scope = serviceProvider.CreateScope();
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    
+
                     Log.Information("Attempting to apply database migrations (attempt {Attempt}/{MaxRetries})", attempt, maxRetries);
-                    
+
                     // Test database connection first
                     var connectionString = context.Database.GetConnectionString();
-                    var displayConnectionString = connectionString?.Length > 50 ? 
+                    var displayConnectionString = connectionString?.Length > 50 ?
                         connectionString.Substring(0, 50) + "..." : connectionString;
                     Log.Information("Testing database connection to: {ConnectionString}", displayConnectionString);
-                    
+
                     var canConnect = await context.Database.CanConnectAsync();
                     if (!canConnect)
                     {
                         throw new InvalidOperationException("Cannot establish connection to the database");
                     }
                     Log.Information("Database connection established successfully");
-                    
+
                     // Check if migration history table exists and has corrupt state
                     try
                     {
@@ -417,7 +464,7 @@ namespace KPISolution
                     catch (Exception ex) when (ex.Message.Contains("doesn't exist"))
                     {
                         Log.Warning("Tables don't exist but migration history might be corrupted. Forcing migration reset.");
-                        
+
                         // Reset migration history to force fresh migration
                         try
                         {
@@ -429,14 +476,14 @@ namespace KPISolution
                             Log.Warning(dropEx, "Could not drop migration history table");
                         }
                     }
-                    
+
                     // Apply migrations
                     var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
                     if (pendingMigrations.Any())
                     {
-                        Log.Information("Found {Count} pending migrations: {Migrations}", 
+                        Log.Information("Found {Count} pending migrations: {Migrations}",
                             pendingMigrations.Count(), string.Join(", ", pendingMigrations));
-                        
+
                         await context.Database.MigrateAsync();
                         Log.Information("Database migrations applied successfully");
                     }
@@ -447,23 +494,23 @@ namespace KPISolution
                         await context.Database.EnsureCreatedAsync();
                         Log.Information("Database schema created using EnsureCreated");
                     }
-                    
+
                     // Verify critical tables exist by trying to count roles
                     var finalRoleCount = await context.Roles.CountAsync();
                     Log.Information("Database verification successful - AspNetRoles table exists with {Count} roles", finalRoleCount);
-                    
+
                     return; // Success, exit the retry loop
                 }
                 catch (Exception ex)
                 {
                     Log.Error(ex, "Database migration attempt {Attempt}/{MaxRetries} failed: {Message}", attempt, maxRetries, ex.Message);
-                    
+
                     if (attempt == maxRetries)
                     {
                         Log.Fatal("All database migration attempts failed. Application cannot start without a properly configured database.");
                         throw new InvalidOperationException("Database migration failed after all retry attempts", ex);
                     }
-                    
+
                     Log.Information("Waiting {Delay}ms before retry attempt {NextAttempt}", delayBetweenRetriesMs, attempt + 1);
                     await Task.Delay(delayBetweenRetriesMs);
                 }
