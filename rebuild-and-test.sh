@@ -64,4 +64,4 @@ fi
 
 echo "🎉 Deployment test completed successfully!"
 echo "📊 You can access the application at: http://localhost:8080"
-echo "🗄️ MySQL is accessible at: localhost:3306"
+echo "🗄️ MySQL is accessible at: localhost:3307"
