@@ -338,12 +338,15 @@ namespace KPISolution.Controllers
                         }
                     }
 
+                    // Đảm bảo Description không null
+                    viewModel.Description ??= "";
+
                     // Clone các thuộc tính từ viewModel, gán giá trị responsiblePersonId đã chuyển đổi
                     var objectiveToCreate = new Objective
                     {
                         Code = viewModel.Code,
                         Name = viewModel.Name,
-                        Description = viewModel.Description ?? string.Empty,
+                        Description = viewModel.Description,
                         BusinessPerspective = viewModel.Perspective,
                         Timeframe = viewModel.Timeframe,
                         Status = viewModel.Status,
@@ -479,6 +482,7 @@ namespace KPISolution.Controllers
 
                     // Update properties
                     this._mapper.Map(viewModel, objective);
+                    objective.Description = viewModel.Description ?? "";
 
                     // Set updated date
                     objective.UpdatedAt = DateTime.UtcNow;

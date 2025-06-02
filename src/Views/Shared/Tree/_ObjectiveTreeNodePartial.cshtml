@@ -3,77 +3,77 @@
 
 @if (Model != null && Model.Any())
 {
-        <ul class="list-group list-group-flush objective-tree">
-            @foreach (var node in Model)
-            {
-                    <li class="list-group-item border-0 pt-2 pb-2">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-transparent">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi @node.GetPriorityIcon() me-2"></i>
-                                        <h5 class="mb-0">@node.Name</h5>
-                                        <span class="badge @node.GetStatusBadgeClass() ms-2">@node.Status</span>
-                                    </div>
-                                    <div>
-                                        <a href="@Url.Action("Details", "Objective", new { id = node.Id })" class="btn btn-sm btn-outline-primary me-1">
-                                            <i class="bi bi-info-circle"></i>
-                                        </a>
-                                        @if (node.HasChildren)
-                                        {
-                                                <button class="btn btn-sm btn-outline-secondary toggle-children" data-bs-toggle="collapse" data-bs-target="#children-@node.Id">
-                                                    <i class="bi bi-chevron-down"></i>
-                                                </button>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-9">
-                                        <p class="card-text text-muted mb-2">@(node.Description.Length > 150 ? node.Description.Substring(0, 150) + "..." : node.Description)</p>
-                                        <div class="progress" style="height: 10px;">
-                                            <div class="progress-bar @node.GetProgressBarClass()" 
-                                                 role="progressbar" 
-                                                 style="width: @node.ProgressPercentage%;" 
-                                                 aria-valuenow="@node.ProgressPercentage" 
-                                                 aria-valuemin="0" 
-                                                 aria-valuemax="100">
+                <ul class="list-group list-group-flush objective-tree">
+                    @foreach (var node in Model)
+                    {
+                                    <li class="list-group-item border-0 pt-2 pb-2">
+                                        <div class="card shadow-sm">
+                                            <div class="card-header bg-transparent">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi @node.GetPriorityIcon() me-2"></i>
+                                                        <h5 class="mb-0">@node.Name</h5>
+                                                        <span class="badge @node.GetStatusBadgeClass() ms-2">@node.Status</span>
+                                                    </div>
+                                                    <div>
+                                                        <a href="@Url.Action("Details", "Objective", new { id = node.Id })" class="btn btn-sm btn-outline-primary me-1">
+                                                            <i class="bi bi-info-circle"></i>
+                                                        </a>
+                                                        @if (node.HasChildren)
+                                                        {
+                                                                        <button class="btn btn-sm btn-outline-secondary toggle-children" data-bs-toggle="collapse" data-bs-target="#children-@node.Id">
+                                                                            <i class="bi bi-chevron-down"></i>
+                                                                        </button>
+                                                        }
+                                                    </div>
+                                                </div>
                                             </div>
+                                            <div class="card-body">
+                                                <div class="row mb-3">
+                                                    <div class="col-md-9">
+                                                        <p class="card-text text-muted mb-2">@((node.Description ?? "").Length > 150 ? (node.Description ?? "").Substring(0, 150) + "..." : (node.Description ?? ""))</p>
+                                                        <div class="progress" style="height: 10px;">
+                                                            <div class="progress-bar @node.GetProgressBarClass()" 
+                                                                 role="progressbar" 
+                                                                 style="width: @node.ProgressPercentage%;" 
+                                                                 aria-valuenow="@node.ProgressPercentage" 
+                                                                 aria-valuemin="0" 
+                                                                 aria-valuemax="100">
+                                                            </div>
+                                                        </div>
+                                                        <small class="text-muted">Tiến độ: @node.ProgressPercentage%</small>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="d-flex flex-column">
+                                                            <small class="text-muted mb-1">
+                                                                <i class="bi bi-building me-1"></i> @(string.IsNullOrEmpty(node.DepartmentName) ? "Không có phòng ban" : node.DepartmentName)
+                                                            </small>
+                                                            <small class="text-muted mb-1">
+                                                                <i class="bi bi-clock me-1"></i> @node.Timeframe
+                                                            </small>
+                                                            <small class="text-muted">
+                                                                <i class="bi bi-tag me-1"></i> @node.BusinessPerspective
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @if (node.HasChildren)
+                                            {
+                                                            <div class="collapse" id="children-@node.Id">
+                                                                <div class="ps-4">
+                                                                    <partial name="_ObjectiveTreeNodePartial" model="node.Children" />
+                                                                </div>
+                                                            </div>
+                                            }
                                         </div>
-                                        <small class="text-muted">Tiến độ: @node.ProgressPercentage%</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="d-flex flex-column">
-                                            <small class="text-muted mb-1">
-                                                <i class="bi bi-building me-1"></i> @(string.IsNullOrEmpty(node.DepartmentName) ? "Không có phòng ban" : node.DepartmentName)
-                                            </small>
-                                            <small class="text-muted mb-1">
-                                                <i class="bi bi-clock me-1"></i> @node.Timeframe
-                                            </small>
-                                            <small class="text-muted">
-                                                <i class="bi bi-tag me-1"></i> @node.BusinessPerspective
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            @if (node.HasChildren)
-                            {
-                                    <div class="collapse" id="children-@node.Id">
-                                        <div class="ps-4">
-                                            <partial name="_ObjectiveTreeNodePartial" model="node.Children" />
-                                        </div>
-                                    </div>
-                            }
-                        </div>
-                    </li>
-            }
-        </ul>
+                                    </li>
+                    }
+                </ul>
 }
 else
 {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i> Không có mục tiêu nào được tìm thấy.
-        </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i> Không có mục tiêu nào được tìm thấy.
+                </div>
 }
