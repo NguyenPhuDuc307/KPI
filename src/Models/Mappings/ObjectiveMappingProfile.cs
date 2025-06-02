@@ -44,7 +44,7 @@ namespace KPISolution.Models.Mappings
                 .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.TargetDate))
                 .ForMember(dest => dest.Perspective, opt => opt.MapFrom(src => src.BusinessPerspective))
                 .ForMember(dest => dest.ParentObjectiveId, opt => opt.MapFrom(src => src.ParentId))
-                .ForMember(dest => dest.ResponsiblePersonId, opt => opt.Ignore());
+                .ForMember(dest => dest.ResponsiblePersonId, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.ResponsiblePersonId) ? Guid.Empty : Guid.Parse(src.ResponsiblePersonId)));
 
             // Map từ ObjectiveCreateViewModel sang Objective entity
             this.CreateMap<ObjectiveCreateViewModel, Objective>()

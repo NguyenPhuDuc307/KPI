@@ -18,9 +18,9 @@
                 </a>
                 @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
                 {
-                    <a href="@Url.Action("Create", "Objective")" class="btn btn-sm btn-primary">
-                        <i class="bi bi-plus-circle me-1"></i>Thêm mới
-                    </a>
+                            <a href="@Url.Action("Create", "Objective")" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Thêm mới
+                            </a>
                 }
             </div>
         </div>
@@ -54,53 +54,53 @@
         </div>
 
         <div class="objective-tree-container">
-            <partial name="_ObjectiveTreeNodePartial" model="Model" />
+            <partial name="~/Views/Shared/Tree/_ObjectiveTreeNodePartial.cshtml" model="Model" />
         </div>
     </div>
 </div>
 
 @section Styles {
-    <style>
-        .objective-tree .list-group-item {
-            padding: 0.5rem 0;
-        }
+            <style>
+                .objective-tree .list-group-item {
+                    padding: 0.5rem 0;
+                }
 
-        .objective-tree .card {
-            transition: all 0.2s;
-        }
+                .objective-tree .card {
+                    transition: all 0.2s;
+                }
 
-        .objective-tree .card:hover {
-            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-        }
+                .objective-tree .card:hover {
+                    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+                }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            font-size: 0.875rem;
-        }
+                .legend-item {
+                    display: flex;
+                    align-items: center;
+                    font-size: 0.875rem;
+                }
 
-        .toggle-children:focus {
-            box-shadow: none;
-        }
+                .toggle-children:focus {
+                    box-shadow: none;
+                }
 
-        .toggle-children[aria-expanded="true"] .bi-chevron-down {
-            transform: rotate(180deg);
-            transition: transform 0.2s;
-        }
+                .toggle-children[aria-expanded="true"] .bi-chevron-down {
+                    transform: rotate(180deg);
+                    transition: transform 0.2s;
+                }
 
-        .toggle-children .bi-chevron-down {
-            transition: transform 0.2s;
-        }
-    </style>
+                .toggle-children .bi-chevron-down {
+                    transition: transform 0.2s;
+                }
+            </style>
 }
 
 @section Scripts {
-    <script>
-        $(document).ready(function () {
-            // Toggle button icon
-            $('.toggle-children').on('click', function () {
-                $(this).find('i').toggleClass('bi-chevron-down bi-chevron-up');
-            });
-        });
-    </script>
+            <script>
+                $(document).ready(function () {
+                    // Toggle button icon
+                    $('.toggle-children').on('click', function () {
+                        $(this).find('i').toggleClass('bi-chevron-down bi-chevron-up');
+                    });
+                });
+            </script>
 }

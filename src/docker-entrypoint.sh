@@ -5,12 +5,12 @@ echo "Starting KPI Application..."
 
 # Function to test MySQL connection
 test_mysql_connection() {
-    timeout 30s mysql -h mysql -u kpiuser -pkpipassword -e "SELECT 1;" kpi > /dev/null 2>&1
+    timeout 30s mysql -h mysql -P 3307 -u kpiuser -pkpipassword -e "SELECT 1;" kpi > /dev/null 2>&1
 }
 
 # Wait for MySQL to be ready with more robust checking
 echo "Waiting for MySQL server to be ready..."
-until nc -z mysql 3306; do
+until nc -z mysql 3307; do
   echo "MySQL port is not open - sleeping 2 seconds"
   sleep 2
 done

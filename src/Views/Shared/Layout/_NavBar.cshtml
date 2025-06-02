@@ -50,14 +50,14 @@
                                     </a></li>
                                 @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
                                 {
-                                    <li>
-                                        <hr class="dropdown-divider opacity-25">
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-controller="Objective" asp-action="Create">
-                                            <i class="bi bi-plus-circle me-1"></i>Add New Objective
-                                        </a>
-                                    </li>
+                                        <li>
+                                            <hr class="dropdown-divider opacity-25">
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" asp-controller="Objective" asp-action="Create">
+                                                <i class="bi bi-plus-circle me-1"></i>Add New Objective
+                                            </a>
+                                        </li>
                                 }
                             </ul>
                         </li>
@@ -78,11 +78,11 @@
                                     </a></li>
                                 @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
                                 {
-                                    <li>
-                                        <hr class="dropdown-divider opacity-25">
-                                    </li>
-                                    <li><a class="dropdown-item py-2" asp-controller="SuccessFactor" asp-action="Create">
-                                            <i class="bi bi-plus-circle me-1"></i>Add Success Factor</a></li>
+                                        <li>
+                                            <hr class="dropdown-divider opacity-25">
+                                        </li>
+                                        <li><a class="dropdown-item py-2" asp-controller="SuccessFactor" asp-action="Create">
+                                                <i class="bi bi-plus-circle me-1"></i>Add Success Factor</a></li>
                                 }
                             </ul>
                         </li>
@@ -124,16 +124,16 @@
                                 </li>
                                 @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
                                 {
-                                    <li class="d-flex justify-content-between px-2 mb-2">
-                                        <a class="btn btn-sm btn-success w-100 me-1" asp-controller="PerformanceIndicator"
-                                            asp-action="Create" asp-route-isKey="true">
-                                            <i class="bi bi-plus-circle me-1"></i> Add KPI
-                                        </a>
-                                        <a class="btn btn-sm btn-primary w-100 ms-1" asp-controller="PerformanceIndicator"
-                                            asp-action="Create" asp-route-isKey="false">
-                                            <i class="bi bi-plus-circle me-1"></i> Add PI
-                                        </a>
-                                    </li>
+                                        <li class="d-flex justify-content-between px-2 mb-2">
+                                            <a class="btn btn-sm btn-success w-100 me-1" asp-controller="PerformanceIndicator"
+                                                asp-action="Create" asp-route-isKey="true">
+                                                <i class="bi bi-plus-circle me-1"></i> Add KPI
+                                            </a>
+                                            <a class="btn btn-sm btn-primary w-100 ms-1" asp-controller="PerformanceIndicator"
+                                                asp-action="Create" asp-route-isKey="false">
+                                                <i class="bi bi-plus-circle me-1"></i> Add PI
+                                            </a>
+                                        </li>
                                 }
                                 <li>
                                     <hr class="dropdown-divider opacity-50">
@@ -157,16 +157,16 @@
                                 </li>
                                 @if (User.IsInRole("Administrator") || User.IsInRole("Manager"))
                                 {
-                                    <li class="d-flex justify-content-between px-2 mb-2">
-                                        <a class="btn btn-sm btn-danger w-100 me-1" asp-controller="ResultIndicator"
-                                            asp-action="Create" asp-route-isKey="true">
-                                            <i class="bi bi-plus-circle me-1"></i> Add KRI
-                                        </a>
-                                        <a class="btn btn-sm btn-secondary w-100 ms-1" asp-controller="ResultIndicator"
-                                            asp-action="Create" asp-route-isKey="false">
-                                            <i class="bi bi-plus-circle me-1"></i> Add RI
-                                        </a>
-                                    </li>
+                                        <li class="d-flex justify-content-between px-2 mb-2">
+                                            <a class="btn btn-sm btn-danger w-100 me-1" asp-controller="ResultIndicator"
+                                                asp-action="Create" asp-route-isKey="true">
+                                                <i class="bi bi-plus-circle me-1"></i> Add KRI
+                                            </a>
+                                            <a class="btn btn-sm btn-secondary w-100 ms-1" asp-controller="ResultIndicator"
+                                                asp-action="Create" asp-route-isKey="false">
+                                                <i class="bi bi-plus-circle me-1"></i> Add RI
+                                            </a>
+                                        </li>
                                 }
                                 <li>
                                     <hr class="dropdown-divider opacity-50">
@@ -233,17 +233,17 @@
                                 <i class="bi bi-clipboard-data me-2"></i>View RI/KRI Measurements</a>
                         </li>
                         @if (User.IsInRole("Administrator") || User.IsInRole("Manager") ||
-                                                User.IsInRole("Member"))
+                                                                                                User.IsInRole("Member"))
                         {
-                            <li>
-                                <hr class="dropdown-divider opacity-25">
-                            </li>
-                            <li>
-                                <h6 class="dropdown-header text-success fw-bold"><i class="bi bi-plus-circle me-1"></i> Add
-                                    New</h6>
-                            </li>
-                            <li><a class="dropdown-item py-2" asp-controller="Measurement" asp-action="SelectIndicator">
-                                    <i class="bi bi-calendar-plus me-2"></i>Add New Measurement</a></li>
+                                <li>
+                                    <hr class="dropdown-divider opacity-25">
+                                </li>
+                                <li>
+                                    <h6 class="dropdown-header text-success fw-bold"><i class="bi bi-plus-circle me-1"></i> Add
+                                        New</h6>
+                                </li>
+                                <li><a class="dropdown-item py-2" asp-controller="Measurement" asp-action="SelectIndicator">
+                                        <i class="bi bi-calendar-plus me-2"></i>Add New Measurement</a></li>
                         }
                         <li>
                             <hr class="dropdown-divider opacity-25">
@@ -283,12 +283,12 @@
                                     </a></li>
                                 @if (User.IsInRole("Administrator"))
                                 {
-                                    <li>
-                                        <hr class="dropdown-divider opacity-25">
-                                    </li>
-                                    <li><a class="dropdown-item py-2" asp-controller="Department" asp-action="Create">
-                                            <i class="bi bi-plus-circle me-1"></i>Add New Department
-                                        </a></li>
+                                        <li>
+                                            <hr class="dropdown-divider opacity-25">
+                                        </li>
+                                        <li><a class="dropdown-item py-2" asp-controller="Department" asp-action="Create">
+                                                <i class="bi bi-plus-circle me-1"></i>Add New Department
+                                            </a></li>
                                 }
                             </ul>
                         </li>
@@ -306,17 +306,22 @@
                         <span>Administration</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                        <li>
+                            <a class="dropdown-item py-2" href="/">
+                                <i class="bi bi-house-door me-2"></i>Trang giới thiệu
+                            </a>
+                        </li>
                         <li><a class="dropdown-item py-2" asp-area="Identity" asp-page="/Account/Manage/Index"><i
                                     class="bi bi-person-circle me-2"></i>My
                                 Account</a></li>
                         @if (User.IsInRole("Administrator"))
                         {
-                            <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Index"><i
-                                        class="bi bi-people-fill me-2"></i>User Management</a></li>
-                            <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Create"><i
-                                        class="bi bi-person-plus-fill me-2"></i>Add New User</a></li>
-                            <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Roles"><i
-                                        class="bi bi-person-rolodex me-2"></i>Role Management</a></li>
+                                <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Index"><i
+                                            class="bi bi-people-fill me-2"></i>User Management</a></li>
+                                <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Create"><i
+                                            class="bi bi-person-plus-fill me-2"></i>Add New User</a></li>
+                                <li><a class="dropdown-item py-2" asp-controller="UserManagement" asp-action="Roles"><i
+                                            class="bi bi-person-rolodex me-2"></i>Role Management</a></li>
                         }
                         <li>
                             <hr class="dropdown-divider opacity-25">

@@ -95,6 +95,12 @@ namespace KPISolution.Areas.Identity.Pages.Account
         {
             returnUrl ??= this.Url.Content("~/");
 
+            // Nếu returnUrl là trang gốc thì chuyển về /Home/Index
+            if (string.IsNullOrEmpty(returnUrl) || returnUrl == "/" || returnUrl == this.Url.Content("~/"))
+            {
+                returnUrl = "/Home/Index";
+            }
+
             this.ExternalLogins = (await this._signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
             if (this.ModelState.IsValid)

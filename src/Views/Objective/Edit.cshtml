@@ -69,7 +69,7 @@
                             <option value="">-- Không có mục tiêu cha --</option>
                             @foreach (var objective in ViewBag.ParentObjectives)
                             {
-                                <option value="@objective.Value">@objective.Text</option>
+                                        <option value="@objective.Value">@objective.Text</option>
                             }
                         </select>
                         <span asp-validation-for="ParentObjectiveId" class="text-danger"></span>
@@ -84,7 +84,7 @@
                             <option value="">-- Chọn phòng ban --</option>
                             @foreach (var department in ViewBag.Departments)
                             {
-                                <option value="@department.Value">@department.Text</option>
+                                        <option value="@department.Value">@department.Text</option>
                             }
                         </select>
                         <span asp-validation-for="DepartmentId" class="text-danger"></span>
@@ -92,15 +92,8 @@
 
                     <div class="mb-3">
                         <label asp-for="ResponsiblePersonId" class="form-label required">Người phụ trách</label>
-                        <select asp-for="ResponsiblePersonId" class="form-select" required>
+                        <select asp-for="ResponsiblePersonId" class="form-select" asp-items="ViewBag.ResponsiblePersons" required>
                             <option value="">-- Chọn người phụ trách --</option>
-                            @if (ViewBag.ResponsiblePersons != null)
-                            {
-                                @foreach (var person in ViewBag.ResponsiblePersons)
-                                {
-                                    <option value="@person.Value">@person.Text</option>
-                                }
-                            }
                         </select>
                         <span asp-validation-for="ResponsiblePersonId" class="text-danger"></span>
                         <div class="invalid-feedback">Vui lòng chọn người phụ trách</div>
@@ -154,37 +147,37 @@
 </div>
 
 @section Scripts {
-    <script>
-        $(document).ready(function () {
-            // Initialize select2 for better dropdown experience
-            $('.form-select').select2({
-                theme: 'bootstrap-5'
-            });
+            <script>
+                $(document).ready(function () {
+                    // Initialize select2 for better dropdown experience
+                    $('.form-select').select2({
+                        theme: 'bootstrap-5'
+                    });
 
-            // Auto-update progress when status changes
-            $('#Status').change(function () {
-                var status = $(this).val();
-                if (status == @((int)ObjectiveStatus.Completed)) {
-                    $('#ProgressPercentage').val(100);
-                } else if (status == @((int)ObjectiveStatus.NotStarted)) {
-                    $('#ProgressPercentage').val(0);
-                }
-            });
+                    // Auto-update progress when status changes
+                    $('#Status').change(function () {
+                        var status = $(this).val();
+                        if (status == @((int)ObjectiveStatus.Completed)) {
+                            $('#ProgressPercentage').val(100);
+                        } else if (status == @((int)ObjectiveStatus.NotStarted)) {
+                            $('#ProgressPercentage').val(0);
+                        }
+                    });
 
-            // Add validation for date range
-            $('form').submit(function (e) {
-                var startDate = new Date($('#StartDate').val());
-                var endDate = new Date($('#EndDate').val());
+                    // Add validation for date range
+                    $('form').submit(function (e) {
+                        var startDate = new Date($('#StartDate').val());
+                        var endDate = new Date($('#EndDate').val());
 
-                if (endDate < startDate) {
-                    e.preventDefault();
-                    alert("Ngày kết thúc phải sau ngày bắt đầu!");
-                    $('#EndDate').addClass('is-invalid');
-                    return false;
-                }
-            });
-        });
-    </script>
+                        if (endDate < startDate) {
+                            e.preventDefault();
+                            alert("Ngày kết thúc phải sau ngày bắt đầu!");
+                            $('#EndDate').addClass('is-invalid');
+                            return false;
+                        }
+                    });
+                });
+            </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
